@@ -21,6 +21,7 @@ backup_folder = os.path.join(data_dir, 'Backups_Automaticos')
 os.makedirs(upload_folder, exist_ok=True)
 os.makedirs(backup_folder, exist_ok=True)
 
+# Ruta absoluta exacta para que Render encuentre los templates
 template_dir = os.path.join(base_dir, 'templates')
 app = Flask(__name__, template_folder=template_dir)
 app.secret_key = 'cardio_elite_seguro_2026'
@@ -72,7 +73,6 @@ def init_db():
         )
     ''')
 
-    # Migraciones seguras para columnas nuevas
     for col, tipo in [('es_estudio', 'INTEGER DEFAULT 0'), ('medicacion_actual', 'TEXT')]:
         try:
             cursor.execute(f'ALTER TABLE pacientes ADD COLUMN {col} {tipo}')
@@ -140,10 +140,6 @@ def calcular_edad(nacimiento_str):
     except:
         return 0
 
-def calcular_edad_texto(nacimiento_str):
-    edad = calcular_edad(nacimiento_str)
-    return f'{edad} años' if edad else ''
-
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     error = None
@@ -163,40 +159,6 @@ def login():
         else:
             error = 'Usuario o contraseña incorrectos'
     return render_template('login.html', error=error)
-
-@app.route('/cambiar-contrasena', methods=['GET', 'POST'])
-def cambiar_contrasena():
-    if not session.get('logged_in'):
-        return redirect(url_for('login'))
-    
-    error, exito = None, None
-    username = session.get('username', 'draceciliamarecos')
-
-    if request.method == 'POST':
-        actual = request.form.get('password_actual', '')
-        nueva = request.form.get('password_nueva', '')
-        repetir = request.form.get('password_repetir', '')
-
-        if not actual or not nueva or not repetir:
-            error = 'Por favor, complete todos los campos.'
-        elif nueva != repetir:
-            error = 'Las nuevas contraseñas no coinciden.'
-        else:
-            conn = sqlite3.connect(db_path)
-            cursor = conn.cursor()
-            cursor.execute('SELECT password_hash FROM usuarios WHERE username = ?', (username,))
-            row = cursor.fetchone()
-
-            if row and check_password_hash(row[0], actual):
-                nuevo_hash = generate_password_hash(nueva)
-                cursor.execute('UPDATE usuarios SET password_hash = ? WHERE username = ?', (nuevo_hash, username))
-                conn.commit()
-                exito = '¡Contraseña actualizada con éxito!'
-            else:
-                error = 'La contraseña actual es incorrecta.'
-            conn.close()
-            
-    return render_template('calculadoras.html', error=error, exito=exito)
 
 @app.route('/')
 def index():
@@ -265,6 +227,57 @@ def nuevo():
         return redirect(url_for('index', fecha=fecha_cita))
         
     return render_template('nuevo_paciente.html')
+
+@app.route('/lista-estudios')
+def lista_estudios():
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT e.*, p.cedula, p.nombre as nombre_paciente 
+        FROM estudios e 
+        JOIN pacientes p ON e.paciente_id = p.id 
+        ORDER BY e.id DESC
+    """)
+    estudios = cursor.fetchall()
+    conn.close()
+    return render_template('estudios_recientes.html', estudios=estudios)
+
+@app.route('/cambiar-contrasena', methods=['GET', 'POST'])
+def cambiar_contrasena():
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+    
+    error, exito = None, None
+    username = session.get('username', 'draceciliamarecos')
+
+    if request.method == 'POST':
+        actual = request.form.get('password_actual', '')
+        nueva = request.form.get('password_nueva', '')
+        repetir = request.form.get('password_repetir', '')
+
+        if not actual or not nueva or not repetir:
+            error = 'Por favor, complete todos los campos.'
+        elif nueva != repetir:
+            error = 'Las nuevas contraseñas no coinciden.'
+        else:
+            conn = sqlite3.connect(db_path)
+            cursor = conn.cursor()
+            cursor.execute('SELECT password_hash FROM usuarios WHERE username = ?', (username,))
+            row = cursor.fetchone()
+
+            if row and check_password_hash(row[0], actual):
+                nuevo_hash = generate_password_hash(nueva)
+                cursor.execute('UPDATE usuarios SET password_hash = ? WHERE username = ?', (nuevo_hash, username))
+                conn.commit()
+                exito = '¡Contraseña actualizada con éxito!'
+            else:
+                error = 'La contraseña actual es incorrecta.'
+            conn.close()
+            
+    return render_template('cambiar_contrasena.html', error=error, exito=exito)
 
 @app.route('/ficha/<int:id>', methods=['GET', 'POST'])
 def ficha(id):
@@ -414,24 +427,6 @@ def receta(id):
     </body>
     </html>
     """
-
-@app.route('/estudios-recientes')
-def estudios_recientes():
-    if not session.get('logged_in'):
-        return redirect(url_for('login'))
-        
-    conn = sqlite3.connect(db_path)
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
-    cursor.execute("""
-        SELECT e.*, p.cedula, p.nombre as nombre_paciente 
-        FROM estudios e 
-        JOIN pacientes p ON e.paciente_id = p.id 
-        ORDER BY e.id DESC
-    """)
-    estudios = cursor.fetchall()
-    conn.close()
-    return render_template('estudios_recientes.html', estudios=estudios)
 
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
