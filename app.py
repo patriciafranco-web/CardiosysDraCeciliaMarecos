@@ -5,8 +5,6 @@ import json
 from datetime import datetime
 from flask import Flask, request, redirect, url_for, session, send_file, render_template
 from werkzeug.security import generate_password_hash, check_password_hash
-from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
 
 # Configuración de rutas apuntando al Disco Persistente en Render
 if getattr(sys, 'frozen', False):
@@ -160,34 +158,47 @@ def login():
             return redirect(url_for('index'))
         else:
             error = 'Usuario o contraseña incorrectos'
-    return render_template('login.html', error=error) if os.path.exists('Plantillas/login.html') else 'Falta login.html'
+    return render_template('login.html', error=error)
 
 @app.route('/cambiar-contrasena', methods=['GET', 'POST'])
 def cambiar_contrasena():
     if not session.get('logged_in'):
         return redirect(url_for('login'))
-    return "Cambiar contraseña"
+    
+    error, exito = None, None
+    username = session.get('username', 'draceciliamarecos')
 
-@app.route('/lista-pacientes')
-def lista_pacientes():
-    if not session.get('logged_in'):
-        return redirect(url_for('login'))
-    q = request.args.get('q', '').strip()
-    conn = sqlite3.connect(db_path)
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
-    if q:
-        cursor.execute('SELECT * FROM pacientes WHERE es_estudio = 0 AND (nombre LIKE ? OR cedula LIKE ?) ORDER BY nombre ASC', (f'%{q}%', f'%{q}%'))
-    else:
-        cursor.execute('SELECT * FROM pacientes WHERE es_estudio = 0 ORDER BY nombre ASC')
-    pacientes = cursor.fetchall()
-    conn.close()
-    return render_template('lista_pacientes.html', pacientes=pacientes, q=q, calcular_edad=calcular_edad)
+    if request.method == 'POST':
+        actual = request.form.get('password_actual', '')
+        nueva = request.form.get('password_nueva', '')
+        repetir = request.form.get('password_repetir', '')
+
+        if not actual or not nueva or not repetir:
+            error = 'Por favor, complete todos los campos.'
+        elif nueva != repetir:
+            error = 'Las nuevas contraseñas no coinciden.'
+        else:
+            conn = sqlite3.connect(db_path)
+            cursor = conn.cursor()
+            cursor.execute('SELECT password_hash FROM usuarios WHERE username = ?', (username,))
+            row = cursor.fetchone()
+
+            if row and check_password_hash(row[0], actual):
+                nuevo_hash = generate_password_hash(nueva)
+                cursor.execute('UPDATE usuarios SET password_hash = ? WHERE username = ?', (nuevo_hash, username))
+                conn.commit()
+                exito = '¡Contraseña actualizada con éxito!'
+            else:
+                error = 'La contraseña actual es incorrecta.'
+            conn.close()
+            
+    return render_template('calculadoras.html', error=error, exito=exito)
 
 @app.route('/')
 def index():
     if not session.get('logged_in'):
         return redirect(url_for('login'))
+    
     fecha_agenda = request.args.get('fecha', datetime.today().strftime('%Y-%m-%d'))
     busqueda = request.args.get('q', '').strip()
     conn = sqlite3.connect(db_path)
@@ -198,14 +209,35 @@ def index():
         cursor.execute('SELECT * FROM pacientes WHERE es_estudio = 0 AND (nombre LIKE ? OR cedula LIKE ?)', (f'%{busqueda}%', f'%{busqueda}%'))
     else:
         cursor.execute('SELECT * FROM pacientes WHERE es_estudio = 0 AND fecha_cita = ?', (fecha_agenda,))
+    
     pacientes = cursor.fetchall()
     conn.close()
     return render_template('dashboard.html', pacientes=pacientes, fecha_agenda=fecha_agenda, busqueda=busqueda, calcular_edad=calcular_edad)
+
+@app.route('/lista-pacientes')
+def lista_pacientes():
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+    
+    q = request.args.get('q', '').strip()
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    
+    if q:
+        cursor.execute('SELECT * FROM pacientes WHERE es_estudio = 0 AND (nombre LIKE ? OR cedula LIKE ?) ORDER BY nombre ASC', (f'%{q}%', f'%{q}%'))
+    else:
+        cursor.execute('SELECT * FROM pacientes WHERE es_estudio = 0 ORDER BY nombre ASC')
+        
+    pacientes = cursor.fetchall()
+    conn.close()
+    return render_template('lista_pacientes.html', pacientes=pacientes, q=q, calcular_edad=calcular_edad)
 
 @app.route('/nuevo', methods=['GET', 'POST'])
 def nuevo():
     if not session.get('logged_in'):
         return redirect(url_for('login'))
+        
     if request.method == 'POST':
         cedula = request.form.get('cedula')
         nombre = request.form.get('nombre')
@@ -227,6 +259,7 @@ def nuevo():
         conn.commit()
         conn.close()
         return redirect(url_for('index', fecha=fecha_cita))
+        
     return render_template('nuevo_paciente.html')
 
 @app.route('/ficha/<int:id>', methods=['GET', 'POST'])
@@ -243,6 +276,19 @@ def ficha(id):
         if accion == 'guardar_antecedentes':
             nuevo_ant = request.form.get('antecedentes_base', '')
             cursor.execute('UPDATE pacientes SET antecedentes = ? WHERE id = ?', (nuevo_ant, id))
+            conn.commit()
+        elif accion == 'guardar_datos_paciente':
+            nombre = request.form.get('nombre', '')
+            cedula = request.form.get('cedula', '')
+            profesion = request.form.get('profesion', '')
+            direccion = request.form.get('direccion', '')
+            telefono = request.form.get('telefono', '')
+            alergias = request.form.get('alergias', '')
+            cursor.execute('''
+                UPDATE pacientes 
+                SET nombre = ?, cedula = ?, profesion = ?, direccion = ?, telefono = ?, alergias = ? 
+                WHERE id = ?
+            ''', (nombre, cedula, profesion, direccion, telefono, alergias, id))
             conn.commit()
         elif accion == 'nueva_consulta':
             fecha_cons = datetime.today().strftime('%Y-%m-%d %H:%M')
@@ -287,7 +333,25 @@ def ficha(id):
     if not paciente:
         return 'Paciente no encontrado', 404
 
-    return render_template('ficha.html', paciente=paciente, historiales=historiales, archivos_paciente=archivos_paciente)
+    return render_template('ficha.html', paciente=paciente, historiales=historiales, archivos_paciente=archivos_paciente, calcular_edad=calcular_edad)
+
+@app.route('/estudios-recientes')
+def estudios_recientes():
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+        
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT e.*, p.cedula, p.nombre as nombre_paciente 
+        FROM estudios e 
+        JOIN pacientes p ON e.paciente_id = p.id 
+        ORDER BY e.id DESC
+    """)
+    estudios = cursor.fetchall()
+    conn.close()
+    return render_template('estudios_recientes.html', estudios=estudios)
 
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
