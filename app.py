@@ -3,16 +3,23 @@ import sys
 import sqlite3
 import json
 from datetime import datetime
-from flask import Flask, request, redirect, url_for, session, send_file, render_template
+from flask import Flask, request, redirect, url_for, session, send_file, render_template, make_response
 from werkzeug.security import generate_password_hash, check_password_hash
 
-# Configuración de rutas apuntando al Disco Persistente en Render
+# ReportLab imports para generación de PDFs
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+from reportlab.lib import colors
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+
+# Configuración de rutas apuntando al Disco Persistente en Render o entorno local
 if getattr(sys, 'frozen', False):
     base_dir = os.path.dirname(sys.executable)
 else:
     base_dir = os.path.dirname(os.path.abspath(__file__))
 
-data_dir = os.path.join(base_dir, 'data')
+data_dir = '/data' if os.path.exists('/data') else os.path.join(base_dir, 'data')
 os.makedirs(data_dir, exist_ok=True)
 
 db_path = os.path.join(data_dir, 'cardiologia_elite.db')
