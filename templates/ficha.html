@@ -51,9 +51,22 @@
                     </span>
                     <span><strong>Teléfono:</strong> {{ paciente[4] }}</span>
                 </div>
+                
                 {% if paciente[6] %}
-                <div class="alerta-alergia">⚠️ Alergias: {{ paciente[6] }}</div>
+                <div>
+                    <span class="alerta-alergia">⚠️ Alergias: {{ paciente[6] }}</span>
+                </div>
                 {% endif %}
+
+                <!-- Indicador visual de Estudios / Adjuntos debajo de Alergias -->
+                <div style="background-color: #34495e; color: #ecf0f1; padding: 6px 12px; border-radius: 4px; font-size: 13px; margin-top: 8px; display: inline-block; border-left: 3px solid #3498db;">
+                    <strong>📁 Estudios / Adjuntos:</strong> 
+                    {% if estudios %}
+                        {% for est in estudios[:3] %}{{ est[2] }}{% if not loop.last %}, {% endif %}{% endfor %}
+                    {% else %}
+                        Ninguno
+                    {% endif %}
+                </div>
             </div>
             
             <!-- Recetario Rápido y Exportar -->
@@ -160,16 +173,29 @@
                 </form>
             </div>
 
-            <!-- Columna Derecha: Historial Clínico -->
+            <!-- Columna Derecha: Historial Clínico (Ocultando campos vacíos) -->
             <div class="columna" style="background-color: #fcfcfc;">
                 <h3 style="margin-top: 0; color: #2c3e50;">Historial Clínico</h3>
                 {% for consulta in historial %}
                 <div class="consulta-previa">
+                    {% if consulta[0] %}
                     <small style="color: #7f8c8d;"><strong>{{ consulta[0] }}</strong></small>
+                    {% endif %}
+                    
+                    {% if consulta[1] %}
                     <p style="margin: 5px 0;"><strong>Motivo:</strong> {{ consulta[1] }}</p>
+                    {% endif %}
+                    
+                    {% if consulta[3] %}
                     <p style="margin: 5px 0; font-size: 14px;"><strong>Dx:</strong> {{ consulta[3] }}</p>
+                    {% endif %}
+                    
                     {% if consulta[5] or consulta[8] %}
-                    <p style="margin: 3px 0; font-size: 12px; color: #16a085;"><strong>MAPA/Holter:</strong> D: {{ consulta[5] }} | H: {{ consulta[8] }}</p>
+                    <p style="margin: 3px 0; font-size: 12px; color: #16a085;">
+                        <strong>MAPA/Holter:</strong> 
+                        {% if consulta[5] %}D: {{ consulta[5] }}{% endif %} 
+                        {% if consulta[8] %}| H: {{ consulta[8] }}{% endif %}
+                    </p>
                     {% endif %}
                 </div>
                 {% else %}
@@ -217,7 +243,6 @@
 
     <!-- SCRIPTS -->
     <script>
-        // Función para insertar frases rápidas de ECG
         function insertarTexto(frase) {
             const campo = document.getElementById('campoExamen');
             if (campo.value.length > 0) {
@@ -228,7 +253,6 @@
             campo.focus();
         }
 
-        // Cálculo de edad
         const fechaNac = new Date("{{ paciente[3] }}");
         const fechaHoy = new Date();
         let edadCalculada = fechaHoy.getFullYear() - fechaNac.getFullYear();
