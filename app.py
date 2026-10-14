@@ -12,9 +12,9 @@ from reportlab.pdfgen import canvas
 
 # Configuración de rutas apuntando al Disco Persistente en Render
 if getattr(sys, 'frozen', False):
-  base_dir = os.path.dirname(sys.executable)
+    base_dir = os.path.dirname(sys.executable)
 else:
-  base_dir = os.path.dirname(os.path.abspath(__file__))
+    base_dir = os.path.dirname(os.path.abspath(__file__))
 
 data_dir = os.path.join(base_dir, 'data')
 os.makedirs(data_dir, exist_ok=True)
@@ -30,24 +30,24 @@ app.secret_key = 'cardio_elite_seguro_2026'
 
 
 def hacer_backup_automatico():
-  if os.path.exists(db_path):
-    fecha_str = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-    backup_file = os.path.join(
-        backup_folder, f'backup_cardiologia_{fecha_str}.db'
-    )
-    try:
-      with open(db_path, 'rb') as src, open(backup_file, 'wb') as dst:
-        dst.write(src.read())
-    except Exception as e:
-      print('Error al generar auto-backup:', e)
+    if os.path.exists(db_path):
+        fecha_str = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+        backup_file = os.path.join(
+            backup_folder, f'backup_cardiologia_{fecha_str}.db'
+        )
+        try:
+            with open(db_path, 'rb') as src, open(backup_file, 'wb') as dst:
+                dst.write(src.read())
+        except Exception as e:
+            print('Error al generar auto-backup:', e)
 
 
 def init_db():
-  conn = sqlite3.connect(db_path)
-  cursor = conn.cursor()
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
 
-  # Tabla de Usuarios y contraseñas cifradas
-  cursor.execute('''
+    # Tabla de Usuarios y contraseñas cifradas
+    cursor.execute('''
         CREATE TABLE IF NOT EXISTS usuarios (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT UNIQUE NOT NULL,
@@ -55,17 +55,17 @@ def init_db():
         )
     ''')
 
-  pass_hash = generate_password_hash('cardiopy')
-  cursor.execute(
-      '''
+    pass_hash = generate_password_hash('cardiopy')
+    cursor.execute(
+        '''
         INSERT INTO usuarios (username, password_hash) 
         VALUES ('draceciliamarecos', ?) 
         ON CONFLICT(username) DO UPDATE SET password_hash = ?
     ''',
-      (pass_hash, pass_hash),
-  )
+        (pass_hash, pass_hash),
+    )
 
-  cursor.execute('''
+    cursor.execute('''
         CREATE TABLE IF NOT EXISTS pacientes (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             cedula TEXT NOT NULL,
@@ -82,15 +82,15 @@ def init_db():
         )
     ''')
 
-  # Migración segura para columna es_estudio en pacientes
-  try:
-    cursor.execute(
-        'ALTER TABLE pacientes ADD COLUMN es_estudio INTEGER DEFAULT 0'
-    )
-  except sqlite3.OperationalError:
-    pass
+    # Migración segura para columna es_estudio en pacientes
+    try:
+        cursor.execute(
+            'ALTER TABLE pacientes ADD COLUMN es_estudio INTEGER DEFAULT 0'
+        )
+    except sqlite3.OperationalError:
+        pass
 
-  cursor.execute('''
+    cursor.execute('''
         CREATE TABLE IF NOT EXISTS historial (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             paciente_id INTEGER,
@@ -118,23 +118,23 @@ def init_db():
         )
     ''')
 
-  # Migración segura para columnas nuevas en historial
-  for col, tipo in [
-      ('framingham', 'TEXT'),
-      ('cha2ds2', 'TEXT'),
-      ('funcion_renal', 'TEXT'),
-      ('rel_alb_crea', 'TEXT'),
-      ('scag', 'TEXT'),
-      ('asa', 'TEXT'),
-      ('lee', 'TEXT'),
-      ('examen_fisico_notas', 'TEXT'),
-  ]:
-    try:
-      cursor.execute(f'ALTER TABLE historial ADD COLUMN {col} {tipo}')
-    except sqlite3.OperationalError:
-      pass
+    # Migración segura para columnas nuevas en historial
+    for col, tipo in [
+        ('framingham', 'TEXT'),
+        ('cha2ds2', 'TEXT'),
+        ('funcion_renal', 'TEXT'),
+        ('rel_alb_crea', 'TEXT'),
+        ('scag', 'TEXT'),
+        ('asa', 'TEXT'),
+        ('lee', 'TEXT'),
+        ('examen_fisico_notas', 'TEXT'),
+    ]:
+        try:
+            cursor.execute(f'ALTER TABLE historial ADD COLUMN {col} {tipo}')
+        except sqlite3.OperationalError:
+            pass
 
-  cursor.execute('''
+    cursor.execute('''
         CREATE TABLE IF NOT EXISTS estudios (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             paciente_id INTEGER,
@@ -148,20 +148,20 @@ def init_db():
         )
     ''')
 
-  cursor.execute('SELECT COUNT(*) FROM pacientes')
-  if cursor.fetchone()[0] == 0:
-    hoy_str = datetime.today().strftime('%Y-%m-%d')
-    cursor.execute(
-        '''
+    cursor.execute('SELECT COUNT(*) FROM pacientes')
+    if cursor.fetchone()[0] == 0:
+        hoy_str = datetime.today().strftime('%Y-%m-%d')
+        cursor.execute(
+            '''
             INSERT INTO pacientes (cedula, nombre, nacimiento, sexo, telefono, profesion, direccion, alergias, antecedentes, fecha_cita, es_estudio) 
             VALUES ('3789170', 'Paciente Ejemplo', '1986-05-22', 'Femenino', '0987546321', 'Médico', 'Asunción', 'Ninguna', 'HTA, Dislipidemia', ?, 0)
         ''',
-        (hoy_str,),
-    )
+            (hoy_str,),
+        )
 
-  conn.commit()
-  conn.close()
-  hacer_backup_automatico()
+    conn.commit()
+    conn.close()
+    hacer_backup_automatico()
 
 
 # Inicializar la base de datos y tablas globalmente para Render/Gunicorn
@@ -170,73 +170,73 @@ init_db()
 
 @app.before_request
 def hacer_sesion_no_permanente():
-  session.permanent = False
+    session.permanent = False
 
 
 def calcular_edad(nacimiento_str):
-  if not nacimiento_str:
-    return 0
-  try:
-    nac = datetime.strptime(nacimiento_str, '%Y-%m-%d')
-    hoy = datetime.today()
-    edad = (
-        hoy.year
-        - nac.year
-        - ((hoy.month, hoy.day) < (nac.month, nac.day))
-    )
-    return edad
-  except:
-    return 0
+    if not nacimiento_str:
+        return 0
+    try:
+        nac = datetime.strptime(nacimiento_str, '%Y-%m-%d')
+        hoy = datetime.today()
+        edad = (
+            hoy.year
+            - nac.year
+            - ((hoy.month, hoy.day) < (nac.month, nac.day))
+        )
+        return edad
+    except:
+        return 0
 
 
 def calcular_edad_texto(nacimiento_str):
-  edad = calcular_edad(nacimiento_str)
-  return f'{edad} años' if edad else 'N/D'
+    edad = calcular_edad(nacimiento_str)
+    return f'{edad} años' if edad else ''
 
 
 def dibujar_membrete(c, sanatorio, width, height):
-  logo_file = (
-      'logo_ovelar.png' if 'Ovelar' in sanatorio else 'logo_carlos.png'
-  )
-  if not os.path.exists(logo_file):
-    alternativos = (
-        ['logo_san_carlos.png', 'SanCarlos.png', 'san_carlos.png']
-        if 'Carlos' in sanatorio
-        else ['logo_san_ovelar.png', 'Ovelar.png']
+    logo_file = (
+        'logo_ovelar.png' if 'Ovelar' in sanatorio else 'logo_carlos.png'
     )
-    for alt in alternativos:
-      if os.path.exists(alt):
-        logo_file = alt
-        break
+    if not os.path.exists(logo_file):
+        alternativos = (
+            ['logo_san_carlos.png', 'SanCarlos.png', 'san_carlos.png']
+            if 'Carlos' in sanatorio
+            else ['logo_san_ovelar.png', 'Ovelar.png']
+        )
+        for alt in alternativos:
+            if os.path.exists(alt):
+                logo_file = alt
+                break
 
-  if os.path.exists(logo_file):
-    try:
-      c.drawImage(
-          logo_file,
-          50,
-          height - 60,
-          width=160,
-          height=45,
-          preserveAspectRatio=True,
-          mask='auto',
-      )
-    except Exception as e:
-      print('Error al cargar logo:', e)
-  else:
-    c.setFillColorRGB(0.1, 0.3, 0.5)
-    c.setFont('Helvetica-Bold', 14)
-    c.drawString(50, height - 40, sanatorio)
+    if os.path.exists(logo_file):
+        try:
+            c.drawImage(
+                logo_file,
+                50,
+                height - 60,
+                width=160,
+                height=45,
+                preserveAspectRatio=True,
+                mask='auto',
+            )
+        except Exception as e:
+            print('Error al cargar logo:', e)
+    else:
+        c.setFillColorRGB(0.1, 0.3, 0.5)
+        c.setFont('Helvetica-Bold', 14)
+        c.drawString(50, height - 40, sanatorio)
 
-  c.setFillColorRGB(0.85, 0.87, 0.9)
-  c.rect(50, height - 85, width - 100, 18, fill=1, stroke=0)
-  c.setFillColorRGB(0.1, 0.1, 0.1)
-  c.setFont('Helvetica-Bold', 10)
-  c.drawCentredString(width / 2.0, height - 78, 'SERVICIO DE CARDIOLOGÍA IMÁGENES')
+    c.setFillColorRGB(0.85, 0.87, 0.9)
+    c.rect(50, height - 85, width - 100, 18, fill=1, stroke=0)
+    c.setFillColorRGB(0.1, 0.1, 0.1)
+    c.setFont('Helvetica-Bold', 10)
+    c.drawCentredString(width / 2.0, height - 78, 'SERVICIO DE CARDIOLOGÍA IMÁGENES')
 
-  c.setFont('Helvetica-Bold', 12)
-  c.drawCentredString(
-      width / 2.0, height - 105, 'Informe de Ecocardiografía-Doppler-Color'
-  )
+    c.setFont('Helvetica-Bold', 12)
+    c.drawCentredString(
+        width / 2.0, height - 105, 'Informe de Ecocardiografía-Doppler-Color'
+    )
 
 
 def generar_pdf_ecocardiograma(
@@ -252,305 +252,305 @@ def generar_pdf_ecocardiograma(
     desc,
     conc,
 ):
-  nombre_limpio = nombre.replace(' ', '_')
-  sanatorio_limpio = sanatorio.replace(' ', '_')
-  filename = f'Informe_{nombre_limpio}_{sanatorio_limpio}.pdf'
-  filepath = os.path.join(upload_folder, filename)
+    nombre_limpio = nombre.replace(' ', '_')
+    sanatorio_limpio = sanatorio.replace(' ', '_')
+    filename = f'Informe_{nombre_limpio}_{sanatorio_limpio}.pdf'
+    filepath = os.path.join(upload_folder, filename)
 
-  c = canvas.Canvas(filepath, pagesize=letter)
-  width, height = letter
+    c = canvas.Canvas(filepath, pagesize=letter)
+    width, height = letter
 
-  # PÁGINA 1
-  dibujar_membrete(c, sanatorio, width, height)
-
-  # Datos del paciente
-  y = height - 128
-  c.setFont('Helvetica-Bold', 10)
-  c.drawString(50, y, 'Nombre:')
-  c.setFont('Helvetica', 10)
-  c.drawString(105, y, f'{nombre}')
-
-  c.setFont('Helvetica-Bold', 10)
-  c.drawString(450, y, 'Fecha:')
-  c.setFont('Helvetica', 10)
-  c.drawString(490, y, f"{datetime.today().strftime('%d/%m/%Y')}")
-  y -= 16
-
-  c.setFont('Helvetica-Bold', 10)
-  c.drawString(50, y, 'Edad (años):')
-  c.setFont('Helvetica', 10)
-  c.drawString(125, y, f'{edad}')
-
-  c.setFont('Helvetica-Bold', 10)
-  c.drawString(240, y, 'Sexo:')
-  c.setFont('Helvetica', 10)
-  c.drawString(280, y, f'{sexo}')
-  y -= 16
-
-  c.setFont('Helvetica-Bold', 10)
-  c.drawString(50, y, 'Motivo del estudio:')
-  c.setFont('Helvetica', 10)
-  c.drawString(150, y, f'{motivo}')
-  y -= 16
-
-  c.setFont('Helvetica-Bold', 10)
-  c.drawString(50, y, 'C.I. nº:')
-  c.setFont('Helvetica', 10)
-  c.drawString(100, y, f'{cedula}')
-  y -= 8
-  c.line(50, y, width - 50, y)
-  y -= 15
-
-  # Sección Dimensiones
-  c.setFont('Helvetica-Bold', 10)
-  c.drawString(50, y, 'Dimensiones')
-  y -= 3
-  c.line(50, y, width - 50, y)
-  y -= 15
-
-  lista_dims = [
-      ('Aorta (AO):', dims.get('ao', ''), 'v.n.: 20 - 37', 'mm'),
-      ('Aurícula izquierda (AI):', dims.get('ai', ''), 'v.n.: 20 - 40', 'mm'),
-      ('Volumen aurícula izquierda:', dims.get('vol_ai', ''), '', 'ml'),
-      (
-          'Volumen aurícula izquierda/SC:',
-          dims.get('vol_ai_sc', ''),
-          'v.n.: 16 - 34',
-          'ml/m2',
-      ),
-      ('Ventrículo derecho:', dims.get('vd', ''), 'v.n.: 09 - 26', 'mm'),
-      (
-          'Ventrículo izquierdo Diástole:',
-          dims.get('vi_diastole', ''),
-          'v.n.: 37 - 56',
-          'mm',
-      ),
-      (
-          'Ventrículo izquierdo Sístole:',
-          dims.get('vi_sistole', ''),
-          'v.n.: 27 - 37',
-          'mm',
-      ),
-      (
-          'Volumen de fin de Diástole del VI:',
-          dims.get('vol_diastole_vi', ''),
-          '',
-          'ml/m2',
-      ),
-      (
-          'Volumen de fin de Sístole del VI:',
-          dims.get('vol_sistole_vi', ''),
-          '',
-          'ml/m2',
-      ),
-      (
-          'Fracción de acortamiento:',
-          dims.get('facortamiento', ''),
-          'v.n.: 28 - 40 %',
-          '',
-      ),
-      (
-          'Fracción de eyección:',
-          dims.get('feyeccion', ''),
-          'v.n.: 55 - 70 %',
-          '',
-      ),
-      (
-          'Espesor del tabique interventricular:',
-          dims.get('siv', ''),
-          'v.n.: 7 - 11',
-          'mm',
-      ),
-      (
-          'Espesor de la pared posterior del VI:',
-          dims.get('ppvi', ''),
-          'v.n.: 7 - 11',
-          'mm',
-      ),
-      ('Espesor parietal relativo:', dims.get('epr', ''), '', ''),
-      ('Masa del VI (g):', dims.get('masavi', ''), '', 'g'),
-      (
-          'Índice de Masa del VI (g/m2):',
-          dims.get('imasa_vi', ''),
-          'v.n.: <115 g/m2 (hombres) - <95 g/m2 (mujeres)',
-          '',
-      ),
-  ]
-
-  c.setFont('Helvetica', 9)
-  for label, val, vn, unit in lista_dims:
-    if y < 80:
-      c.showPage()
-      dibujar_membrete(c, sanatorio, width, height)
-      y = height - 130
-    c.drawString(50, y, label)
-    if val:
-      c.setFont('Helvetica-Bold', 9)
-      c.drawString(280, y, str(val))
-      c.setFont('Helvetica', 9)
-    c.drawString(340, y, vn)
-    c.drawString(480, y, unit)
-    y -= 13
-
-  y -= 5
-  c.line(50, y, width - 50, y)
-  y -= 15
-
-  # Sección Descripción
-  if y < 120:
-    c.showPage()
+    # PÁGINA 1
     dibujar_membrete(c, sanatorio, width, height)
-    y = height - 130
 
-  c.setFont('Helvetica-Bold', 10)
-  c.drawString(50, y, 'Descripción')
-  y -= 3
-  c.line(50, y, width - 50, y)
-  y -= 15
+    # Datos del paciente
+    y = height - 128
+    c.setFont('Helvetica-Bold', 10)
+    c.drawString(50, y, 'Nombre:')
+    c.setFont('Helvetica', 10)
+    c.drawString(105, y, f'{nombre}')
 
-  c.setFont('Helvetica', 9)
-  for line in desc.split('\n'):
-    clean_line = line.replace('■', '').replace('', '').strip()
-    if clean_line:
-      if y < 70:
+    c.setFont('Helvetica-Bold', 10)
+    c.drawString(450, y, 'Fecha:')
+    c.setFont('Helvetica', 10)
+    c.drawString(490, y, f"{datetime.today().strftime('%d/%m/%Y')}")
+    y -= 16
+
+    c.setFont('Helvetica-Bold', 10)
+    c.drawString(50, y, 'Edad (años):')
+    c.setFont('Helvetica', 10)
+    c.drawString(125, y, f'{edad}')
+
+    c.setFont('Helvetica-Bold', 10)
+    c.drawString(240, y, 'Sexo:')
+    c.setFont('Helvetica', 10)
+    c.drawString(280, y, f'{sexo}')
+    y -= 16
+
+    c.setFont('Helvetica-Bold', 10)
+    c.drawString(50, y, 'Motivo del estudio:')
+    c.setFont('Helvetica', 10)
+    c.drawString(150, y, f'{motivo}')
+    y -= 16
+
+    c.setFont('Helvetica-Bold', 10)
+    c.drawString(50, y, 'C.I. nº:')
+    c.setFont('Helvetica', 10)
+    c.drawString(100, y, f'{cedula}')
+    y -= 8
+    c.line(50, y, width - 50, y)
+    y -= 15
+
+    # Sección Dimensiones
+    c.setFont('Helvetica-Bold', 10)
+    c.drawString(50, y, 'Dimensiones')
+    y -= 3
+    c.line(50, y, width - 50, y)
+    y -= 15
+
+    lista_dims = [
+        ('Aorta (AO):', dims.get('ao', ''), 'v.n.: 20 - 37', 'mm'),
+        ('Aurícula izquierda (AI):', dims.get('ai', ''), 'v.n.: 20 - 40', 'mm'),
+        ('Volumen aurícula izquierda:', dims.get('vol_ai', ''), '', 'ml'),
+        (
+            'Volumen aurícula izquierda/SC:',
+            dims.get('vol_ai_sc', ''),
+            'v.n.: 16 - 34',
+            'ml/m2',
+        ),
+        ('Ventrículo derecho:', dims.get('vd', ''), 'v.n.: 09 - 26', 'mm'),
+        (
+            'Ventrículo izquierdo Diástole:',
+            dims.get('vi_diastole', ''),
+            'v.n.: 37 - 56',
+            'mm',
+        ),
+        (
+            'Ventrículo izquierdo Sístole:',
+            dims.get('vi_sistole', ''),
+            'v.n.: 27 - 37',
+            'mm',
+        ),
+        (
+            'Volumen de fin de Diástole del VI:',
+            dims.get('vol_diastole_vi', ''),
+            '',
+            'ml/m2',
+        ),
+        (
+            'Volumen de fin de Sístole del VI:',
+            dims.get('vol_sistole_vi', ''),
+            '',
+            'ml/m2',
+        ),
+        (
+            'Fracción de acortamiento:',
+            dims.get('facortamiento', ''),
+            'v.n.: 28 - 40 %',
+            '',
+        ),
+        (
+            'Fracción de eyección:',
+            dims.get('feyeccion', ''),
+            'v.n.: 55 - 70 %',
+            '',
+        ),
+        (
+            'Espesor del tabique interventricular:',
+            dims.get('siv', ''),
+            'v.n.: 7 - 11',
+            'mm',
+        ),
+        (
+            'Espesor de la pared posterior del VI:',
+            dims.get('ppvi', ''),
+            'v.n.: 7 - 11',
+            'mm',
+        ),
+        ('Espesor parietal relativo:', dims.get('epr', ''), '', ''),
+        ('Masa del VI (g):', dims.get('masavi', ''), '', 'g'),
+        (
+            'Índice de Masa del VI (g/m2):',
+            dims.get('imasa_vi', ''),
+            'v.n.: <115 g/m2 (hombres) - <95 g/m2 (mujeres)',
+            '',
+        ),
+    ]
+
+    c.setFont('Helvetica', 9)
+    for label, val, vn, unit in lista_dims:
+        if y < 80:
+            c.showPage()
+            dibujar_membrete(c, sanatorio, width, height)
+            y = height - 130
+        c.drawString(50, y, label)
+        if val:
+            c.setFont('Helvetica-Bold', 9)
+            c.drawString(280, y, str(val))
+            c.setFont('Helvetica', 9)
+        c.drawString(340, y, vn)
+        c.drawString(480, y, unit)
+        y -= 13
+
+    y -= 5
+    c.line(50, y, width - 50, y)
+    y -= 15
+
+    # Sección Descripción
+    if y < 120:
         c.showPage()
         dibujar_membrete(c, sanatorio, width, height)
         y = height - 130
-      c.drawString(50, y, clean_line)
-      y -= 12
 
-  y -= 10
+    c.setFont('Helvetica-Bold', 10)
+    c.drawString(50, y, 'Descripción')
+    y -= 3
+    c.line(50, y, width - 50, y)
+    y -= 15
 
-  # Sección Examen Doppler Completo
-  if y < 180:
-    c.showPage()
-    dibujar_membrete(c, sanatorio, width, height)
-    y = height - 130
+    c.setFont('Helvetica', 9)
+    for line in desc.split('\n'):
+        clean_line = line.replace('■', '').replace('', '').strip()
+        if clean_line:
+            if y < 70:
+                c.showPage()
+                dibujar_membrete(c, sanatorio, width, height)
+                y = height - 130
+            c.drawString(50, y, clean_line)
+            y -= 12
 
-  c.setFont('Helvetica-Bold', 10)
-  c.drawString(50, y, 'Examen Doppler')
-  y -= 3
-  c.line(50, y, width - 50, y)
-  y -= 15
+    y -= 10
 
-  lista_doppler = [
-      ('Flujo mitral:', doppler.get('flujo_mitral', ''), ''),
-      ('Onda E:', doppler.get('onda_e', ''), 'm/seg'),
-      ('Onda A:', doppler.get('onda_a', ''), 'm/seg'),
-      (
-          'E/A:',
-          doppler.get('ea', ''),
-          (
-              'v.n.: < 40 años:1,5±0,40 ms; <60 años:1,3±0,25 ms; >60'
-              ' años:0,96±0,18 ms'
-          ),
-      ),
-      ('TDE:', doppler.get('tde', ''), 'v.n.: 188±28 ms'),
-      ('Flujo aórtico:', doppler.get('flujo_aortico', ''), ''),
-      ('Velocidad máxima:', doppler.get('vel_max', ''), 'm/seg'),
-      ('Gradiente pico:', doppler.get('grad_pico', ''), 'mm/Hg'),
-      ('Gradiente medio:', doppler.get('grad_medio', ''), 'mm/Hg'),
-      ('Área aórtica:', doppler.get('area_aortica', ''), 'cm2'),
-      ('THP:', doppler.get('thp', ''), 'ms'),
-      ('Flujo tricuspídeo:', doppler.get('flujo_tricuspideo', ''), ''),
-      ('Gradiente VD/AD:', doppler.get('grad_vd_ad', ''), 'mmHg'),
-      ('Flujo pulmonar:', doppler.get('flujo_pulmonar', ''), ''),
-      (
-          'PA pulmonar sistólica:',
-          doppler.get('pa_sistolica', ''),
-          'mmHg    v.n.: <36 mm/Hg',
-      ),
-  ]
-
-  c.setFont('Helvetica', 9)
-  for label, val, unit in lista_doppler:
-    if val or label in [
-        'Flujo mitral:',
-        'Flujo aórtico:',
-        'Flujo tricuspídeo:',
-        'Flujo pulmonar:',
-    ]:
-      if y < 70:
+    # Sección Examen Doppler Completo
+    if y < 180:
         c.showPage()
         dibujar_membrete(c, sanatorio, width, height)
         y = height - 130
-      c.drawString(50, y, label)
-      if val:
-        c.setFont('Helvetica-Bold', 9)
-        c.drawString(180, y, str(val))
-        c.setFont('Helvetica', 9)
-      if unit:
-        c.drawString(260, y, unit)
-      y -= 13
 
-  y -= 5
-  c.line(50, y, width - 50, y)
-  y -= 15
+    c.setFont('Helvetica-Bold', 10)
+    c.drawString(50, y, 'Examen Doppler')
+    y -= 3
+    c.line(50, y, width - 50, y)
+    y -= 15
 
-  # Sección Conclusión
-  if y < 150:
-    c.showPage()
-    dibujar_membrete(c, sanatorio, width, height)
-    y = height - 130
+    lista_doppler = [
+        ('Flujo mitral:', doppler.get('flujo_mitral', ''), ''),
+        ('Onda E:', doppler.get('onda_e', ''), 'm/seg'),
+        ('Onda A:', doppler.get('onda_a', ''), 'm/seg'),
+        (
+            'E/A:',
+            doppler.get('ea', ''),
+            (
+                'v.n.: < 40 años:1,5±0,40 ms; <60 años:1,3±0,25 ms; >60'
+                ' años:0,96±0,18 ms'
+            ),
+        ),
+        ('TDE:', doppler.get('tde', ''), 'v.n.: 188±28 ms'),
+        ('Flujo aórtico:', doppler.get('flujo_aortico', ''), ''),
+        ('Velocidad máxima:', doppler.get('vel_max', ''), 'm/seg'),
+        ('Gradiente pico:', doppler.get('grad_pico', ''), 'mm/Hg'),
+        ('Gradiente medio:', doppler.get('grad_medio', ''), 'mm/Hg'),
+        ('Área aórtica:', doppler.get('area_aortica', ''), 'cm2'),
+        ('THP:', doppler.get('thp', ''), 'ms'),
+        ('Flujo tricuspídeo:', doppler.get('flujo_tricuspideo', ''), ''),
+        ('Gradiente VD/AD:', doppler.get('grad_vd_ad', ''), 'mmHg'),
+        ('Flujo pulmonar:', doppler.get('flujo_pulmonar', ''), ''),
+        (
+            'PA pulmonar sistólica:',
+            doppler.get('pa_sistolica', ''),
+            'mmHg    v.n.: <36 mm/Hg',
+        ),
+    ]
 
-  c.setFont('Helvetica-Bold', 10)
-  c.setFillColorRGB(0.1, 0.1, 0.1)
-  c.drawString(50, y, 'Conclusión')
-  y -= 3
-  c.line(50, y, width - 50, y)
-  y -= 15
+    c.setFont('Helvetica', 9)
+    for label, val, unit in lista_doppler:
+        if val or label in [
+            'Flujo mitral:',
+            'Flujo aórtico:',
+            'Flujo tricuspídeo:',
+            'Flujo pulmonar:',
+        ]:
+            if y < 70:
+                c.showPage()
+                dibujar_membrete(c, sanatorio, width, height)
+                y = height - 130
+            c.drawString(50, y, label)
+            if val:
+                c.setFont('Helvetica-Bold', 9)
+                c.drawString(180, y, str(val))
+                c.setFont('Helvetica', 9)
+            if unit:
+                c.drawString(260, y, unit)
+            y -= 13
 
-  c.setFont('Helvetica-Bold', 9)
-  c.setFillColorRGB(0.05, 0.3, 0.15)
-  for line in conc.split('\n'):
-    clean_line = line.replace('■', '').replace('', '').strip()
-    if clean_line:
-      if y < 70:
+    y -= 5
+    c.line(50, y, width - 50, y)
+    y -= 15
+
+    # Sección Conclusión
+    if y < 150:
         c.showPage()
         dibujar_membrete(c, sanatorio, width, height)
         y = height - 130
-      c.drawString(50, y, clean_line)
-      y -= 13
 
-  # Firma al pie
-  c.setFont('Helvetica-Bold', 10)
-  c.setFillColorRGB(0.1, 0.1, 0.1)
-  c.drawString(width - 250, 70, 'Dra. Cecilia Marecos Viana')
-  c.setFont('Helvetica', 9)
-  c.drawString(width - 250, 57, 'Reg. Prof. 13943')
-  c.drawString(width - 250, 44, 'Esp. Cardiología Clínica y Diagnóstica')
+    c.setFont('Helvetica-Bold', 10)
+    c.setFillColorRGB(0.1, 0.1, 0.1)
+    c.drawString(50, y, 'Conclusión')
+    y -= 3
+    c.line(50, y, width - 50, y)
+    y -= 15
 
-  c.save()
-  return filename
+    c.setFont('Helvetica-Bold', 9)
+    c.setFillColorRGB(0.05, 0.3, 0.15)
+    for line in conc.split('\n'):
+        clean_line = line.replace('■', '').replace('', '').strip()
+        if clean_line:
+            if y < 70:
+                c.showPage()
+                dibujar_membrete(c, sanatorio, width, height)
+                y = height - 130
+            c.drawString(50, y, clean_line)
+            y -= 13
+
+    # Firma al pie
+    c.setFont('Helvetica-Bold', 10)
+    c.setFillColorRGB(0.1, 0.1, 0.1)
+    c.drawString(width - 250, 70, 'Dra. Cecilia Marecos Viana')
+    c.setFont('Helvetica', 9)
+    c.drawString(width - 250, 57, 'Reg. Prof. 13943')
+    c.drawString(width - 250, 44, 'Esp. Cardiología Clínica y Diagnóstica')
+
+    c.save()
+    return filename
 
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-  error = None
-  if request.method == 'POST':
-    username = request.form.get('username')
-    password = request.form.get('password')
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
-    cursor.execute(
-        'SELECT password_hash FROM usuarios WHERE username = ?', (username,)
+    error = None
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        cursor.execute(
+            'SELECT password_hash FROM usuarios WHERE username = ?', (username,)
+        )
+        row = cursor.fetchone()
+        conn.close()
+
+        if row and check_password_hash(row[0], password):
+            session['logged_in'] = True
+            session['username'] = username
+            return redirect(url_for('index'))
+        else:
+            error = 'Usuario o contraseña incorrectos'
+
+    err_html = (
+        f'<p style="color:red; font-size:13px; text-align:center;">{error}</p>'
+        if error
+        else ''
     )
-    row = cursor.fetchone()
-    conn.close()
-
-    if row and check_password_hash(row[0], password):
-      session['logged_in'] = True
-      session['username'] = username
-      return redirect(url_for('index'))
-    else:
-      error = 'Usuario o contraseña incorrectos'
-
-  err_html = (
-      f'<p style="color:red; font-size:13px; text-align:center;">{error}</p>'
-      if error
-      else ''
-  )
-  return f"""
+    return f"""
     <!DOCTYPE html>
     <html lang="es">
     <head><meta charset="UTF-8"><title>Acceso - CardioSys</title></head>
@@ -576,53 +576,53 @@ def login():
 
 @app.route('/cambiar-contrasena', methods=['GET', 'POST'])
 def cambiar_contrasena():
-  if not session.get('logged_in'):
-    return redirect(url_for('login'))
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
 
-  error = None
-  exito = None
-  username = session.get('username', 'draceciliamarecos')
+    error = None
+    exito = None
+    username = session.get('username', 'draceciliamarecos')
 
-  if request.method == 'POST':
-    actual = request.form.get('password_actual', '')
-    nueva = request.form.get('password_nueva', '')
-    repetir = request.form.get('password_repetir', '')
+    if request.method == 'POST':
+        actual = request.form.get('password_actual', '')
+        nueva = request.form.get('password_nueva', '')
+        repetir = request.form.get('password_repetir', '')
 
-    if not actual or not nueva or not repetir:
-      error = 'Por favor, complete todos los campos.'
-    elif nueva != repetir:
-      error = 'Las nuevas contraseñas no coinciden.'
-    else:
-      conn = sqlite3.connect(db_path)
-      cursor = conn.cursor()
-      cursor.execute(
-          'SELECT password_hash FROM usuarios WHERE username = ?', (username,)
-      )
-      row = cursor.fetchone()
+        if not actual or not nueva or not repetir:
+            error = 'Por favor, complete todos los campos.'
+        elif nueva != repetir:
+            error = 'Las nuevas contraseñas no coinciden.'
+        else:
+            conn = sqlite3.connect(db_path)
+            cursor = conn.cursor()
+            cursor.execute(
+                'SELECT password_hash FROM usuarios WHERE username = ?', (username,)
+            )
+            row = cursor.fetchone()
 
-      if row and check_password_hash(row[0], actual):
-        nuevo_hash = generate_password_hash(nueva)
-        cursor.execute(
-            'UPDATE usuarios SET password_hash = ? WHERE username = ?',
-            (nuevo_hash, username),
+            if row and check_password_hash(row[0], actual):
+                nuevo_hash = generate_password_hash(nueva)
+                cursor.execute(
+                    'UPDATE usuarios SET password_hash = ? WHERE username = ?',
+                    (nuevo_hash, username),
+                )
+                conn.commit()
+                exito = '¡Contraseña actualizada con éxito!'
+            else:
+                error = 'La contraseña actual es incorrecta.'
+            conn.close()
+
+    msg_html = (
+        f'<p style="color:green; font-weight:bold; text-align:center;">{exito}</p>'
+        if exito
+        else (
+            f'<p style="color:red; font-size:13px; text-align:center;">{error}</p>'
+            if error
+            else ''
         )
-        conn.commit()
-        exito = '¡Contraseña actualizada con éxito!'
-      else:
-        error = 'La contraseña actual es incorrecta.'
-      conn.close()
+    )
 
-  msg_html = (
-      f'<p style="color:green; font-weight:bold; text-align:center;">{exito}</p>'
-      if exito
-      else (
-          f'<p style="color:red; font-size:13px; text-align:center;">{error}</p>'
-          if error
-          else ''
-      )
-  )
-
-  return f"""
+    return f"""
     <!DOCTYPE html>
     <html lang="es">
     <head><meta charset="UTF-8"><title>Cambiar Contraseña - CardioSys</title></head>
@@ -670,41 +670,51 @@ def cambiar_contrasena():
 
 @app.route('/lista-pacientes')
 def lista_pacientes():
-  if not session.get('logged_in'):
-    return redirect(url_for('login'))
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
 
-  conn = sqlite3.connect(db_path)
-  cursor = conn.cursor()
-  cursor.execute(
-      'SELECT id, cedula, nombre, nacimiento, profesion, direccion, telefono'
-      ' FROM pacientes WHERE es_estudio = 0 ORDER BY nombre ASC'
-  )
-  pacientes = cursor.fetchall()
-  conn.close()
+    q = request.args.get('q', '').strip()
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    
+    if q:
+        cursor.execute(
+            'SELECT id, cedula, nombre, nacimiento, profesion, direccion, telefono'
+            ' FROM pacientes WHERE es_estudio = 0 AND (nombre LIKE ? OR cedula LIKE ?)'
+            ' ORDER BY nombre ASC',
+            (f'%{q}%', f'%{q}%')
+        )
+    else:
+        cursor.execute(
+            'SELECT id, cedula, nombre, nacimiento, profesion, direccion, telefono'
+            ' FROM pacientes WHERE es_estudio = 0 ORDER BY nombre ASC'
+        )
+    pacientes = cursor.fetchall()
+    conn.close()
 
-  filas_html = ''
-  for p in pacientes:
-    edad_txt = calcular_edad_texto(p[3])
-    filas_html += f"""
+    filas_html = ''
+    for p in pacientes:
+        edad_txt = calcular_edad_texto(p[3])
+        filas_html += f"""
         <tr>
             <td style="padding:12px; border-bottom:1px solid #ddd;">{p[1]}</td>
             <td style="padding:12px; border-bottom:1px solid #ddd; font-weight:bold;">{p[2]}</td>
             <td style="padding:12px; border-bottom:1px solid #ddd;">{edad_txt}</td>
-            <td style="padding:12px; border-bottom:1px solid #ddd;">{p[4] or 'N/D'}</td>
-            <td style="padding:12px; border-bottom:1px solid #ddd;">{p[5] or 'N/D'}</td>
-            <td style="padding:12px; border-bottom:1px solid #ddd;">{p[6] or 'N/D'}</td>
+            <td style="padding:12px; border-bottom:1px solid #ddd;">{p[4] or ''}</td>
+            <td style="padding:12px; border-bottom:1px solid #ddd;">{p[5] or ''}</td>
+            <td style="padding:12px; border-bottom:1px solid #ddd;">{p[6] or ''}</td>
             <td style="padding:12px; border-bottom:1px solid #ddd;">
                 <a href="/ficha/{p[0]}" style="background:#3498db; color:white; padding:6px 12px; text-decoration:none; border-radius:4px; font-size:14px; margin-right:5px;">Ver Ficha</a>
             </td>
         </tr>
         """
-  if not filas_html:
-    filas_html = (
-        "<tr><td colspan='7' style='padding:15px;"
-        " text-align:center;'>No hay pacientes habituales registrados.</td></tr>"
-    )
+    if not filas_html:
+        filas_html = (
+            "<tr><td colspan='7' style='padding:15px;"
+            " text-align:center;'>No se encontraron pacientes registrados.</td></tr>"
+        )
 
-  return f"""
+    return f"""
     <!DOCTYPE html>
     <html lang="es">
     <head><meta charset="UTF-8"><title>Lista de Pacientes - CardioSys</title></head>
@@ -728,8 +738,16 @@ def lista_pacientes():
         </div>
         <div style="flex:1; padding:40px; overflow-y:auto;">
             <h1>👥 Directorio General de Pacientes Habituales</h1>
-            <div style="background:white; padding:25px; border-radius:8px; box-shadow:0 2px 10px rgba(0,0,0,0.05); margin-top:20px;">
-                <table style="width:100%; border-collapse:collapse; margin-top:15px;">
+            
+            <!-- BUSCADOR -->
+            <form method="GET" action="/lista-pacientes" style="margin-top:20px; margin-bottom:20px; display:flex; gap:10px;">
+                <input type="text" name="q" value="{q}" placeholder="Buscar por Nombre o Cédula..." style="padding:10px; width:350px; border-radius:4px; border:1px solid #cbd5e1; font-size:14px;">
+                <button type="submit" style="padding:10px 20px; background:#3498db; color:white; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">Buscar</button>
+                {f'<a href="/lista-pacientes" style="padding:10px 15px; background:#95a5a6; color:white; text-decoration:none; border-radius:4px; font-weight:bold; display:inline-block; text-align:center;">Ver Todos</a>' if q else ''}
+            </form>
+
+            <div style="background:white; padding:25px; border-radius:8px; box-shadow:0 2px 10px rgba(0,0,0,0.05);">
+                <table style="width:100%; border-collapse:collapse; margin-top:5px;">
                     <tr style="background:#1e293b; color:white;">
                         <th style="padding:12px; text-align:left;">Cédula (C.I.)</th>
                         <th style="padding:12px; text-align:left;">Nombre y Apellido</th>
@@ -750,39 +768,39 @@ def lista_pacientes():
 
 @app.route('/')
 def index():
-  if not session.get('logged_in'):
-    return redirect(url_for('login'))
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
 
-  fecha_agenda = request.args.get(
-      'fecha', datetime.today().strftime('%Y-%m-%d')
-  )
-  busqueda = request.args.get('q', '').strip()
-  conn = sqlite3.connect(db_path)
-  cursor = conn.cursor()
-
-  if busqueda:
-    cursor.execute(
-        'SELECT id, cedula, nombre, nacimiento, profesion, direccion,'
-        ' fecha_cita FROM pacientes WHERE es_estudio = 0 AND (nombre LIKE ? OR'
-        ' cedula LIKE ?)',
-        (f'%{busqueda}%', f'%{busqueda}%'),
+    fecha_agenda = request.args.get(
+        'fecha', datetime.today().strftime('%Y-%m-%d')
     )
-  else:
-    cursor.execute(
-        'SELECT id, cedula, nombre, nacimiento, profesion, direccion,'
-        ' fecha_cita FROM pacientes WHERE es_estudio = 0 AND fecha_cita = ?',
-        (fecha_agenda,),
-    )
+    busqueda = request.args.get('q', '').strip()
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
 
-  pacientes = cursor.fetchall()
-  conn.close()
+    if busqueda:
+        cursor.execute(
+            'SELECT id, cedula, nombre, nacimiento, profesion, direccion,'
+            ' fecha_cita FROM pacientes WHERE es_estudio = 0 AND (nombre LIKE ? OR'
+            ' cedula LIKE ?)',
+            (f'%{busqueda}%', f'%{busqueda}%'),
+        )
+    else:
+        cursor.execute(
+            'SELECT id, cedula, nombre, nacimiento, profesion, direccion,'
+            ' fecha_cita FROM pacientes WHERE es_estudio = 0 AND fecha_cita = ?',
+            (fecha_agenda,),
+        )
 
-  filas_html = ''
-  for p in pacientes:
-    edad_txt = calcular_edad_texto(p[3])
-    profesion_txt = p[4] or 'N/D'
-    procedencia_txt = p[5] or 'N/D'
-    filas_html += f"""
+    pacientes = cursor.fetchall()
+    conn.close()
+
+    filas_html = ''
+    for p in pacientes:
+        edad_txt = calcular_edad_texto(p[3])
+        profesion_txt = p[4] or ''
+        procedencia_txt = p[5] or ''
+        filas_html += f"""
         <tr>
             <td style="padding:12px; border-bottom:1px solid #ddd;">{p[1]}</td>
             <td style="padding:12px; border-bottom:1px solid #ddd; font-weight:bold;">{p[2]}</td>
@@ -794,14 +812,14 @@ def index():
             </td>
         </tr>
         """
-  if not filas_html:
-    filas_html = (
-        "<tr><td colspan='6' style='padding:15px;"
-        " text-align:center;'>No hay pacientes agendados para esta"
-        ' fecha.</td></tr>'
-    )
+    if not filas_html:
+        filas_html = (
+            "<tr><td colspan='6' style='padding:15px;"
+            " text-align:center;'>No hay pacientes agendados para esta"
+            ' fecha.</td></tr>'
+        )
 
-  return f"""
+    return f"""
     <!DOCTYPE html>
     <html lang="es">
     <head><meta charset="UTF-8"><title>Panel Principal - CardioSys</title></head>
@@ -861,48 +879,48 @@ def index():
 
 @app.route('/nuevo', methods=['GET', 'POST'])
 def nuevo():
-  if not session.get('logged_in'):
-    return redirect(url_for('login'))
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
 
-  if request.method == 'POST':
-    cedula = request.form.get('cedula')
-    nombre = request.form.get('nombre')
-    nacimiento = request.form.get('nacimiento')
-    sexo = request.form.get('sexo')
-    telefono = request.form.get('telefono')
-    profesion = request.form.get('profesion')
-    direccion = request.form.get('direccion')
-    alergias = request.form.get('alergias', 'Ninguna')
-    antecedentes_list = request.form.getlist('antecedentes')
-    antecedentes_str = ', '.join(antecedentes_list)
-    fecha_cita = request.form.get(
-        'fecha_cita', datetime.today().strftime('%Y-%m-%d')
-    )
+    if request.method == 'POST':
+        cedula = request.form.get('cedula')
+        nombre = request.form.get('nombre')
+        nacimiento = request.form.get('nacimiento')
+        sexo = request.form.get('sexo')
+        telefono = request.form.get('telefono')
+        profesion = request.form.get('profesion')
+        direccion = request.form.get('direccion')
+        alergias = request.form.get('alergias', '')
+        antecedentes_list = request.form.getlist('antecedentes')
+        antecedentes_str = ', '.join(antecedentes_list)
+        fecha_cita = request.form.get(
+            'fecha_cita', datetime.today().strftime('%Y-%m-%d')
+        )
 
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
-    cursor.execute(
-        'INSERT INTO pacientes (cedula, nombre, nacimiento, sexo, telefono,'
-        ' profesion, direccion, alergias, antecedentes, fecha_cita, es_estudio)'
-        ' VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)',
-        (
-            cedula,
-            nombre,
-            nacimiento,
-            sexo,
-            telefono,
-            profesion,
-            direccion,
-            alergias,
-            antecedentes_str,
-            fecha_cita,
-        ),
-    )
-    conn.commit()
-    conn.close()
-    return redirect(url_for('index', fecha=fecha_cita))
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        cursor.execute(
+            'INSERT INTO pacientes (cedula, nombre, nacimiento, sexo, telefono,'
+            ' profesion, direccion, alergias, antecedentes, fecha_cita, es_estudio)'
+            ' VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)',
+            (
+                cedula,
+                nombre,
+                nacimiento,
+                sexo,
+                telefono,
+                profesion,
+                direccion,
+                alergias,
+                antecedentes_str,
+                fecha_cita,
+            ),
+        )
+        conn.commit()
+        conn.close()
+        return redirect(url_for('index', fecha=fecha_cita))
 
-  return f"""
+    return f"""
     <!DOCTYPE html>
     <html lang="es">
     <head><meta charset="UTF-8"><title>Nuevo Ingreso - CardioSys</title></head>
@@ -1136,242 +1154,242 @@ PLANTILLAS_DATOS = {
 
 @app.route('/plantilla-ovelar', methods=['GET', 'POST'])
 def plantilla_ovelar():
-  if not session.get('logged_in'):
-    return redirect(url_for('login'))
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
 
-  if request.method == 'POST':
-    cedula = request.form.get('cedula', 'S/N')
-    nombre = request.form.get('nombre_apellido', 'Paciente')
-    edad = request.form.get('edad', '0')
-    sexo = request.form.get('sexo', 'Femenino')
-    motivo = request.form.get('motivo', 'Control')
-    pestaña_activa = request.form.get('pestana_activa', 'NORMAL')
+    if request.method == 'POST':
+        cedula = request.form.get('cedula', 'S/N')
+        nombre = request.form.get('nombre_apellido', 'Paciente')
+        edad = request.form.get('edad', '0')
+        sexo = request.form.get('sexo', 'Femenino')
+        motivo = request.form.get('motivo', 'Control')
+        pestaña_activa = request.form.get('pestana_activa', 'NORMAL')
 
-    dims = {
-        'ao': request.form.get(f'{pestaña_activa}_ao', ''),
-        'ai': request.form.get(f'{pestaña_activa}_ai', ''),
-        'vol_ai': request.form.get(f'{pestaña_activa}_vol_ai', ''),
-        'vol_ai_sc': request.form.get(f'{pestaña_activa}_vol_ai_sc', ''),
-        'vd': request.form.get(f'{pestaña_activa}_vd', ''),
-        'vi_diastole': request.form.get(f'{pestaña_activa}_vi_diastole', ''),
-        'vi_sistole': request.form.get(f'{pestaña_activa}_vi_sistole', ''),
-        'vol_diastole_vi': request.form.get(
-            f'{pestaña_activa}_vol_diastole_vi', ''
-        ),
-        'vol_sistole_vi': request.form.get(
-            f'{pestaña_activa}_vol_sistole_vi', ''
-        ),
-        'facortamiento': request.form.get(
-            f'{pestaña_activa}_facortamiento', ''
-        ),
-        'feyeccion': request.form.get(f'{pestaña_activa}_feyeccion', ''),
-        'siv': request.form.get(f'{pestaña_activa}_siv', ''),
-        'ppvi': request.form.get(f'{pestaña_activa}_ppvi', ''),
-        'epr': request.form.get(f'{pestaña_activa}_epr', ''),
-        'masavi': request.form.get(f'{pestaña_activa}_masavi', ''),
-        'imasa_vi': request.form.get(f'{pestaña_activa}_imasa_vi', ''),
-    }
+        dims = {
+            'ao': request.form.get(f'{pestaña_activa}_ao', ''),
+            'ai': request.form.get(f'{pestaña_activa}_ai', ''),
+            'vol_ai': request.form.get(f'{pestaña_activa}_vol_ai', ''),
+            'vol_ai_sc': request.form.get(f'{pestaña_activa}_vol_ai_sc', ''),
+            'vd': request.form.get(f'{pestaña_activa}_vd', ''),
+            'vi_diastole': request.form.get(f'{pestaña_activa}_vi_diastole', ''),
+            'vi_sistole': request.form.get(f'{pestaña_activa}_vi_sistole', ''),
+            'vol_diastole_vi': request.form.get(
+                f'{pestaña_activa}_vol_diastole_vi', ''
+            ),
+            'vol_sistole_vi': request.form.get(
+                f'{pestaña_activa}_vol_sistole_vi', ''
+            ),
+            'facortamiento': request.form.get(
+                f'{pestaña_activa}_facortamiento', ''
+            ),
+            'feyeccion': request.form.get(f'{pestaña_activa}_feyeccion', ''),
+            'siv': request.form.get(f'{pestaña_activa}_siv', ''),
+            'ppvi': request.form.get(f'{pestaña_activa}_ppvi', ''),
+            'epr': request.form.get(f'{pestaña_activa}_epr', ''),
+            'masavi': request.form.get(f'{pestaña_activa}_masavi', ''),
+            'imasa_vi': request.form.get(f'{pestaña_activa}_imasa_vi', ''),
+        }
 
-    doppler = {
-        'flujo_mitral': request.form.get(f'{pestaña_activa}_flujo_mitral', ''),
-        'onda_e': request.form.get(f'{pestaña_activa}_onda_e', ''),
-        'onda_a': request.form.get(f'{pestaña_activa}_onda_a', ''),
-        'ea': request.form.get(f'{pestaña_activa}_ea', ''),
-        'tde': request.form.get(f'{pestaña_activa}_tde', ''),
-        'flujo_aortico': request.form.get(f'{pestaña_activa}_flujo_aortico', ''),
-        'vel_max': request.form.get(f'{pestaña_activa}_vel_max', ''),
-        'grad_pico': request.form.get(f'{pestaña_activa}_grad_pico', ''),
-        'grad_medio': request.form.get(f'{pestaña_activa}_grad_medio', ''),
-        'area_aortica': request.form.get(f'{pestaña_activa}_area_aortica', ''),
-        'thp': request.form.get(f'{pestaña_activa}_thp', ''),
-        'flujo_tricuspideo': request.form.get(
-            f'{pestaña_activa}_flujo_tricuspideo', ''
-        ),
-        'grad_vd_ad': request.form.get(f'{pestaña_activa}_grad_vd_ad', ''),
-        'flujo_pulmonar': request.form.get(
-            f'{pestaña_activa}_flujo_pulmonar', ''
-        ),
-        'pa_sistolica': request.form.get(f'{pestaña_activa}_pa_sistolica', ''),
-    }
+        doppler = {
+            'flujo_mitral': request.form.get(f'{pestaña_activa}_flujo_mitral', ''),
+            'onda_e': request.form.get(f'{pestaña_activa}_onda_e', ''),
+            'onda_a': request.form.get(f'{pestaña_activa}_onda_a', ''),
+            'ea': request.form.get(f'{pestaña_activa}_ea', ''),
+            'tde': request.form.get(f'{pestaña_activa}_tde', ''),
+            'flujo_aortico': request.form.get(f'{pestaña_activa}_flujo_aortico', ''),
+            'vel_max': request.form.get(f'{pestaña_activa}_vel_max', ''),
+            'grad_pico': request.form.get(f'{pestaña_activa}_grad_pico', ''),
+            'grad_medio': request.form.get(f'{pestaña_activa}_grad_medio', ''),
+            'area_aortica': request.form.get(f'{pestaña_activa}_area_aortica', ''),
+            'thp': request.form.get(f'{pestaña_activa}_thp', ''),
+            'flujo_tricuspideo': request.form.get(
+                f'{pestaña_activa}_flujo_tricuspideo', ''
+            ),
+            'grad_vd_ad': request.form.get(f'{pestaña_activa}_grad_vd_ad', ''),
+            'flujo_pulmonar': request.form.get(
+                f'{pestaña_activa}_flujo_pulmonar', ''
+            ),
+            'pa_sistolica': request.form.get(f'{pestaña_activa}_pa_sistolica', ''),
+        }
 
-    desc = request.form.get(f'{pestaña_activa}_desc', '')
-    conc = request.form.get(f'{pestaña_activa}_conc', '')
+        desc = request.form.get(f'{pestaña_activa}_desc', '')
+        conc = request.form.get(f'{pestaña_activa}_conc', '')
 
-    pdf_filename = generar_pdf_ecocardiograma(
-        'Sanatorio Ovelar',
-        cedula,
-        nombre,
-        edad,
-        sexo,
-        motivo,
-        pestaña_activa,
-        dims,
-        doppler,
-        desc,
-        conc,
-    )
-
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
-    cursor.execute('SELECT id, es_estudio FROM pacientes WHERE cedula = ?', (cedula,))
-    p_row = cursor.fetchone()
-    if p_row:
-      p_id = p_row[0]
-    else:
-      cursor.execute(
-          'INSERT INTO pacientes (cedula, nombre, sexo, fecha_cita, es_estudio)'
-          ' VALUES (?, ?, ?, ?, 1)',
-          (cedula, nombre, sexo, datetime.today().strftime('%Y-%m-%d')),
-      )
-      p_id = cursor.lastrowid
-
-    cursor.execute(
-        'INSERT INTO estudios (paciente_id, nombre_estudio, archivo, fecha,'
-        ' sanatorio, tipo_plantilla, contenido_editable) VALUES (?, ?, ?, ?,'
-        ' ?, ?, ?)',
-        (
-            p_id,
-            f'Ecocardiograma ({pestaña_activa})',
-            pdf_filename,
-            datetime.today().strftime('%Y-%m-%d %H:%M'),
+        pdf_filename = generar_pdf_ecocardiograma(
             'Sanatorio Ovelar',
+            cedula,
+            nombre,
+            edad,
+            sexo,
+            motivo,
             pestaña_activa,
+            dims,
+            doppler,
+            desc,
             conc,
-        ),
-    )
-    conn.commit()
-    conn.close()
+        )
 
-    return redirect(url_for('imprimir_pdf', filename=pdf_filename))
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        cursor.execute('SELECT id, es_estudio FROM pacientes WHERE cedula = ?', (cedula,))
+        p_row = cursor.fetchone()
+        if p_row:
+            p_id = p_row[0]
+        else:
+            cursor.execute(
+                'INSERT INTO pacientes (cedula, nombre, sexo, fecha_cita, es_estudio)'
+                ' VALUES (?, ?, ?, ?, 1)',
+                (cedula, nombre, sexo, datetime.today().strftime('%Y-%m-%d')),
+            )
+            p_id = cursor.lastrowid
 
-  return renderizar_plantilla_html('Sanatorio Ovelar')
+        cursor.execute(
+            'INSERT INTO estudios (paciente_id, nombre_estudio, archivo, fecha,'
+            ' sanatorio, tipo_plantilla, contenido_editable) VALUES (?, ?, ?, ?,'
+            ' ?, ?, ?)',
+            (
+                p_id,
+                f'Ecocardiograma ({pestaña_activa})',
+                pdf_filename,
+                datetime.today().strftime('%Y-%m-%d %H:%M'),
+                'Sanatorio Ovelar',
+                pestaña_activa,
+                conc,
+            ),
+        )
+        conn.commit()
+        conn.close()
+
+        return redirect(url_for('imprimir_pdf', filename=pdf_filename))
+
+    return renderizar_plantilla_html('Sanatorio Ovelar')
 
 
 @app.route('/plantilla-san-carlos', methods=['GET', 'POST'])
 def plantilla_san_carlos():
-  if not session.get('logged_in'):
-    return redirect(url_for('login'))
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
 
-  if request.method == 'POST':
-    cedula = request.form.get('cedula', 'S/N')
-    nombre = request.form.get('nombre_apellido', 'Paciente')
-    edad = request.form.get('edad', '0')
-    sexo = request.form.get('sexo', 'Femenino')
-    motivo = request.form.get('motivo', 'Control')
-    pestaña_activa = request.form.get('pestana_activa', 'NORMAL')
+    if request.method == 'POST':
+        cedula = request.form.get('cedula', 'S/N')
+        nombre = request.form.get('nombre_apellido', 'Paciente')
+        edad = request.form.get('edad', '0')
+        sexo = request.form.get('sexo', 'Femenino')
+        motivo = request.form.get('motivo', 'Control')
+        pestaña_activa = request.form.get('pestana_activa', 'NORMAL')
 
-    dims = {
-        'ao': request.form.get(f'{pestaña_activa}_ao', ''),
-        'ai': request.form.get(f'{pestaña_activa}_ai', ''),
-        'vol_ai': request.form.get(f'{pestaña_activa}_vol_ai', ''),
-        'vol_ai_sc': request.form.get(f'{pestaña_activa}_vol_ai_sc', ''),
-        'vd': request.form.get(f'{pestaña_activa}_vd', ''),
-        'vi_diastole': request.form.get(f'{pestaña_activa}_vi_diastole', ''),
-        'vi_sistole': request.form.get(f'{pestaña_activa}_vi_sistole', ''),
-        'vol_diastole_vi': request.form.get(
-            f'{pestaña_activa}_vol_diastole_vi', ''
-        ),
-        'vol_sistole_vi': request.form.get(
-            f'{pestaña_activa}_vol_sistole_vi', ''
-        ),
-        'facortamiento': request.form.get(
-            f'{pestaña_activa}_facortamiento', ''
-        ),
-        'feyeccion': request.form.get(f'{pestaña_activa}_feyeccion', ''),
-        'siv': request.form.get(f'{pestaña_activa}_siv', ''),
-        'ppvi': request.form.get(f'{pestaña_activa}_ppvi', ''),
-        'epr': request.form.get(f'{pestaña_activa}_epr', ''),
-        'masavi': request.form.get(f'{pestaña_activa}_masavi', ''),
-        'imasa_vi': request.form.get(f'{pestaña_activa}_imasa_vi', ''),
-    }
+        dims = {
+            'ao': request.form.get(f'{pestaña_activa}_ao', ''),
+            'ai': request.form.get(f'{pestaña_activa}_ai', ''),
+            'vol_ai': request.form.get(f'{pestaña_activa}_vol_ai', ''),
+            'vol_ai_sc': request.form.get(f'{pestaña_activa}_vol_ai_sc', ''),
+            'vd': request.form.get(f'{pestaña_activa}_vd', ''),
+            'vi_diastole': request.form.get(f'{pestaña_activa}_vi_diastole', ''),
+            'vi_sistole': request.form.get(f'{pestaña_activa}_vi_sistole', ''),
+            'vol_diastole_vi': request.form.get(
+                f'{pestaña_activa}_vol_diastole_vi', ''
+            ),
+            'vol_sistole_vi': request.form.get(
+                f'{pestaña_activa}_vol_sistole_vi', ''
+            ),
+            'facortamiento': request.form.get(
+                f'{pestaña_activa}_facortamiento', ''
+            ),
+            'feyeccion': request.form.get(f'{pestaña_activa}_feyeccion', ''),
+            'siv': request.form.get(f'{pestaña_activa}_siv', ''),
+            'ppvi': request.form.get(f'{pestaña_activa}_ppvi', ''),
+            'epr': request.form.get(f'{pestaña_activa}_epr', ''),
+            'masavi': request.form.get(f'{pestaña_activa}_masavi', ''),
+            'imasa_vi': request.form.get(f'{pestaña_activa}_imasa_vi', ''),
+        }
 
-    doppler = {
-        'flujo_mitral': request.form.get(f'{pestaña_activa}_flujo_mitral', ''),
-        'onda_e': request.form.get(f'{pestaña_activa}_onda_e', ''),
-        'onda_a': request.form.get(f'{pestaña_activa}_onda_a', ''),
-        'ea': request.form.get(f'{pestaña_activa}_ea', ''),
-        'tde': request.form.get(f'{pestaña_activa}_tde', ''),
-        'flujo_aortico': request.form.get(f'{pestaña_activa}_flujo_aortico', ''),
-        'vel_max': request.form.get(f'{pestaña_activa}_vel_max', ''),
-        'grad_pico': request.form.get(f'{pestaña_activa}_grad_pico', ''),
-        'grad_medio': request.form.get(f'{pestaña_activa}_grad_medio', ''),
-        'area_aortica': request.form.get(f'{pestaña_activa}_area_aortica', ''),
-        'thp': request.form.get(f'{pestaña_activa}_thp', ''),
-        'flujo_tricuspideo': request.form.get(
-            f'{pestaña_activa}_flujo_tricuspideo', ''
-        ),
-        'grad_vd_ad': request.form.get(f'{pestaña_activa}_grad_vd_ad', ''),
-        'flujo_pulmonar': request.form.get(
-            f'{pestaña_activa}_flujo_pulmonar', ''
-        ),
-        'pa_sistolica': request.form.get(f'{pestaña_activa}_pa_sistolica', ''),
-    }
+        doppler = {
+            'flujo_mitral': request.form.get(f'{pestaña_activa}_flujo_mitral', ''),
+            'onda_e': request.form.get(f'{pestaña_activa}_onda_e', ''),
+            'onda_a': request.form.get(f'{pestaña_activa}_onda_a', ''),
+            'ea': request.form.get(f'{pestaña_activa}_ea', ''),
+            'tde': request.form.get(f'{pestaña_activa}_tde', ''),
+            'flujo_aortico': request.form.get(f'{pestaña_activa}_flujo_aortico', ''),
+            'vel_max': request.form.get(f'{pestaña_activa}_vel_max', ''),
+            'grad_pico': request.form.get(f'{pestaña_activa}_grad_pico', ''),
+            'grad_medio': request.form.get(f'{pestaña_activa}_grad_medio', ''),
+            'area_aortica': request.form.get(f'{pestaña_activa}_area_aortica', ''),
+            'thp': request.form.get(f'{pestaña_activa}_thp', ''),
+            'flujo_tricuspideo': request.form.get(
+                f'{pestaña_activa}_flujo_tricuspideo', ''
+            ),
+            'grad_vd_ad': request.form.get(f'{pestaña_activa}_grad_vd_ad', ''),
+            'flujo_pulmonar': request.form.get(
+                f'{pestaña_activa}_flujo_pulmonar', ''
+            ),
+            'pa_sistolica': request.form.get(f'{pestaña_activa}_pa_sistolica', ''),
+        }
 
-    desc = request.form.get(f'{pestaña_activa}_desc', '')
-    conc = request.form.get(f'{pestaña_activa}_conc', '')
+        desc = request.form.get(f'{pestaña_activa}_desc', '')
+        conc = request.form.get(f'{pestaña_activa}_conc', '')
 
-    pdf_filename = generar_pdf_ecocardiograma(
-        'Sanatorio San Carlos',
-        cedula,
-        nombre,
-        edad,
-        sexo,
-        motivo,
-        pestaña_activa,
-        dims,
-        doppler,
-        desc,
-        conc,
-    )
-
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
-    cursor.execute('SELECT id, es_estudio FROM pacientes WHERE cedula = ?', (cedula,))
-    p_row = cursor.fetchone()
-    if p_row:
-      p_id = p_row[0]
-    else:
-      cursor.execute(
-          'INSERT INTO pacientes (cedula, nombre, sexo, fecha_cita, es_estudio)'
-          ' VALUES (?, ?, ?, ?, 1)',
-          (cedula, nombre, sexo, datetime.today().strftime('%Y-%m-%d')),
-      )
-      p_id = cursor.lastrowid
-
-    cursor.execute(
-        'INSERT INTO estudios (paciente_id, nombre_estudio, archivo, fecha,'
-        ' sanatorio, tipo_plantilla, contenido_editable) VALUES (?, ?, ?, ?,'
-        ' ?, ?, ?)',
-        (
-            p_id,
-            f'Ecocardiograma ({pestaña_activa})',
-            pdf_filename,
-            datetime.today().strftime('%Y-%m-%d %H:%M'),
+        pdf_filename = generar_pdf_ecocardiograma(
             'Sanatorio San Carlos',
+            cedula,
+            nombre,
+            edad,
+            sexo,
+            motivo,
             pestaña_activa,
+            dims,
+            doppler,
+            desc,
             conc,
-        ),
-    )
-    conn.commit()
-    conn.close()
+        )
 
-    return redirect(url_for('imprimir_pdf', filename=pdf_filename))
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        cursor.execute('SELECT id, es_estudio FROM pacientes WHERE cedula = ?', (cedula,))
+        p_row = cursor.fetchone()
+        if p_row:
+            p_id = p_row[0]
+        else:
+            cursor.execute(
+                'INSERT INTO pacientes (cedula, nombre, sexo, fecha_cita, es_estudio)'
+                ' VALUES (?, ?, ?, ?, 1)',
+                (cedula, nombre, sexo, datetime.today().strftime('%Y-%m-%d')),
+            )
+            p_id = cursor.lastrowid
 
-  return renderizar_plantilla_html('Sanatorio San Carlos')
+        cursor.execute(
+            'INSERT INTO estudios (paciente_id, nombre_estudio, archivo, fecha,'
+            ' sanatorio, tipo_plantilla, contenido_editable) VALUES (?, ?, ?, ?,'
+            ' ?, ?, ?)',
+            (
+                p_id,
+                f'Ecocardiograma ({pestaña_activa})',
+                pdf_filename,
+                datetime.today().strftime('%Y-%m-%d %H:%M'),
+                'Sanatorio San Carlos',
+                pestaña_activa,
+                conc,
+            ),
+        )
+        conn.commit()
+        conn.close()
+
+        return redirect(url_for('imprimir_pdf', filename=pdf_filename))
+
+    return renderizar_plantilla_html('Sanatorio San Carlos')
 
 
 @app.route('/imprimir/<filename>')
 def imprimir_pdf(filename):
-  if not session.get('logged_in'):
-    return redirect(url_for('login'))
-  return f"""
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+    return f"""
     <!DOCTYPE html>
     <html lang="es">
     <head><meta charset="UTF-8"><title>Imprimir Informe</title></head>
     <body style="font-family:Segoe UI; text-align:center; padding:50px; background:#f4f7f6;">
         <div style="background:white; padding:30px; border-radius:8px; box-shadow:0 2px 10px rgba(0,0,0,0.1); display:inline-block;">
             <h2 style="color:#107c41;">✅ ¡Informe Guardado e Impreso con Éxito!</h2>
-            <p>El PDF ha sido generado y enviado a imprimir automáticamente.</p>
+            <p>El PDF has sido generado y enviado a imprimir automáticamente.</p>
             <div style="margin-top:20px; display:flex; gap:15px; justify-content:center;">
                 <a href="/uploads/{filename}" target="_blank" style="background:#3498db; color:white; padding:10px 20px; text-decoration:none; border-radius:4px; font-weight:bold;">📄 Ver / Imprimir PDF</a>
                 <a href="/" style="background:#64748b; color:white; padding:10px 20px; text-decoration:none; border-radius:4px; font-weight:bold;">🏠 Volver al Panel</a>
@@ -1389,17 +1407,17 @@ def imprimir_pdf(filename):
 
 
 def renderizar_plantilla_html(nombre_sanatorio):
-  sheets = list(PLANTILLAS_DATOS.keys())
-  tabs_html = ''
-  pages_html = ''
+    sheets = list(PLANTILLAS_DATOS.keys())
+    tabs_html = ''
+    pages_html = ''
 
-  for idx, sheetname in enumerate(sheets):
-    active_cls = 'active' if idx == 0 else ''
-    tabs_html += f'<button type="button" class="excel-tab {active_cls}" onclick="cambiarPestana(event, \'{sheetname}\')">{sheetname}</button>'
+    for idx, sheetname in enumerate(sheets):
+        active_cls = 'active' if idx == 0 else ''
+        tabs_html += f'<button type="button" class="excel-tab {active_cls}" onclick="cambiarPestana(event, \'{sheetname}\')">{sheetname}</button>'
 
-    data = PLANTILLAS_DATOS[sheetname]
+        data = PLANTILLAS_DATOS[sheetname]
 
-    pages_html += f"""
+        pages_html += f"""
         <div id="{sheetname}" class="sheet-page {active_cls}">
             <div style="background:#f8fafc; padding:8px 12px; border:1px solid #cbd5e1; border-bottom:none; font-weight:bold; color:#107c41; font-size:13px;">
                 📑 Pestaña Activa: {sheetname} (Plantilla oficial integrada con valores de referencia)
@@ -1464,7 +1482,7 @@ def renderizar_plantilla_html(nombre_sanatorio):
         </div>
         """
 
-  return f"""
+    return f"""
     <!DOCTYPE html>
     <html lang="es">
     <head>
@@ -1622,31 +1640,31 @@ def renderizar_plantilla_html(nombre_sanatorio):
 
 @app.route('/estudios-recientes')
 def estudios_recientes():
-  if not session.get('logged_in'):
-    return redirect(url_for('login'))
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
 
-  conn = sqlite3.connect(db_path)
-  cursor = conn.cursor()
-  cursor.execute("""
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    cursor.execute("""
         SELECT e.id, p.cedula, p.nombre, e.nombre_estudio, e.archivo, e.fecha, e.sanatorio, p.id, e.contenido_editable 
         FROM estudios e 
         JOIN pacientes p ON e.paciente_id = p.id 
         ORDER BY e.id DESC
     """)
-  estudios = cursor.fetchall()
-  conn.close()
+    estudios = cursor.fetchall()
+    conn.close()
 
-  filas_estudios = ''
-  for est in estudios:
-    sanatorio_badge = est[6] or 'No especificado'
-    badge_color = (
-        '#107c41'
-        if 'Ovelar' in sanatorio_badge
-        else '#0284c7' if 'Carlos' in sanatorio_badge else '#64748b'
-    )
-    pdf_link = f'/uploads/{est[4]}' if est[4] else '#'
+    filas_estudios = ''
+    for est in estudios:
+        sanatorio_badge = est[6] or 'No especificado'
+        badge_color = (
+            '#107c41'
+            if 'Ovelar' in sanatorio_badge
+            else '#0284c7' if 'Carlos' in sanatorio_badge else '#64748b'
+        )
+        pdf_link = f'/uploads/{est[4]}' if est[4] else '#'
 
-    filas_estudios += f"""
+        filas_estudios += f"""
         <tr>
             <td style="padding:12px; border-bottom:1px solid #ddd;">{est[5]}</td>
             <td style="padding:12px; border-bottom:1px solid #ddd;">{est[1]}</td>
@@ -1659,13 +1677,13 @@ def estudios_recientes():
             </td>
         </tr>
         """
-  if not filas_estudios:
-    filas_estudios = (
-        "<tr><td colspan='6' style='padding:15px;"
-        " text-align:center;'>No hay estudios recientes registrados.</td></tr>"
-    )
+    if not filas_estudios:
+        filas_estudios = (
+            "<tr><td colspan='6' style='padding:15px;"
+            " text-align:center;'>No hay estudios recientes registrados.</td></tr>"
+        )
 
-  return f"""
+    return f"""
     <!DOCTYPE html>
     <html lang="es">
     <head><meta charset="UTF-8"><title>Lista de Estudios - CardioSys</title></head>
@@ -1711,207 +1729,232 @@ def estudios_recientes():
 
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
-  if not session.get('logged_in'):
-    return redirect(url_for('login'))
-  return send_file(os.path.join(upload_folder, filename))
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+    return send_file(os.path.join(upload_folder, filename))
 
 
 @app.route('/ficha/<int:id>', methods=['GET', 'POST'])
 def ficha(id):
-  if not session.get('logged_in'):
-    return redirect(url_for('login'))
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
 
-  conn = sqlite3.connect(db_path)
-  cursor = conn.cursor()
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
 
-  if request.method == 'POST':
-    accion = request.form.get('accion')
-    if accion == 'guardar_antecedentes':
-      nuevo_ant = request.form.get('antecedentes_base', '')
-      cursor.execute(
-          'UPDATE pacientes SET antecedentes = ? WHERE id = ?', (nuevo_ant, id)
-      )
-      conn.commit()
-    elif accion == 'nueva_consulta':
-      fecha_cons = datetime.today().strftime('%Y-%m-%d %H:%M')
-      ant_cons = request.form.get('antecedentes_consulta', '')
-      motivo = request.form.get('motivo', '')
-      consulta_actual = request.form.get('consulta_actual', '')
-      pa = request.form.get('pa', '')
-      fc = request.form.get('fc', '')
-      peso = request.form.get('peso', '')
-      talla = request.form.get('talla', '')
-      imc = request.form.get('imc', '')
-      cintura = request.form.get('cintura', '')
-      estudios_h = request.form.get('estudios_historial', '')
-      med = request.form.get('medicacion_actual', '')
+    if request.method == 'POST':
+        accion = request.form.get('accion')
+        if accion == 'guardar_antecedentes':
+            nuevo_ant = request.form.get('antecedentes_base', '')
+            cursor.execute(
+                'UPDATE pacientes SET antecedentes = ? WHERE id = ?', (nuevo_ant, id)
+            )
+            conn.commit()
+        elif accion == 'nueva_consulta':
+            fecha_cons = datetime.today().strftime('%Y-%m-%d %H:%M')
+            motivo_evolucion = request.form.get('motivo_evolucion', '')
+            pa = request.form.get('pa', '')
+            fc = request.form.get('fc', '')
+            peso = request.form.get('peso', '')
+            talla = request.form.get('talla', '')
+            imc = request.form.get('imc', '')
+            cintura = request.form.get('cintura', '')
+            estudios_h = request.form.get('estudios_historial', '')
+            med = request.form.get('medicacion_actual', '')
 
-      framingham = request.form.get('framingham', '')
-      cha2ds2 = request.form.get('cha2ds2', '')
-      funcion_renal = request.form.get('funcion_renal', '')
-      rel_alb_crea = request.form.get('rel_alb_crea', '')
-      scag = request.form.get('scag', '')
-      asa = request.form.get('asa', '')
-      lee = request.form.get('lee', '')
-      examen_fisico_notas = request.form.get('examen_fisico_notas', '')
+            framingham = request.form.get('framingham', '')
+            cha2ds2 = request.form.get('cha2ds2', '')
+            funcion_renal = request.form.get('funcion_renal', '')
+            rel_alb_crea = request.form.get('rel_alb_crea', '')
+            scag = request.form.get('scag', '')
+            asa = request.form.get('asa', '')
+            lee = request.form.get('lee', '')
+            examen_fisico_notas = request.form.get('examen_fisico_notas', '')
 
-      cursor.execute(
-          '''
-                INSERT INTO historial (paciente_id, fecha, antecedentes_consulta, motivo, consulta_actual, pa, fc, peso, talla, imc, cintura, estudios_historial, medicacion_actual, framingham, cha2ds2, funcion_renal, rel_alb_crea, scag, asa, lee, examen_fisico_notas)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ''',
-          (
-              id,
-              fecha_cons,
-              ant_cons,
-              motivo,
-              consulta_actual,
-              pa,
-              fc,
-              peso,
-              talla,
-              imc,
-              cintura,
-              estudios_h,
-              med,
-              framingham,
-              cha2ds2,
-              funcion_renal,
-              rel_alb_crea,
-              scag,
-              asa,
-              lee,
-              examen_fisico_notas,
-          ),
-      )
-      conn.commit()
-    elif accion == 'subir_archivo':
-      nombre_estudio = request.form.get('nombre_estudio', 'Estudio')
-      archivo_obj = request.files.get('archivo_estudio')
-      if archivo_obj and archivo_obj.filename:
-        filename = f'Estudio_{id}_{int(datetime.now().timestamp())}_{archivo_obj.filename}'
-        filepath = os.path.join(upload_folder, filename)
-        archivo_obj.save(filepath)
-        cursor.execute(
-            'INSERT INTO estudios (paciente_id, nombre_estudio, archivo, fecha,'
-            ' sanatorio) VALUES (?, ?, ?, ?, ?)',
-            (
-                id,
-                nombre_estudio,
-                filename,
-                datetime.today().strftime('%Y-%m-%d %H:%M'),
-                'Adjunto Consultorio',
-            ),
-        )
-        conn.commit()
+            cursor.execute(
+                '''
+                    INSERT INTO historial (paciente_id, fecha, motivo, pa, fc, peso, talla, imc, cintura, estudios_historial, medicacion_actual, framingham, cha2ds2, funcion_renal, rel_alb_crea, scag, asa, lee, examen_fisico_notas)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ''',
+                (
+                    id,
+                    fecha_cons,
+                    motivo_evolucion,
+                    pa,
+                    fc,
+                    peso,
+                    talla,
+                    imc,
+                    cintura,
+                    estudios_h,
+                    med,
+                    framingham,
+                    cha2ds2,
+                    funcion_renal,
+                    rel_alb_crea,
+                    scag,
+                    asa,
+                    lee,
+                    examen_fisico_notas,
+                ),
+            )
+            conn.commit()
+        elif accion == 'subir_archivo':
+            nombre_estudio = request.form.get('nombre_estudio', 'Estudio')
+            archivo_obj = request.files.get('archivo_estudio')
+            if archivo_obj and archivo_obj.filename:
+                filename = f'Estudio_{id}_{int(datetime.now().timestamp())}_{archivo_obj.filename}'
+                filepath = os.path.join(upload_folder, filename)
+                archivo_obj.save(filepath)
+                cursor.execute(
+                    'INSERT INTO estudios (paciente_id, nombre_estudio, archivo, fecha,'
+                    ' sanatorio) VALUES (?, ?, ?, ?, ?)',
+                    (
+                        id,
+                        nombre_estudio,
+                        filename,
+                        datetime.today().strftime('%Y-%m-%d %H:%M'),
+                        'Adjunto Consultorio',
+                    ),
+                )
+                conn.commit()
 
-  cursor.execute(
-      'SELECT id, cedula, nombre, nacimiento, sexo, telefono, profesion,'
-      ' direccion, alergias, antecedentes FROM pacientes WHERE id = ?',
-      (id,),
-  )
-  paciente = cursor.fetchone()
+    cursor.execute(
+        'SELECT id, cedula, nombre, nacimiento, sexo, telefono, profesion,'
+        ' direccion, alergias, antecedentes FROM pacientes WHERE id = ?',
+        (id,),
+    )
+    paciente = cursor.fetchone()
 
-  cursor.execute(
-      'SELECT fecha, antecedentes_consulta, motivo, consulta_actual, pa, fc,'
-      ' peso, talla, imc, cintura, estudios_historial, medicacion_actual,'
-      ' framingham, cha2ds2, funcion_renal, rel_alb_crea, scag, asa, lee,'
-      ' examen_fisico_notas FROM historial WHERE paciente_id = ? ORDER BY id'
-      ' DESC',
-      (id,),
-  )
-  historiales = cursor.fetchall()
+    cursor.execute(
+        'SELECT fecha, antecedentes_consulta, motivo, consulta_actual, pa, fc,'
+        ' peso, talla, imc, cintura, estudios_historial, medicacion_actual,'
+        ' framingham, cha2ds2, funcion_renal, rel_alb_crea, scag, asa, lee,'
+        ' examen_fisico_notas FROM historial WHERE paciente_id = ? ORDER BY id'
+        ' DESC',
+        (id,),
+    )
+    historiales = cursor.fetchall()
 
-  cursor.execute(
-      'SELECT id, nombre_estudio, archivo, fecha FROM estudios WHERE'
-      ' paciente_id = ? ORDER BY id DESC',
-      (id,),
-  )
-  archivos_paciente = cursor.fetchall()
+    cursor.execute(
+        'SELECT id, nombre_estudio, archivo, fecha FROM estudios WHERE'
+        ' paciente_id = ? ORDER BY id DESC',
+        (id,),
+    )
+    archivos_paciente = cursor.fetchall()
 
-  conn.close()
+    conn.close()
 
-  if not paciente:
-    return 'Paciente no encontrado', 404
+    if not paciente:
+        return 'Paciente no encontrado', 404
 
-  edad_num = calcular_edad(paciente[3])
-  edad_txt = f'{edad_num} años' if edad_num else 'N/D'
-  sexo_paciente = paciente[4] or 'Femenino'
+    edad_num = calcular_edad(paciente[3])
+    edad_txt = f'{edad_num} años' if edad_num else ''
+    sexo_paciente = paciente[4] or 'Femenino'
 
-  # Resumen de la consulta anterior
-  ultima_consulta_html = ''
-  if len(historiales) > 0:
-    ult = historiales[0]
-    notas_ant = f'<p><b>Notas Ex. Físico:</b> {ult[19]}</p>' if ult[19] else ''
-    ultima_consulta_html = f"""
+    # Resumen de la consulta anterior (sin mostrar campos vacíos)
+    ultima_consulta_html = ''
+    if len(historiales) > 0:
+        ult = historiales[0]
+        campos_ult = []
+        if ult[2]:
+            campos_ult.append(f'<div><b>Motivo / Evolución:</b> {ult[2]}</div>')
+        if ult[10]:
+            campos_ult.append(f'<div><b>Estudios:</b> {ult[10]}</div>')
+        if ult[11]:
+            campos_ult.append(f'<div><b>Medicación Actual:</b> {ult[11]}</div>')
+        
+        ef_items = []
+        if ult[4]: ef_items.append(f'PA: {ult[4]} mmHg')
+        if ult[5]: ef_items.append(f'FC: {ult[5]} lpm')
+        if ult[6]: ef_items.append(f'Peso: {ult[6]} kg')
+        if ult[7]: ef_items.append(f'Talla: {ult[7]} m')
+        if ult[8]: ef_items.append(f'IMC: {ult[8]}')
+        if ult[9]: ef_items.append(f'Cintura: {ult[9]} cm')
+        
+        ef_html = f'<div style="background:#1e293b; padding:8px 12px; border-radius:4px; margin-top:10px; font-size:12px;"><b>Examen Físico:</b> {" | ".join(ef_items)}</div>' if ef_items else ''
+        if ult[19]:
+            ef_html += f'<div style="background:#1e293b; padding:8px 12px; border-radius:4px; margin-top:6px; font-size:12px;"><b>Notas Ex. Físico:</b> {ult[19]}</div>'
+
+        grid_html = f'<div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; font-size:13px; color:#e2e8f0;">' + "".join(campos_ult) + '</div>' if campos_ult else ''
+        
+        ultima_consulta_html = f"""
         <div style="background:#334155; color:#f8fafc; padding:20px; border-radius:8px; margin-bottom:20px; border:1px solid #475569; box-shadow:0 4px 10px rgba(0,0,0,0.1);">
             <div style="display:flex; justify-content:space-between; border-bottom:1px solid #475569; padding-bottom:6px; margin-bottom:12px; font-weight:bold; color:#38bdf8; font-size:14px;">
                 <span>📅 Fecha de última consulta: {ult[0]}</span>
             </div>
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; font-size:13px; color:#e2e8f0;">
-                <div><b>Motivo:</b> {ult[2] or 'N/D'}</div>
-                <div><b>Antecedentes:</b> {ult[1] or 'N/D'}</div>
-                <div><b>Estudios:</b> {ult[10] or 'Ninguno'}</div>
-                <div><b>Medicación Actual:</b> {ult[11] or 'Ninguna'}</div>
-            </div>
-            {notas_ant}
+            {grid_html}
+            {ef_html}
         </div>
         """
-  else:
-    ultima_consulta_html = (
-        "<p style='color:#64748b; font-style:italic; font-size:13px;"
-        " margin-bottom:15px;'>No hay consultas anteriores registradas.</p>"
-    )
+    else:
+        ultima_consulta_html = (
+            "<p style='color:#64748b; font-style:italic; font-size:13px;"
+            " margin-bottom:15px;'>No hay consultas anteriores registradas.</p>"
+        )
 
-  # Listado completo de historiales
-  historial_completo_html = ''
-  for h in historiales:
-    scores_previo = ''
-    if h[12] or h[13] or h[14] or h[15] or h[16]:
-      scores_previo += f"""
+    # Listado completo de historiales (sin mostrar campos vacíos)
+    historial_completo_html = ''
+    for h in historiales:
+        lineas_h = []
+        if h[2]: lineas_h.append(f'<p><b>Motivo / Evolución:</b> {h[2]}</p>')
+        
+        ef_h_items = []
+        if h[4]: ef_h_items.append(f'<b>PA:</b> {h[4]} mmHg')
+        if h[5]: ef_h_items.append(f'<b>FC:</b> {h[5]} lpm')
+        if h[6]: ef_h_items.append(f'<b>Peso:</b> {h[6]} kg')
+        if h[7]: ef_h_items.append(f'<b>Talla:</b> {h[7]} m')
+        if h[8]: ef_h_items.append(f'<b>IMC:</b> {h[8]}')
+        if h[9]: ef_h_items.append(f'<b>Cintura:</b> {h[9]} cm')
+        
+        ef_h_html = f'<div style="background:#f8fafc; padding:10px; border-radius:6px; margin:10px 0; font-size:13px; display:grid; grid-template-columns: repeat(3, 1fr); gap:10px;">' + "".join([f'<span>{item}</span>' for item in ef_h_items]) + '</div>' if ef_h_items else ''
+        if h[19]: lineas_h.append(f'<p><b>Notas Ex. Físico:</b> {h[19]}</p>')
+
+        scores_previo = ''
+        if h[12] or h[13] or h[14] or h[15] or h[16]:
+            scores_parts = []
+            if h[12]: scores_parts.append(f'Framingham: {h[12]}')
+            if h[13]: scores_parts.append(f'CHA2DS2: {h[13]}')
+            if h[14]: scores_parts.append(f'F. Renal: {h[14]}')
+            if h[15]: scores_parts.append(f'Rel. Alb/Crea: {h[15]}')
+            if h[16]: scores_parts.append(f'SCag: {h[16]}')
+            scores_previo += f"""
             <div style="background:#e0f2fe; padding:8px 12px; border-radius:6px; margin:8px 0; font-size:12px; color:#0369a1;">
-                <b>📊 Scores:</b> Framingham: {h[12] or '-'} | CHA2DS2: {h[13] or '-'} | F. Renal: {h[14] or '-'} | Rel. Alb/Crea: {h[15] or '-'} | SCag: {h[16] or '-'}
+                <b>📊 Scores:</b> {" | ".join(scores_parts)}
             </div>
             """
-    if h[17] or h[18]:
-      scores_previo += f"""
+        if h[17] or h[18]:
+            pre_parts = []
+            if h[17]: pre_parts.append(f'ASA: {h[17]}')
+            if h[18]: pre_parts.append(f'Índice de Lee: {h[18]}')
+            scores_previo += f"""
             <div style="background:#fef3c7; padding:8px 12px; border-radius:6px; margin:8px 0; font-size:12px; color:#b45309;">
-                <b>🏥 Prequirúrgico:</b> ASA: {h[17] or '-'} | Índice de Lee: {h[18] or '-'}
+                <b>🏥 Prequirúrgico:</b> {" | ".join(pre_parts)}
             </div>
             """
-    notas_hist = f'<p><b>Notas Ex. Físico:</b> {h[19]}</p>' if h[19] else ''
 
-    historial_completo_html += f"""
+        if h[10]: lineas_h.append(f'<p><b>Estudios:</b> {h[10]}</p>')
+        if h[11]: lineas_h.append(f'<p><b>Medicación Actual:</b> {h[11]}</p>')
+
+        historial_completo_html += f"""
         <div style="background:white; padding:20px; border-radius:8px; margin-bottom:15px; border:1px solid #cbd5e1;">
             <div style="display:flex; justify-content:space-between; border-bottom:1px solid #e2e8f0; padding-bottom:8px; margin-bottom:10px; font-weight:bold; color:#1e3a8a;">
                 <span>📅 Fecha: {h[0]}</span>
             </div>
-            <p><b>Motivo:</b> {h[2] or 'N/D'}</p>
-            <p><b>Antecedentes:</b> {h[1] or 'N/D'}</p>
-            <p><b>Consulta Actual / Plan:</b> {h[3] or 'N/D'}</p>
-            <div style="background:#f8fafc; padding:10px; border-radius:6px; margin:10px 0; font-size:13px; display:grid; grid-template-columns: repeat(3, 1fr); gap:10px;">
-                <span><b>PA:</b> {h[4] or '-'} mmHg</span>
-                <span><b>FC:</b> {h[5] or '-'} lpm</span>
-                <span><b>Peso:</b> {h[6] or '-'} kg</span>
-                <span><b>Talla:</b> {h[7] or '-'} m</span>
-                <span><b>IMC:</b> {h[8] or '-'}</span>
-                <span><b>Cintura:</b> {h[9] or '-'} cm</span>
-            </div>
-            {notas_hist}
+            {"".join(lineas_h)}
+            {ef_h_html}
             {scores_previo}
-            <p><b>Estudios:</b> {h[10] or 'Ninguno'}</p>
-            <p><b>Medicación Actual:</b> {h[11] or 'Ninguna'}</p>
         </div>
         """
-  if not historial_completo_html:
-    historial_completo_html = (
-        "<p style='color:#64748b; font-style:italic;'>No hay consultas"
-        ' registradas aún.</p>'
-    )
+    if not historial_completo_html:
+        historial_completo_html = (
+            "<p style='color:#64748b; font-style:italic;'>No hay consultas"
+            ' registradas aún.</p>'
+        )
 
-  archivos_html = ''
-  for ar in archivos_paciente:
-    archivos_html += f"""
+    archivos_html = ''
+    for ar in archivos_paciente:
+        archivos_html += f"""
         <div style="background:white; padding:12px 15px; border-radius:6px; margin-bottom:8px; border:1px solid #d8b4fe; display:flex; justify-content:space-between; align-items:center;">
             <div>
                 <b style="color:#6b21a8; font-size:14px;">{ar[1]}</b>
@@ -1920,44 +1963,62 @@ def ficha(id):
             <a href="/uploads/{ar[2]}" target="_blank" style="background:#7c3aed; color:white; padding:6px 14px; text-decoration:none; border-radius:4px; font-weight:bold; font-size:12px;">Ver Archivo</a>
         </div>
         """
-  if not archivos_html:
-    archivos_html = (
-        "<p style='color:#64748b; font-style:italic;'>No hay archivos adjuntos"
-        ' aún.</p>'
+    if not archivos_html:
+        archivos_html = (
+            "<p style='color:#64748b; font-style:italic;'>No hay archivos adjuntos"
+            ' aún.</p>'
+        )
+
+    # Indicador de estudios / adjuntos para colocar debajo de Alergias
+    estudios_badge_html = ''
+    if len(archivos_paciente) > 0:
+        nombres_estudios = ", ".join([ar[1] for ar in archivos_paciente[:3]])
+        if len(archivos_paciente) > 3:
+            nombres_estudios += "..."
+        estudios_badge_html = f"""
+        <div style="background:#334155; padding:10px 14px; border-radius:6px; border:1px solid #475569; margin-top:10px;">
+            <span style="font-weight:bold; color:#38bdf8;">Estudios / Adjuntos:</span> <span style="color:#e2e8f0;">{nombres_estudios}</span>
+        </div>
+        """
+    else:
+        estudios_badge_html = """
+        <div style="background:#334155; padding:10px 14px; border-radius:6px; border:1px solid #475569; margin-top:10px;">
+            <span style="font-weight:bold; color:#38bdf8;">Estudios / Adjuntos:</span> <span style="color:#94a3b8;">Ninguno</span>
+        </div>
+        """
+
+    # Datos para gráfico (JSON seguros)
+    fechas_graf = json.dumps([h[0].split(' ')[0] for h in reversed(historiales)])
+    pesos_graf = json.dumps(
+        [float(h[6]) if h[6] else None for h in reversed(historiales)]
     )
 
-  # Datos para gráfico (JSON seguros)
-  fechas_graf = json.dumps([h[0].split(' ')[0] for h in reversed(historiales)])
-  pesos_graf = json.dumps(
-      [float(h[6]) if h[6] else None for h in reversed(historiales)]
-  )
+    sistolica_list = []
+    diastolica_list = []
+    for h in reversed(historiales):
+        pa_val = h[4] or ''
+        if '/' in pa_val:
+            try:
+                parts = pa_val.split('/')
+                sistolica_list.append(float(parts[0].strip()))
+                diastolica_list.append(float(parts[1].strip()))
+            except:
+                sistolica_list.append(None)
+                diastolica_list.append(None)
+        else:
+            sistolica_list.append(None)
+            diastolica_list.append(None)
 
-  sistolica_list = []
-  diastolica_list = []
-  for h in reversed(historiales):
-    pa_val = h[4] or ''
-    if '/' in pa_val:
-      try:
-        parts = pa_val.split('/')
-        sistolica_list.append(float(parts[0].strip()))
-        diastolica_list.append(float(parts[1].strip()))
-      except:
-        sistolica_list.append(None)
-        diastolica_list.append(None)
-    else:
-      sistolica_list.append(None)
-      diastolica_list.append(None)
+    sistolica_graf = json.dumps(sistolica_list)
+    diastolica_graf = json.dumps(diastolica_list)
 
-  sistolica_graf = json.dumps(sistolica_list)
-  diastolica_graf = json.dumps(diastolica_list)
+    sexo_js = (
+        'Femenino'
+        if 'Femenino' in sexo_paciente or 'Mujer' in sexo_paciente
+        else 'Masculino'
+    )
 
-  sexo_js = (
-      'Femenino'
-      if 'Femenino' in sexo_paciente or 'Mujer' in sexo_paciente
-      else 'Masculino'
-  )
-
-  return f"""
+    return f"""
     <!DOCTYPE html>
     <html lang="es">
     <head>
@@ -2149,12 +2210,13 @@ def ficha(id):
                     <div style="display:flex; gap:20px; font-size:14px; color:#cbd5e1; margin-bottom:15px; flex-wrap:wrap;">
                         <span><b>C.I.:</b> {paciente[1]}</span>
                         <span><b>Edad:</b> {edad_txt}</span>
-                        <span><b>Profesión:</b> {paciente[6] or 'N/D'}</span>
-                        <span><b>Procedencia:</b> {paciente[7] or 'N/D'}</span>
+                        <span><b>Profesión:</b> {paciente[6] or ''}</span>
+                        <span><b>Procedencia:</b> {paciente[7] or ''}</span>
                     </div>
                     <div style="background:#334155; padding:10px 14px; border-radius:6px; border:1px solid #475569;">
                         <span style="font-weight:bold; color:#f87171;">Alergias:</span> <span style="color:#fca5a5;">{paciente[8] or 'Ninguna'}</span>
                     </div>
+                    {estudios_badge_html}
                 </div>
                 <div>
                     <form method="POST" style="background:#334155; padding:12px 18px; border-radius:6px; border:1px solid #475569; height:100%; box-sizing:border-box; display:flex; flex-direction:column;">
@@ -2275,27 +2337,16 @@ def ficha(id):
                 </div>
             </details>
 
-            <!-- Formulario Nueva Consulta / Evolución Ancho -->
+            <!-- Formulario Nueva Consulta / Evolución (Cuadro único Motivo / Evolución) -->
             <div style="background:white; padding:35px; border-radius:10px; box-shadow:0 4px 15px rgba(0,0,0,0.05); margin-bottom:30px; border:1px solid #e2e8f0;">
                 <h3 style="color:#1e3a8a; margin-top:0; border-bottom:2px solid #e2e8f0; padding-bottom:8px;">🩺 Registrar Nueva Consulta / Evolución</h3>
                 
                 <form method="POST">
                     <input type="hidden" name="accion" value="nueva_consulta">
                     
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom:15px;">
-                        <div>
-                            <label style="display:block; font-weight:bold; font-size:13px; color:#334155; margin-bottom:4px;">Motivo:</label>
-                            <input type="text" name="motivo" placeholder="Ej: Control cardiológico..." required style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:4px; box-sizing:border-box; font-size:14px;">
-                        </div>
-                        <div>
-                            <label style="display:block; font-weight:bold; font-size:13px; color:#334155; margin-bottom:4px;">Antecedentes:</label>
-                            <textarea name="antecedentes_consulta" rows="3" placeholder="Ej: Refiere mejoría..." style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:4px; font-family:Segoe UI; box-sizing:border-box; font-size:14px;"></textarea>
-                        </div>
-                    </div>
-
                     <div style="margin-bottom:15px;">
-                        <label style="display:block; font-weight:bold; font-size:13px; color:#334155; margin-bottom:4px;">Consulta Actual / Plan:</label>
-                        <textarea name="consulta_actual" rows="4" placeholder="Detalles de la evaluación y plan médico..." style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:4px; font-family:Segoe UI; box-sizing:border-box; font-size:14px;"></textarea>
+                        <label style="display:block; font-weight:bold; font-size:13px; color:#334155; margin-bottom:4px;">Motivo / Evolución:</label>
+                        <textarea name="motivo_evolucion" rows="6" placeholder="Escriba aquí el motivo de consulta y la evolución detallada..." required style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:4px; font-family:Segoe UI; box-sizing:border-box; font-size:14px;"></textarea>
                     </div>
 
                     <!-- NUEVO CUADRO EXCLUSIVO PARA COPIAR LOS SCORES -->
@@ -2474,19 +2525,19 @@ def ficha(id):
 
 @app.route('/backup')
 def backup():
-  if not session.get('logged_in'):
-    return redirect(url_for('login'))
-  if os.path.exists(db_path):
-    return send_file(db_path, as_attachment=True)
-  return 'Base de datos no encontrada', 404
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+    if os.path.exists(db_path):
+        return send_file(db_path, as_attachment=True)
+    return 'Base de datos no encontrada', 404
 
 
 @app.route('/logout')
 def logout():
-  session.clear()
-  return redirect(url_for('login'))
+    session.clear()
+    return redirect(url_for('login'))
 
 
 if __name__ == '__main__':
-  port = int(os.environ.get('PORT', 5002))
-  app.run(host='0.0.0.0', port=port, debug=False)
+    port = int(os.environ.get('PORT', 5002))
+    app.run(host='0.0.0.0', port=port, debug=False)
