@@ -305,11 +305,12 @@ def ficha(id):
             direccion = request.form.get('direccion', '')
             telefono = request.form.get('telefono', '')
             alergias = request.form.get('alergias', '')
+            nacimiento = request.form.get('nacimiento', '')
             cursor.execute('''
                 UPDATE pacientes 
-                SET nombre = ?, cedula = ?, profesion = ?, direccion = ?, telefono = ?, alergias = ? 
+                SET nombre = ?, cedula = ?, profesion = ?, direccion = ?, telefono = ?, alergias = ?, nacimiento = ?
                 WHERE id = ?
-            ''', (nombre, cedula, profesion, direccion, telefono, alergias, id))
+            ''', (nombre, cedula, profesion, direccion, telefono, alergias, nacimiento, id))
             conn.commit()
         elif accion == 'nueva_consulta':
             fecha_cons = datetime.today().strftime('%Y-%m-%d %H:%M')
