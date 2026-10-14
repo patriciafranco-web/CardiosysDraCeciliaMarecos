@@ -72,7 +72,6 @@ def init_db():
         )
     ''')
 
-    # Migraciones seguras para columnas nuevas
     for col, tipo in [('es_estudio', 'INTEGER DEFAULT 0'), ('medicacion_actual', 'TEXT')]:
         try:
             cursor.execute(f'ALTER TABLE pacientes ADD COLUMN {col} {tipo}')
