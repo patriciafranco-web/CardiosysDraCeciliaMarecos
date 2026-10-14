@@ -5,8 +5,6 @@ import json
 from datetime import datetime
 from flask import Flask, request, redirect, url_for, session, send_file
 from werkzeug.security import generate_password_hash, check_password_hash
-from threading import Timer
-import webbrowser
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 
@@ -28,25 +26,20 @@ os.makedirs(backup_folder, exist_ok=True)
 app = Flask(__name__)
 app.secret_key = 'cardio_elite_seguro_2026'
 
-
 def hacer_backup_automatico():
     if os.path.exists(db_path):
         fecha_str = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-        backup_file = os.path.join(
-            backup_folder, f'backup_cardiologia_{fecha_str}.db'
-        )
+        backup_file = os.path.join(backup_folder, f'backup_cardiologia_{fecha_str}.db')
         try:
             with open(db_path, 'rb') as src, open(backup_file, 'wb') as dst:
                 dst.write(src.read())
         except Exception as e:
             print('Error al generar auto-backup:', e)
 
-
 def init_db():
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
 
-    # Tabla de Usuarios y contraseñas cifradas
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS usuarios (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -56,14 +49,11 @@ def init_db():
     ''')
 
     pass_hash = generate_password_hash('cardiopy')
-    cursor.execute(
-        '''
+    cursor.execute('''
         INSERT INTO usuarios (username, password_hash) 
         VALUES ('draceciliamarecos', ?) 
         ON CONFLICT(username) DO UPDATE SET password_hash = ?
-    ''',
-        (pass_hash, pass_hash),
-    )
+    ''', (pass_hash, pass_hash))
 
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS pacientes (
@@ -82,11 +72,8 @@ def init_db():
         )
     ''')
 
-    # Migración segura para columna es_estudio en pacientes
     try:
-        cursor.execute(
-            'ALTER TABLE pacientes ADD COLUMN es_estudio INTEGER DEFAULT 0'
-        )
+        cursor.execute('ALTER TABLE pacientes ADD COLUMN es_estudio INTEGER DEFAULT 0')
     except sqlite3.OperationalError:
         pass
 
@@ -95,9 +82,7 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             paciente_id INTEGER,
             fecha TEXT,
-            antecedentes_consulta TEXT,
             motivo TEXT,
-            consulta_actual TEXT,
             pa TEXT,
             fc TEXT,
             peso TEXT,
@@ -118,22 +103,6 @@ def init_db():
         )
     ''')
 
-    # Migración segura para columnas nuevas en historial
-    for col, tipo in [
-        ('framingham', 'TEXT'),
-        ('cha2ds2', 'TEXT'),
-        ('funcion_renal', 'TEXT'),
-        ('rel_alb_crea', 'TEXT'),
-        ('scag', 'TEXT'),
-        ('asa', 'TEXT'),
-        ('lee', 'TEXT'),
-        ('examen_fisico_notas', 'TEXT'),
-    ]:
-        try:
-            cursor.execute(f'ALTER TABLE historial ADD COLUMN {col} {tipo}')
-        except sqlite3.OperationalError:
-            pass
-
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS estudios (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -148,30 +117,15 @@ def init_db():
         )
     ''')
 
-    cursor.execute('SELECT COUNT(*) FROM pacientes')
-    if cursor.fetchone()[0] == 0:
-        hoy_str = datetime.today().strftime('%Y-%m-%d')
-        cursor.execute(
-            '''
-            INSERT INTO pacientes (cedula, nombre, nacimiento, sexo, telefono, profesion, direccion, alergias, antecedentes, fecha_cita, es_estudio) 
-            VALUES ('3789170', 'Paciente Ejemplo', '1986-05-22', 'Femenino', '0987546321', 'Médico', 'Asunción', 'Ninguna', 'HTA, Dislipidemia', ?, 0)
-        ''',
-            (hoy_str,),
-        )
-
     conn.commit()
     conn.close()
     hacer_backup_automatico()
 
-
-# Inicializar la base de datos y tablas globalmente para Render/Gunicorn
 init_db()
-
 
 @app.before_request
 def hacer_sesion_no_permanente():
     session.permanent = False
-
 
 def calcular_edad(nacimiento_str):
     if not nacimiento_str:
@@ -179,31 +133,19 @@ def calcular_edad(nacimiento_str):
     try:
         nac = datetime.strptime(nacimiento_str, '%Y-%m-%d')
         hoy = datetime.today()
-        edad = (
-            hoy.year
-            - nac.year
-            - ((hoy.month, hoy.day) < (nac.month, nac.day))
-        )
+        edad = hoy.year - nac.year - ((hoy.month, hoy.day) < (nac.month, nac.day))
         return edad
     except:
         return 0
-
 
 def calcular_edad_texto(nacimiento_str):
     edad = calcular_edad(nacimiento_str)
     return f'{edad} años' if edad else ''
 
-
 def dibujar_membrete(c, sanatorio, width, height):
-    logo_file = (
-        'logo_ovelar.png' if 'Ovelar' in sanatorio else 'logo_carlos.png'
-    )
+    logo_file = 'logo_ovelar.png' if 'Ovelar' in sanatorio else 'logo_carlos.png'
     if not os.path.exists(logo_file):
-        alternativos = (
-            ['logo_san_carlos.png', 'SanCarlos.png', 'san_carlos.png']
-            if 'Carlos' in sanatorio
-            else ['logo_san_ovelar.png', 'Ovelar.png']
-        )
+        alternativos = ['logo_san_carlos.png', 'SanCarlos.png', 'san_carlos.png'] if 'Carlos' in sanatorio else ['logo_san_ovelar.png', 'Ovelar.png']
         for alt in alternativos:
             if os.path.exists(alt):
                 logo_file = alt
@@ -211,15 +153,7 @@ def dibujar_membrete(c, sanatorio, width, height):
 
     if os.path.exists(logo_file):
         try:
-            c.drawImage(
-                logo_file,
-                50,
-                height - 60,
-                width=160,
-                height=45,
-                preserveAspectRatio=True,
-                mask='auto',
-            )
+            c.drawImage(logo_file, 50, height - 60, width=160, height=45, preserveAspectRatio=True, mask='auto')
         except Exception as e:
             print('Error al cargar logo:', e)
     else:
@@ -234,24 +168,9 @@ def dibujar_membrete(c, sanatorio, width, height):
     c.drawCentredString(width / 2.0, height - 78, 'SERVICIO DE CARDIOLOGÍA IMÁGENES')
 
     c.setFont('Helvetica-Bold', 12)
-    c.drawCentredString(
-        width / 2.0, height - 105, 'Informe de Ecocardiografía-Doppler-Color'
-    )
+    c.drawCentredString(width / 2.0, height - 105, 'Informe de Ecocardiografía-Doppler-Color')
 
-
-def generar_pdf_ecocardiograma(
-    sanatorio,
-    cedula,
-    nombre,
-    edad,
-    sexo,
-    motivo,
-    pestaña,
-    dims,
-    doppler,
-    desc,
-    conc,
-):
+def generar_pdf_ecocardiograma(sanatorio, cedula, nombre, edad, sexo, motivo, pestaña, dims, doppler, desc, conc):
     nombre_limpio = nombre.replace(' ', '_')
     sanatorio_limpio = sanatorio.replace(' ', '_')
     filename = f'Informe_{nombre_limpio}_{sanatorio_limpio}.pdf'
@@ -260,10 +179,8 @@ def generar_pdf_ecocardiograma(
     c = canvas.Canvas(filepath, pagesize=letter)
     width, height = letter
 
-    # PÁGINA 1
     dibujar_membrete(c, sanatorio, width, height)
 
-    # Datos del paciente
     y = height - 128
     c.setFont('Helvetica-Bold', 10)
     c.drawString(50, y, 'Nombre:')
@@ -301,7 +218,6 @@ def generar_pdf_ecocardiograma(
     c.line(50, y, width - 50, y)
     y -= 15
 
-    # Sección Dimensiones
     c.setFont('Helvetica-Bold', 10)
     c.drawString(50, y, 'Dimensiones')
     y -= 3
@@ -312,69 +228,19 @@ def generar_pdf_ecocardiograma(
         ('Aorta (AO):', dims.get('ao', ''), 'v.n.: 20 - 37', 'mm'),
         ('Aurícula izquierda (AI):', dims.get('ai', ''), 'v.n.: 20 - 40', 'mm'),
         ('Volumen aurícula izquierda:', dims.get('vol_ai', ''), '', 'ml'),
-        (
-            'Volumen aurícula izquierda/SC:',
-            dims.get('vol_ai_sc', ''),
-            'v.n.: 16 - 34',
-            'ml/m2',
-        ),
+        ('Volumen aurícula izquierda/SC:', dims.get('vol_ai_sc', ''), 'v.n.: 16 - 34', 'ml/m2'),
         ('Ventrículo derecho:', dims.get('vd', ''), 'v.n.: 09 - 26', 'mm'),
-        (
-            'Ventrículo izquierdo Diástole:',
-            dims.get('vi_diastole', ''),
-            'v.n.: 37 - 56',
-            'mm',
-        ),
-        (
-            'Ventrículo izquierdo Sístole:',
-            dims.get('vi_sistole', ''),
-            'v.n.: 27 - 37',
-            'mm',
-        ),
-        (
-            'Volumen de fin de Diástole del VI:',
-            dims.get('vol_diastole_vi', ''),
-            '',
-            'ml/m2',
-        ),
-        (
-            'Volumen de fin de Sístole del VI:',
-            dims.get('vol_sistole_vi', ''),
-            '',
-            'ml/m2',
-        ),
-        (
-            'Fracción de acortamiento:',
-            dims.get('facortamiento', ''),
-            'v.n.: 28 - 40 %',
-            '',
-        ),
-        (
-            'Fracción de eyección:',
-            dims.get('feyeccion', ''),
-            'v.n.: 55 - 70 %',
-            '',
-        ),
-        (
-            'Espesor del tabique interventricular:',
-            dims.get('siv', ''),
-            'v.n.: 7 - 11',
-            'mm',
-        ),
-        (
-            'Espesor de la pared posterior del VI:',
-            dims.get('ppvi', ''),
-            'v.n.: 7 - 11',
-            'mm',
-        ),
+        ('Ventrículo izquierdo Diástole:', dims.get('vi_diastole', ''), 'v.n.: 37 - 56', 'mm'),
+        ('Ventrículo izquierdo Sístole:', dims.get('vi_sistole', ''), 'v.n.: 27 - 37', 'mm'),
+        ('Volumen de fin de Diástole del VI:', dims.get('vol_diastole_vi', ''), '', 'ml/m2'),
+        ('Volumen de fin de Sístole del VI:', dims.get('vol_sistole_vi', ''), '', 'ml/m2'),
+        ('Fracción de acortamiento:', dims.get('facortamiento', ''), 'v.n.: 28 - 40 %', ''),
+        ('Fracción de eyección:', dims.get('feyeccion', ''), 'v.n.: 55 - 70 %', ''),
+        ('Espesor del tabique interventricular:', dims.get('siv', ''), 'v.n.: 7 - 11', 'mm'),
+        ('Espesor de la pared posterior del VI:', dims.get('ppvi', ''), 'v.n.: 7 - 11', 'mm'),
         ('Espesor parietal relativo:', dims.get('epr', ''), '', ''),
         ('Masa del VI (g):', dims.get('masavi', ''), '', 'g'),
-        (
-            'Índice de Masa del VI (g/m2):',
-            dims.get('imasa_vi', ''),
-            'v.n.: <115 g/m2 (hombres) - <95 g/m2 (mujeres)',
-            '',
-        ),
+        ('Índice de Masa del VI (g/m2):', dims.get('imasa_vi', ''), 'v.n.: <115 g/m2 (hombres) - <95 g/m2 (mujeres)', ''),
     ]
 
     c.setFont('Helvetica', 9)
@@ -396,7 +262,6 @@ def generar_pdf_ecocardiograma(
     c.line(50, y, width - 50, y)
     y -= 15
 
-    # Sección Descripción
     if y < 120:
         c.showPage()
         dibujar_membrete(c, sanatorio, width, height)
@@ -421,7 +286,6 @@ def generar_pdf_ecocardiograma(
 
     y -= 10
 
-    # Sección Examen Doppler Completo
     if y < 180:
         c.showPage()
         dibujar_membrete(c, sanatorio, width, height)
@@ -437,14 +301,7 @@ def generar_pdf_ecocardiograma(
         ('Flujo mitral:', doppler.get('flujo_mitral', ''), ''),
         ('Onda E:', doppler.get('onda_e', ''), 'm/seg'),
         ('Onda A:', doppler.get('onda_a', ''), 'm/seg'),
-        (
-            'E/A:',
-            doppler.get('ea', ''),
-            (
-                'v.n.: < 40 años:1,5±0,40 ms; <60 años:1,3±0,25 ms; >60'
-                ' años:0,96±0,18 ms'
-            ),
-        ),
+        ('E/A:', doppler.get('ea', ''), 'v.n.: < 40 años:1,5±0,40 ms; <60 años:1,3±0,25 ms; >60 años:0,96±0,18 ms'),
         ('TDE:', doppler.get('tde', ''), 'v.n.: 188±28 ms'),
         ('Flujo aórtico:', doppler.get('flujo_aortico', ''), ''),
         ('Velocidad máxima:', doppler.get('vel_max', ''), 'm/seg'),
@@ -455,21 +312,12 @@ def generar_pdf_ecocardiograma(
         ('Flujo tricuspídeo:', doppler.get('flujo_tricuspideo', ''), ''),
         ('Gradiente VD/AD:', doppler.get('grad_vd_ad', ''), 'mmHg'),
         ('Flujo pulmonar:', doppler.get('flujo_pulmonar', ''), ''),
-        (
-            'PA pulmonar sistólica:',
-            doppler.get('pa_sistolica', ''),
-            'mmHg    v.n.: <36 mm/Hg',
-        ),
+        ('PA pulmonar sistólica:', doppler.get('pa_sistolica', ''), 'mmHg    v.n.: <36 mm/Hg'),
     ]
 
     c.setFont('Helvetica', 9)
     for label, val, unit in lista_doppler:
-        if val or label in [
-            'Flujo mitral:',
-            'Flujo aórtico:',
-            'Flujo tricuspídeo:',
-            'Flujo pulmonar:',
-        ]:
+        if val or label in ['Flujo mitral:', 'Flujo aórtico:', 'Flujo tricuspídeo:', 'Flujo pulmonar:']:
             if y < 70:
                 c.showPage()
                 dibujar_membrete(c, sanatorio, width, height)
@@ -487,7 +335,6 @@ def generar_pdf_ecocardiograma(
     c.line(50, y, width - 50, y)
     y -= 15
 
-    # Sección Conclusión
     if y < 150:
         c.showPage()
         dibujar_membrete(c, sanatorio, width, height)
@@ -512,7 +359,6 @@ def generar_pdf_ecocardiograma(
             c.drawString(50, y, clean_line)
             y -= 13
 
-    # Firma al pie
     c.setFont('Helvetica-Bold', 10)
     c.setFillColorRGB(0.1, 0.1, 0.1)
     c.drawString(width - 250, 70, 'Dra. Cecilia Marecos Viana')
@@ -523,7 +369,6 @@ def generar_pdf_ecocardiograma(
     c.save()
     return filename
 
-
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     error = None
@@ -532,9 +377,7 @@ def login():
         password = request.form.get('password')
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
-        cursor.execute(
-            'SELECT password_hash FROM usuarios WHERE username = ?', (username,)
-        )
+        cursor.execute('SELECT password_hash FROM usuarios WHERE username = ?', (username,))
         row = cursor.fetchone()
         conn.close()
 
@@ -545,11 +388,7 @@ def login():
         else:
             error = 'Usuario o contraseña incorrectos'
 
-    err_html = (
-        f'<p style="color:red; font-size:13px; text-align:center;">{error}</p>'
-        if error
-        else ''
-    )
+    err_html = f'<p style="color:red; font-size:13px; text-align:center;">{error}</p>' if error else ''
     return f"""
     <!DOCTYPE html>
     <html lang="es">
@@ -573,14 +412,12 @@ def login():
     </html>
     """
 
-
 @app.route('/cambiar-contrasena', methods=['GET', 'POST'])
 def cambiar_contrasena():
     if not session.get('logged_in'):
         return redirect(url_for('login'))
 
-    error = None
-    exito = None
+    error, exito = None, None
     username = session.get('username', 'draceciliamarecos')
 
     if request.method == 'POST':
@@ -595,32 +432,19 @@ def cambiar_contrasena():
         else:
             conn = sqlite3.connect(db_path)
             cursor = conn.cursor()
-            cursor.execute(
-                'SELECT password_hash FROM usuarios WHERE username = ?', (username,)
-            )
+            cursor.execute('SELECT password_hash FROM usuarios WHERE username = ?', (username,))
             row = cursor.fetchone()
 
             if row and check_password_hash(row[0], actual):
                 nuevo_hash = generate_password_hash(nueva)
-                cursor.execute(
-                    'UPDATE usuarios SET password_hash = ? WHERE username = ?',
-                    (nuevo_hash, username),
-                )
+                cursor.execute('UPDATE usuarios SET password_hash = ? WHERE username = ?', (nuevo_hash, username))
                 conn.commit()
                 exito = '¡Contraseña actualizada con éxito!'
             else:
                 error = 'La contraseña actual es incorrecta.'
             conn.close()
 
-    msg_html = (
-        f'<p style="color:green; font-weight:bold; text-align:center;">{exito}</p>'
-        if exito
-        else (
-            f'<p style="color:red; font-size:13px; text-align:center;">{error}</p>'
-            if error
-            else ''
-        )
-    )
+    msg_html = f'<p style="color:green; font-weight:bold; text-align:center;">{exito}</p>' if exito else (f'<p style="color:red; font-size:13px; text-align:center;">{error}</p>' if error else '')
 
     return f"""
     <!DOCTYPE html>
@@ -667,7 +491,6 @@ def cambiar_contrasena():
     </html>
     """
 
-
 @app.route('/lista-pacientes')
 def lista_pacientes():
     if not session.get('logged_in'):
@@ -678,17 +501,9 @@ def lista_pacientes():
     cursor = conn.cursor()
     
     if q:
-        cursor.execute(
-            'SELECT id, cedula, nombre, nacimiento, profesion, direccion, telefono'
-            ' FROM pacientes WHERE es_estudio = 0 AND (nombre LIKE ? OR cedula LIKE ?)'
-            ' ORDER BY nombre ASC',
-            (f'%{q}%', f'%{q}%')
-        )
+        cursor.execute('SELECT id, cedula, nombre, nacimiento, profesion, direccion, telefono FROM pacientes WHERE es_estudio = 0 AND (nombre LIKE ? OR cedula LIKE ?) ORDER BY nombre ASC', (f'%{q}%', f'%{q}%'))
     else:
-        cursor.execute(
-            'SELECT id, cedula, nombre, nacimiento, profesion, direccion, telefono'
-            ' FROM pacientes WHERE es_estudio = 0 ORDER BY nombre ASC'
-        )
+        cursor.execute('SELECT id, cedula, nombre, nacimiento, profesion, direccion, telefono FROM pacientes WHERE es_estudio = 0 ORDER BY nombre ASC')
     pacientes = cursor.fetchall()
     conn.close()
 
@@ -709,10 +524,7 @@ def lista_pacientes():
         </tr>
         """
     if not filas_html:
-        filas_html = (
-            "<tr><td colspan='7' style='padding:15px;"
-            " text-align:center;'>No se encontraron pacientes registrados.</td></tr>"
-        )
+        filas_html = "<tr><td colspan='7' style='padding:15px; text-align:center;'>No se encontraron pacientes registrados.</td></tr>"
 
     return f"""
     <!DOCTYPE html>
@@ -739,7 +551,6 @@ def lista_pacientes():
         <div style="flex:1; padding:40px; overflow-y:auto;">
             <h1>👥 Directorio General de Pacientes Habituales</h1>
             
-            <!-- BUSCADOR -->
             <form method="GET" action="/lista-pacientes" style="margin-top:20px; margin-bottom:20px; display:flex; gap:10px;">
                 <input type="text" name="q" value="{q}" placeholder="Buscar por Nombre o Cédula..." style="padding:10px; width:350px; border-radius:4px; border:1px solid #cbd5e1; font-size:14px;">
                 <button type="submit" style="padding:10px 20px; background:#3498db; color:white; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">Buscar</button>
@@ -765,32 +576,20 @@ def lista_pacientes():
     </html>
     """
 
-
 @app.route('/')
 def index():
     if not session.get('logged_in'):
         return redirect(url_for('login'))
 
-    fecha_agenda = request.args.get(
-        'fecha', datetime.today().strftime('%Y-%m-%d')
-    )
+    fecha_agenda = request.args.get('fecha', datetime.today().strftime('%Y-%m-%d'))
     busqueda = request.args.get('q', '').strip()
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
 
     if busqueda:
-        cursor.execute(
-            'SELECT id, cedula, nombre, nacimiento, profesion, direccion,'
-            ' fecha_cita FROM pacientes WHERE es_estudio = 0 AND (nombre LIKE ? OR'
-            ' cedula LIKE ?)',
-            (f'%{busqueda}%', f'%{busqueda}%'),
-        )
+        cursor.execute('SELECT id, cedula, nombre, nacimiento, profesion, direccion, fecha_cita FROM pacientes WHERE es_estudio = 0 AND (nombre LIKE ? OR cedula LIKE ?)', (f'%{busqueda}%', f'%{busqueda}%'))
     else:
-        cursor.execute(
-            'SELECT id, cedula, nombre, nacimiento, profesion, direccion,'
-            ' fecha_cita FROM pacientes WHERE es_estudio = 0 AND fecha_cita = ?',
-            (fecha_agenda,),
-        )
+        cursor.execute('SELECT id, cedula, nombre, nacimiento, profesion, direccion, fecha_cita FROM pacientes WHERE es_estudio = 0 AND fecha_cita = ?', (fecha_agenda,))
 
     pacientes = cursor.fetchall()
     conn.close()
@@ -813,11 +612,7 @@ def index():
         </tr>
         """
     if not filas_html:
-        filas_html = (
-            "<tr><td colspan='6' style='padding:15px;"
-            " text-align:center;'>No hay pacientes agendados para esta"
-            ' fecha.</td></tr>'
-        )
+        filas_html = "<tr><td colspan='6' style='padding:15px; text-align:center;'>No hay pacientes agendados para esta fecha.</td></tr>"
 
     return f"""
     <!DOCTYPE html>
@@ -876,7 +671,6 @@ def index():
     </html>
     """
 
-
 @app.route('/nuevo', methods=['GET', 'POST'])
 def nuevo():
     if not session.get('logged_in'):
@@ -893,29 +687,14 @@ def nuevo():
         alergias = request.form.get('alergias', '')
         antecedentes_list = request.form.getlist('antecedentes')
         antecedentes_str = ', '.join(antecedentes_list)
-        fecha_cita = request.form.get(
-            'fecha_cita', datetime.today().strftime('%Y-%m-%d')
-        )
+        fecha_cita = request.form.get('fecha_cita', datetime.today().strftime('%Y-%m-%d'))
 
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
-        cursor.execute(
-            'INSERT INTO pacientes (cedula, nombre, nacimiento, sexo, telefono,'
-            ' profesion, direccion, alergias, antecedentes, fecha_cita, es_estudio)'
-            ' VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)',
-            (
-                cedula,
-                nombre,
-                nacimiento,
-                sexo,
-                telefono,
-                profesion,
-                direccion,
-                alergias,
-                antecedentes_str,
-                fecha_cita,
-            ),
-        )
+        cursor.execute('''
+            INSERT INTO pacientes (cedula, nombre, nacimiento, sexo, telefono, profesion, direccion, alergias, antecedentes, fecha_cita, es_estudio) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
+        ''', (cedula, nombre, nacimiento, sexo, telefono, profesion, direccion, alergias, antecedentes_str, fecha_cita))
         conn.commit()
         conn.close()
         return redirect(url_for('index', fecha=fecha_cita))
@@ -993,164 +772,36 @@ def nuevo():
     </html>
     """
 
-
 PLANTILLAS_DATOS = {
     'NORMAL': {
-        'descripcion': (
-            'Ventrículo izquierdo de dimensiones conservadas. Espesor parietal'
-            ' aumentado.\nFunción sistólica ventricular izquierda,'
-            ' conservada.\nMotilidad segmentaria normal en reposo.\nVálvula'
-            ' aórtica, apertura y movilidad normal.\nVálvula mitral, apertura y'
-            ' movilidad normal.\nAurícula izquierda dilatación leve. Cavidades'
-            ' derechas de dimensiones normales.\nSeptum interauricular e'
-            ' interventricular íntegrros.\nAorta ascendente y cayado de'
-            ' diámetros normales.\nVena cava inferior, no dilatada, con colapso'
-            ' inspiratorio > 50%.\nPericardio, normal.'
-        ),
-        'conclusion': (
-            'Dimensiones conservadas del ventriculo izquierdo. Función'
-            ' sistolica conservada.\nContractilidad normal en reposo. Cavidades'
-            ' derechas conservadas.\nAuricula izquierda no dilatada.\nFunción'
-            ' diastólica normal, sin aumento de presiones de'
-            ' llenado.\nVálvulas sin alteraciones de consideración. Escape'
-            ' tricuspideo leve.\nPresiones pulmonares estimadas normales.\nVCI'
-            ' no dilatada con colapso inspiratorio mayor al 50%.'
-        ),
+        'descripcion': 'Ventrículo izquierdo de dimensiones conservadas. Espesor parietal aumentado.\nFunción sistólica ventricular izquierda, conservada.\nMotilidad segmentaria normal en reposo.\nVálvula aórtica, apertura y movilidad normal.\nVálvula mitral, apertura y movilidad normal.\nAurícula izquierda dilatación leve. Cavidades derechas de dimensiones normales.\nSeptum interauricular e interventricular íntegrros.\nAorta ascendente y cayado de diámetros normales.\nVena cava inferior, no dilatada, con colapso inspiratorio > 50%.\nPericardio, normal.',
+        'conclusion': 'Dimensiones conservadas del ventriculo izquierdo. Función sistolica conservada.\nContractilidad normal en reposo. Cavidades derechas conservadas.\nAuricula izquierda no dilatada.\nFunción diastólica normal, sin aumento de presiones de llenado.\nVálvulas sin alteraciones de consideración. Escape tricuspideo leve.\nPresiones pulmonares estimadas normales.\nVCI no dilatada con colapso inspiratorio mayor al 50%.'
     },
     'AI-HVI': {
-        'descripcion': (
-            'Ventrículo izquierdo de dimensiones conservadas. Espesor parietal'
-            ' aumentado.\nFunción sistólica ventricular izquierda,'
-            ' conservada.\nMotilidad segmentaria, normal en reposo.\nVálvula'
-            ' aórtica, esclerosis, apertura conservada.\nVálvula mitral,'
-            ' esclerosis, apertura conservada.\nAurícula izquierda dilatación'
-            ' leve. Cavidades derechas de dimensiones normales.\nSeptum'
-            ' interauricular e interventricular íntegrros.\nAorta ascendente y'
-            ' cayado de diámetros normales.\nVena cava inferior, no dilatada,'
-            ' con colapso inspiratorio > 50%.\nPericardio, normal.'
-        ),
-        'conclusion': (
-            'Hipertrofia concéntrica leve del ventriculo izquierdo. Función'
-            ' sistolica conservada.\nContractilidad conservada en'
-            ' reposo.\nAuricula izquierda con dilatación leve.\nDisfunción'
-            ' diastólica tipo 1, sin aumento de presiones de'
-            ' llenado.\nInsuficiencia mitral leve. Escape tricuspideo'
-            ' leve.\nPresiones pulmonares estimadas normales.\nVCI no dilatada'
-            ' con colapso inspiratorio mayor al 50%.'
-        ),
+        'descripcion': 'Ventrículo izquierdo de dimensiones conservadas. Espesor parietal aumentado.\nFunción sistólica ventricular izquierda, conservada.\nMotilidad segmentaria, normal en reposo.\nVálvula aórtica, esclerosis, apertura conservada.\nVálvula mitral, esclerosis, apertura conservada.\nAurícula izquierda dilatación leve. Cavidades derechas de dimensiones normales.\nSeptum interauricular e interventricular íntegrros.\nAorta ascendente y cayado de diámetros normales.\nVena cava inferior, no dilatada, con colapso inspiratorio > 50%.\nPericardio, normal.',
+        'conclusion': 'Hipertrofia concéntrica leve del ventriculo izquierdo. Función sistolica conservada.\nContractilidad conservada en reposo.\nAuricula izquierda con dilatación leve.\nDisfunción diastólica tipo 1, sin aumento de presiones de llenado.\nInsuficiencia mitral leve. Escape tricuspideo leve.\nPresiones pulmonares estimadas normales.\nVCI no dilatada con colapso inspiratorio mayor al 50%.'
     },
     'ESCLERO': {
-        'descripcion': (
-            'Ventrículo izquierdo de dimensiones conservadas. Espesor parietal'
-            ' aumentado.\nFunción sistólica ventricular izquierda,'
-            ' conservada.\nMotilidad segmentaria, normal en reposo.\nVálvula'
-            ' aórtica, esclerosis, apertura conservada.\nVálvula mitral,'
-            ' esclerosis, apertura conservada.\nAurícula izquierda dilatación'
-            ' leve. Cavidades derechas de dimensiones normales.\nSeptum'
-            ' interauricular e interventricular íntegrros.\nAorta ascendente y'
-            ' cayado de diámetros normales.\nVena cava inferior, no dilatada,'
-            ' con colapso inspiratorio > 50%.\nPericardio, normal.'
-        ),
-        'conclusion': (
-            'Hipertrofia concéntrica leve del ventriculo izquierdo. Función'
-            ' sistolica conservada.\nContractilidad conservada en'
-            ' reposo.\nAuricula izquierda con dilatación leve.\nDisfunción'
-            ' diastólica tipo 1, sin aumento de presiones de'
-            ' llenado.\nEsclerosis mitroaortica degenerativa. Insuficiencia'
-            ' tricuspidea leve.\nPresiones pulmonares estimadas normales.\nVCI'
-            ' no dilatada con colapso inspiratorio mayor al 50%.'
-        ),
+        'descripcion': 'Ventrículo izquierdo de dimensiones conservadas. Espesor parietal aumentado.\nFunción sistólica ventricular izquierda, conservada.\nMotilidad segmentaria, normal en reposo.\nVálvula aórtica, esclerosis, apertura conservada.\nVálvula mitral, esclerosis, apertura conservada.\nAurícula izquierda dilatación leve. Cavidades derechas de dimensiones normales.\nSeptum interauricular e interventricular íntegrros.\nAorta ascendente y cayado de diámetros normales.\nVena cava inferior, no dilatada, con colapso inspiratorio > 50%.\nPericardio, normal.',
+        'conclusion': 'Hipertrofia concéntrica leve del ventriculo izquierdo. Función sistolica conservada.\nContractilidad conservada en reposo.\nAuricula izquierda con dilatación leve.\nDisfunción diastólica tipo 1, sin aumento de presiones de llenado.\nEsclerosis mitroaortica degenerativa. Insuficiencia tricuspidea leve.\nPresiones pulmonares estimadas normales.\nVCI no dilatada con colapso inspiratorio mayor al 50%.'
     },
     'FA': {
-        'descripcion': (
-            'Ventrículo izquierdo de dimensiones conservadas. Espesor parietal'
-            ' aumentado.\nFunción sistólica ventricular izquierda,'
-            ' conservada.\nMotilidad segmentaria, normal en reposo.\nVálvula'
-            ' aórtica, esclerosis, apertura conservada.\nVálvula mitral,'
-            ' esclerosis, apertura conservada.\nAurícula izquierda dilatación'
-            ' leve. Cavidades derechas de dimensiones normales.\nSeptum'
-            ' interauricular e interventricular íntegrros.\nAorta ascendente y'
-            ' cayado de diámetros normales.\nVena cava inferior, no dilatada,'
-            ' con colapso inspiratorio > 50%.\nPericardio, normal.'
-        ),
-        'conclusion': (
-            'Hipertrofia concéntrica leve del ventriculo izquierdo. Función'
-            ' sistolica conservada.\nContractilidad conservada en'
-            ' reposo.\nAuricula izquierda con dilatación leve.\nLlenado del VI'
-            ' de onda única por arritmia.\nEsclerosis mitroaortica'
-            ' degenerativa. Insuficiencia tricuspidea leve.\nPresiones'
-            ' pulmonares estimadas normales.\nVCI no dilatada con colapcol'
-            ' inspiratorio mayor al 50%.'
-        ),
+        'descripcion': 'Ventrículo izquierdo de dimensiones conservadas. Espesor parietal aumentado.\nFunción sistólica ventricular izquierda, conservada.\nMotilidad segmentaria, normal en reposo.\nVálvula aórtica, esclerosis, apertura conservada.\nVálvula mitral, esclerosis, apertura conservada.\nAurícula izquierda dilatación leve. Cavidades derechas de dimensiones normales.\nSeptum interauricular e interventricular íntegrros.\nAorta ascendente y cayado de diámetros normales.\nVena cava inferior, no dilatada, con colapso inspiratorio > 50%.\nPericardio, normal.',
+        'conclusion': 'Hipertrofia concéntrica leve del ventriculo izquierdo. Función sistolica conservada.\nContractilidad conservada en reposo.\nAuricula izquierda con dilatación leve.\nLlenado del VI de onda única por arritmia.\nEsclerosis mitroaortica degenerativa. Insuficiencia tricuspidea leve.\nPresiones pulmonares estimadas normales.\nVCI no dilatada con colapcol inspiratorio mayor al 50%.'
     },
     'DILATADA': {
-        'descripcion': (
-            'Ventrículo izquierdo de dimensiones aumentadas. Espesor parietal'
-            ' conservado.\nFunción sistólica ventricular izquierda,'
-            ' deteriorada.\nMotilidad segmentaria, hipoquinesia difusa.\nVálvula'
-            ' aórtica, apertura y movilidad conservada.\nVálvula mitral, apertura'
-            ' y movilidad conservada.\nAurícula izquierda dilatación severa.'
-            ' Cavidades derechas de dimensiones normales.\nSeptum interauricular'
-            ' e interventricular íntegrros.\nAorta ascendente y cayado de'
-            ' diámetros aumentados.\nVena cava inferior, no dilatada, con'
-            ' colapso inspiratorio > 50%.\nPericardio, normal.'
-        ),
-        'conclusion': (
-            'Dilatación excéntrica del ventriculo izquierdo. Función sistolica'
-            ' con deterioro severo.\nHipoquinesia difusa.\nDilatación severa de'
-            ' ambas auriculas.\nDisfunción diastólica tipo 3, con aumento de'
-            ' presiones de llenado.\nInsuficiencia mitral y tricuspidea ambas'
-            ' de grado moderado.\nHipertensión pulmonar leve.\nVCI no dilatada'
-            ' con colapso inspiratorio disminuido.'
-        ),
+        'descripcion': 'Ventrículo izquierdo de dimensiones aumentadas. Espesor parietal conservado.\nFunción sistólica ventricular izquierda, deteriorada.\nMotilidad segmentaria, hipoquinesia difusa.\nVálvula aórtica, apertura y movilidad conservada.\nVálvula mitral, apertura y movilidad conservada.\nAurícula izquierda dilatación severa. Cavidades derechas de dimensiones normales.\nSeptum interauricular e interventricular íntegrros.\nAorta ascendente y cayado de diámetros aumentados.\nVena cava inferior, no dilatada, con colapso inspiratorio > 50%.\nPericardio, normal.',
+        'conclusion': 'Dilatación excéntrica del ventriculo izquierdo. Función sistolica con deterioro severo.\nHipoquinesia difusa.\nDilatación severa de ambas auriculas.\nDisfunción diastólica tipo 3, con aumento de presiones de llenado.\nInsuficiencia mitral y tricuspidea ambas de grado moderado.\nHipertensión pulmonar leve.\nVCI no dilatada con colapso inspiratorio disminuido.'
     },
     'EST AORT': {
-        'descripcion': (
-            'Ventrículo izquierdo de dimensiones conservadas. Espesor parietal'
-            ' aumentado.\nFunción sistólica ventricular izquierda,'
-            ' conservada.\nMotilidad segmentaria, normal en reposo.\nVálvula'
-            ' aórtica, esclerocalcificada, apertura reducida.\nVálvula mitral,'
-            ' esclerosis, apertura conservada.\nAurícula izquierda dilatación'
-            ' leve. Cavidades derechas de dimensiones normales.\nSeptum'
-            ' interauricular e interventricular íntegrros.\nAorta ascendente y'
-            ' cayado de diámetros normales.\nVena cava inferior, no dilatada,'
-            ' con colapso inspiratorio > 50%.\nPericardio, normal.'
-        ),
-        'conclusion': (
-            'Hipertrofia concéntrica leve del ventriculo izquierdo. Función'
-            ' sistolica conservada.\nContractilidad conservada en'
-            ' reposo.\nAuricula izquierda con dilatación leve.\nDisfunción'
-            ' diastólica tipo 1, sin aumento de presiones de'
-            ' llenado.\nEsclerosis mitroaortica degenerativa. Estenosis'
-            ' aórtica moderada. Insuficiencia tricuspidea leve.\nPresiones'
-            ' pulmonares estimadas normales.\nVCI no dilatada con colapso'
-            ' inspiratorio mayor al 50%.'
-        ),
+        'descripcion': 'Ventrículo izquierdo de dimensiones conservadas. Espesor parietal aumentado.\nFunción sistólica ventricular izquierda, conservada.\nMotilidad segmentaria, normal en reposo.\nVálvula aórtica, esclerocalcificada, apertura reducida.\nVálvula mitral, esclerosis, apertura conservada.\nAurícula izquierda dilatación leve. Cavidades derechas de dimensiones normales.\nSeptum interauricular e interventricular íntegrros.\nAorta ascendente y cayado de diámetros normales.\nVena cava inferior, no dilatada, con colapso inspiratorio > 50%.\nPericardio, normal.',
+        'conclusion': 'Hipertrofia concéntrica leve del ventriculo izquierdo. Función sistolica conservada.\nContractilidad conservada en reposo.\nAuricula izquierda con dilatación leve.\nDisfunción diastólica tipo 1, sin aumento de presiones de llenado.\nEsclerosis mitroaortica degenerativa. Estenosis aórtica moderada. Insuficiencia tricuspidea leve.\nPresiones pulmonares estimadas normales.\nVCI no dilatada con colapso inspiratorio mayor al 50%.'
     },
     'COMPLETO': {
-        'descripcion': (
-            'Ventrículo izquierdo de dimensiones conservadas. Espesor parietal'
-            ' aumentado.\nFunción sistólica ventricular izquierda,'
-            ' conservada.\nMotilidad segmentaria normal en reposo.\nVálvula'
-            ' aórtica, apertura y movilidad normal.\nVálvula mitral, apertura y'
-            ' movilidad normal.\nAurícula izquierda dilatación leve. Cavidades'
-            ' derechas de dimensiones normales.\nSeptum interauricular e'
-            ' interventricular íntegrros.\nAorta ascendente y cayado de'
-            ' diámetros normales.\nVena cava inferior, no dilatada, con colapso'
-            ' inspiratorio > 50%.\nPericardio, normal.'
-        ),
-        'conclusion': (
-            'Hipertrofia concéntrica leve del ventriculo izquierdo. Función'
-            ' sistolica conservada.\nContractilidad normal en reposo. Cavidades'
-            ' derechas conservadas.\nAuricula izquierda no dilatada.\nFunción'
-            ' diastólica normal, sin aumento de presiones de'
-            ' llenado.\nVálvulas sin alteraciones de consideración. Escape'
-            ' tricuspideo leve.\nPresiones pulmonares estimadas normales.\nVCI'
-            ' no dilatada con colapso inspiratorio mayor al 50%.'
-        ),
-    },
+        'descripcion': 'Ventrículo izquierdo de dimensiones conservadas. Espesor parietal aumentado.\nFunción sistólica ventricular izquierda, conservada.\nMotilidad segmentaria normal en reposo.\nVálvula aórtica, apertura y movilidad normal.\nVálvula mitral, apertura y movilidad normal.\nAurícula izquierda dilatación leve. Cavidades derechas de dimensiones normales.\nSeptum interauricular e interventricular íntegrros.\nAorta ascendente y cayado de diámetros normales.\nVena cava inferior, no dilatada, con colapso inspiratorio > 50%.\nPericardio, normal.',
+        'conclusion': 'Hipertrofia concéntrica leve del ventriculo izquierdo. Función sistolica conservada.\nContractilidad normal en reposo. Cavidades derechas conservadas.\nAuricula izquierda no dilatada.\nFunción diastólica normal, sin aumento de presiones de llenado.\nVálvulas sin alteraciones de consideración. Escape tricuspideo leve.\nPresiones pulmonares estimadas normales.\nVCI no dilatada con colapso inspiratorio mayor al 50%.'
+    }
 }
-
 
 @app.route('/plantilla-ovelar', methods=['GET', 'POST'])
 def plantilla_ovelar():
@@ -1173,15 +824,9 @@ def plantilla_ovelar():
             'vd': request.form.get(f'{pestaña_activa}_vd', ''),
             'vi_diastole': request.form.get(f'{pestaña_activa}_vi_diastole', ''),
             'vi_sistole': request.form.get(f'{pestaña_activa}_vi_sistole', ''),
-            'vol_diastole_vi': request.form.get(
-                f'{pestaña_activa}_vol_diastole_vi', ''
-            ),
-            'vol_sistole_vi': request.form.get(
-                f'{pestaña_activa}_vol_sistole_vi', ''
-            ),
-            'facortamiento': request.form.get(
-                f'{pestaña_activa}_facortamiento', ''
-            ),
+            'vol_diastole_vi': request.form.get(f'{pestaña_activa}_vol_diastole_vi', ''),
+            'vol_sistole_vi': request.form.get(f'{pestaña_activa}_vol_sistole_vi', ''),
+            'facortamiento': request.form.get(f'{pestaña_activa}_facortamiento', ''),
             'feyeccion': request.form.get(f'{pestaña_activa}_feyeccion', ''),
             'siv': request.form.get(f'{pestaña_activa}_siv', ''),
             'ppvi': request.form.get(f'{pestaña_activa}_ppvi', ''),
@@ -1202,32 +847,16 @@ def plantilla_ovelar():
             'grad_medio': request.form.get(f'{pestaña_activa}_grad_medio', ''),
             'area_aortica': request.form.get(f'{pestaña_activa}_area_aortica', ''),
             'thp': request.form.get(f'{pestaña_activa}_thp', ''),
-            'flujo_tricuspideo': request.form.get(
-                f'{pestaña_activa}_flujo_tricuspideo', ''
-            ),
+            'flujo_tricuspideo': request.form.get(f'{pestaña_activa}_flujo_tricuspideo', ''),
             'grad_vd_ad': request.form.get(f'{pestaña_activa}_grad_vd_ad', ''),
-            'flujo_pulmonar': request.form.get(
-                f'{pestaña_activa}_flujo_pulmonar', ''
-            ),
+            'flujo_pulmonar': request.form.get(f'{pestaña_activa}_flujo_pulmonar', ''),
             'pa_sistolica': request.form.get(f'{pestaña_activa}_pa_sistolica', ''),
         }
 
         desc = request.form.get(f'{pestaña_activa}_desc', '')
         conc = request.form.get(f'{pestaña_activa}_conc', '')
 
-        pdf_filename = generar_pdf_ecocardiograma(
-            'Sanatorio Ovelar',
-            cedula,
-            nombre,
-            edad,
-            sexo,
-            motivo,
-            pestaña_activa,
-            dims,
-            doppler,
-            desc,
-            conc,
-        )
+        pdf_filename = generar_pdf_ecocardiograma('Sanatorio Ovelar', cedula, nombre, edad, sexo, motivo, pestaña_activa, dims, doppler, desc, conc)
 
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
@@ -1236,34 +865,17 @@ def plantilla_ovelar():
         if p_row:
             p_id = p_row[0]
         else:
-            cursor.execute(
-                'INSERT INTO pacientes (cedula, nombre, sexo, fecha_cita, es_estudio)'
-                ' VALUES (?, ?, ?, ?, 1)',
-                (cedula, nombre, sexo, datetime.today().strftime('%Y-%m-%d')),
-            )
+            cursor.execute('INSERT INTO pacientes (cedula, nombre, sexo, fecha_cita, es_estudio) VALUES (?, ?, ?, ?, 1)', (cedula, nombre, sexo, datetime.today().strftime('%Y-%m-%d')))
             p_id = cursor.lastrowid
 
-        cursor.execute(
-            'INSERT INTO estudios (paciente_id, nombre_estudio, archivo, fecha,'
-            ' sanatorio, tipo_plantilla, contenido_editable) VALUES (?, ?, ?, ?,'
-            ' ?, ?, ?)',
-            (
-                p_id,
-                f'Ecocardiograma ({pestaña_activa})',
-                pdf_filename,
-                datetime.today().strftime('%Y-%m-%d %H:%M'),
-                'Sanatorio Ovelar',
-                pestaña_activa,
-                conc,
-            ),
-        )
+        cursor.execute('INSERT INTO estudios (paciente_id, nombre_estudio, archivo, fecha, sanatorio, tipo_plantilla, contenido_editable) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                       (p_id, f'Ecocardiograma ({pestaña_activa})', pdf_filename, datetime.today().strftime('%Y-%m-%d %H:%M'), 'Sanatorio Ovelar', pestaña_activa, conc))
         conn.commit()
         conn.close()
 
         return redirect(url_for('imprimir_pdf', filename=pdf_filename))
 
     return renderizar_plantilla_html('Sanatorio Ovelar')
-
 
 @app.route('/plantilla-san-carlos', methods=['GET', 'POST'])
 def plantilla_san_carlos():
@@ -1286,15 +898,9 @@ def plantilla_san_carlos():
             'vd': request.form.get(f'{pestaña_activa}_vd', ''),
             'vi_diastole': request.form.get(f'{pestaña_activa}_vi_diastole', ''),
             'vi_sistole': request.form.get(f'{pestaña_activa}_vi_sistole', ''),
-            'vol_diastole_vi': request.form.get(
-                f'{pestaña_activa}_vol_diastole_vi', ''
-            ),
-            'vol_sistole_vi': request.form.get(
-                f'{pestaña_activa}_vol_sistole_vi', ''
-            ),
-            'facortamiento': request.form.get(
-                f'{pestaña_activa}_facortamiento', ''
-            ),
+            'vol_diastole_vi': request.form.get(f'{pestaña_activa}_vol_diastole_vi', ''),
+            'vol_sistole_vi': request.form.get(f'{pestaña_activa}_vol_sistole_vi', ''),
+            'facortamiento': request.form.get(f'{pestaña_activa}_facortamiento', ''),
             'feyeccion': request.form.get(f'{pestaña_activa}_feyeccion', ''),
             'siv': request.form.get(f'{pestaña_activa}_siv', ''),
             'ppvi': request.form.get(f'{pestaña_activa}_ppvi', ''),
@@ -1315,32 +921,16 @@ def plantilla_san_carlos():
             'grad_medio': request.form.get(f'{pestaña_activa}_grad_medio', ''),
             'area_aortica': request.form.get(f'{pestaña_activa}_area_aortica', ''),
             'thp': request.form.get(f'{pestaña_activa}_thp', ''),
-            'flujo_tricuspideo': request.form.get(
-                f'{pestaña_activa}_flujo_tricuspideo', ''
-            ),
+            'flujo_tricuspideo': request.form.get(f'{pestaña_activa}_flujo_tricuspideo', ''),
             'grad_vd_ad': request.form.get(f'{pestaña_activa}_grad_vd_ad', ''),
-            'flujo_pulmonar': request.form.get(
-                f'{pestaña_activa}_flujo_pulmonar', ''
-            ),
+            'flujo_pulmonar': request.form.get(f'{pestaña_activa}_flujo_pulmonar', ''),
             'pa_sistolica': request.form.get(f'{pestaña_activa}_pa_sistolica', ''),
         }
 
         desc = request.form.get(f'{pestaña_activa}_desc', '')
         conc = request.form.get(f'{pestaña_activa}_conc', '')
 
-        pdf_filename = generar_pdf_ecocardiograma(
-            'Sanatorio San Carlos',
-            cedula,
-            nombre,
-            edad,
-            sexo,
-            motivo,
-            pestaña_activa,
-            dims,
-            doppler,
-            desc,
-            conc,
-        )
+        pdf_filename = generar_pdf_ecocardiograma('Sanatorio San Carlos', cedula, nombre, edad, sexo, motivo, pestaña_activa, dims, doppler, desc, conc)
 
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
@@ -1349,34 +939,17 @@ def plantilla_san_carlos():
         if p_row:
             p_id = p_row[0]
         else:
-            cursor.execute(
-                'INSERT INTO pacientes (cedula, nombre, sexo, fecha_cita, es_estudio)'
-                ' VALUES (?, ?, ?, ?, 1)',
-                (cedula, nombre, sexo, datetime.today().strftime('%Y-%m-%d')),
-            )
+            cursor.execute('INSERT INTO pacientes (cedula, nombre, sexo, fecha_cita, es_estudio) VALUES (?, ?, ?, ?, 1)', (cedula, nombre, sexo, datetime.today().strftime('%Y-%m-%d')))
             p_id = cursor.lastrowid
 
-        cursor.execute(
-            'INSERT INTO estudios (paciente_id, nombre_estudio, archivo, fecha,'
-            ' sanatorio, tipo_plantilla, contenido_editable) VALUES (?, ?, ?, ?,'
-            ' ?, ?, ?)',
-            (
-                p_id,
-                f'Ecocardiograma ({pestaña_activa})',
-                pdf_filename,
-                datetime.today().strftime('%Y-%m-%d %H:%M'),
-                'Sanatorio San Carlos',
-                pestaña_activa,
-                conc,
-            ),
-        )
+        cursor.execute('INSERT INTO estudios (paciente_id, nombre_estudio, archivo, fecha, sanatorio, tipo_plantilla, contenido_editable) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                       (p_id, f'Ecocardiograma ({pestaña_activa})', pdf_filename, datetime.today().strftime('%Y-%m-%d %H:%M'), 'Sanatorio San Carlos', pestaña_activa, conc))
         conn.commit()
         conn.close()
 
         return redirect(url_for('imprimir_pdf', filename=pdf_filename))
 
     return renderizar_plantilla_html('Sanatorio San Carlos')
-
 
 @app.route('/imprimir/<filename>')
 def imprimir_pdf(filename):
@@ -1389,7 +962,7 @@ def imprimir_pdf(filename):
     <body style="font-family:Segoe UI; text-align:center; padding:50px; background:#f4f7f6;">
         <div style="background:white; padding:30px; border-radius:8px; box-shadow:0 2px 10px rgba(0,0,0,0.1); display:inline-block;">
             <h2 style="color:#107c41;">✅ ¡Informe Guardado e Impreso con Éxito!</h2>
-            <p>El PDF has sido generado y enviado a imprimir automáticamente.</p>
+            <p>El PDF ha sido generado y enviado a imprimir automáticamente.</p>
             <div style="margin-top:20px; display:flex; gap:15px; justify-content:center;">
                 <a href="/uploads/{filename}" target="_blank" style="background:#3498db; color:white; padding:10px 20px; text-decoration:none; border-radius:4px; font-weight:bold;">📄 Ver / Imprimir PDF</a>
                 <a href="/" style="background:#64748b; color:white; padding:10px 20px; text-decoration:none; border-radius:4px; font-weight:bold;">🏠 Volver al Panel</a>
@@ -1404,7 +977,6 @@ def imprimir_pdf(filename):
     </body>
     </html>
     """
-
 
 def renderizar_plantilla_html(nombre_sanatorio):
     sheets = list(PLANTILLAS_DATOS.keys())
@@ -1423,8 +995,6 @@ def renderizar_plantilla_html(nombre_sanatorio):
                 📑 Pestaña Activa: {sheetname} (Plantilla oficial integrada con valores de referencia)
             </div>
             <div style="padding:15px; border:2px solid #107c41; background:#fff; border-radius:4px;">
-                
-                <!-- 1. DIMENSIONES -->
                 <h3 style="color:#1e3a8a; margin-top:0; border-bottom:2px solid #e2e8f0; padding-bottom:5px;">1. Dimensiones</h3>
                 <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:12px; margin-bottom:20px;">
                     <div><label style="font-size:11px; font-weight:bold;">Aorta (AO) [v.n.: 20-37 mm]:</label><input type="text" name="{sheetname}_ao" value="" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px;"></div>
@@ -1448,11 +1018,9 @@ def renderizar_plantilla_html(nombre_sanatorio):
                     <div><label style="font-size:11px; font-weight:bold;">Índice Masa VI [v.n.: <115/<95]:</label><input type="text" name="{sheetname}_imasa_vi" value="" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px;"></div>
                 </div>
 
-                <!-- 2. DESCRIPCIÓN -->
                 <h3 style="color:#1e3a8a; margin-top:20px; border-bottom:2px solid #e2e8f0; padding-bottom:5px;">2. Descripción ({sheetname}):</h3>
                 <textarea name="{sheetname}_desc" rows="10" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:4px; font-family:Segoe UI; font-size:13px; box-sizing:border-box;">{data['descripcion']}</textarea>
 
-                <!-- 3. EXAMEN DOPPLER -->
                 <h3 style="color:#1e3a8a; margin-top:20px; border-bottom:2px solid #e2e8f0; padding-bottom:5px;">3. Examen Doppler</h3>
                 <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:12px; margin-bottom:20px;">
                     <div><label style="font-size:11px; font-weight:bold;">Flujo Mitral:</label><input type="text" name="{sheetname}_flujo_mitral" value="" placeholder="Ej: Insuficiencia leve." style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px;"></div>
@@ -1475,7 +1043,6 @@ def renderizar_plantilla_html(nombre_sanatorio):
                     <div><label style="font-size:11px; font-weight:bold;">PA Pulmonar Sistólica [mmHg]:</label><input type="text" name="{sheetname}_pa_sistolica" value="" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px;"></div>
                 </div>
 
-                <!-- 4. CONCLUSIÓN -->
                 <h3 style="color:#1e3a8a; margin-top:20px; border-bottom:2px solid #e2e8f0; padding-bottom:5px;">4. Conclusión ({sheetname}):</h3>
                 <textarea name="{sheetname}_conc" rows="8" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:4px; font-family:Segoe UI; font-size:13px; box-sizing:border-box;">{data['conclusion']}</textarea>
             </div>
@@ -1489,64 +1056,14 @@ def renderizar_plantilla_html(nombre_sanatorio):
         <meta charset="UTF-8">
         <title>Plantilla {nombre_sanatorio} - CardioSys</title>
         <style>
-            .excel-window {{
-                background: #ffffff;
-                border: 2px solid #107c41;
-                border-radius: 4px;
-                box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-                display: flex;
-                flex-direction: column;
-                height: 84vh;
-                max-width: 1150px;
-            }}
-            .excel-topbar {{
-                background: #f8fafc;
-                padding: 12px 20px;
-                border-bottom: 1px solid #cbd5e1;
-                display: flex;
-                align-items: center;
-                gap: 15px;
-                flex-wrap: wrap;
-            }}
-            .excel-content {{
-                flex: 1;
-                padding: 15px;
-                overflow-y: auto;
-                background: #ffffff;
-            }}
-            .tab-bar {{
-                background: #f3f4f6;
-                display: flex;
-                gap: 1px;
-                padding: 8px 10px 0 10px;
-                border-top: 1px solid #d1d5db;
-                overflow-x: auto;
-            }}
-            .excel-tab {{
-                background: #e5e7eb;
-                color: #374151;
-                border: 1px solid #d1d5db;
-                border-bottom: none;
-                padding: 8px 18px;
-                font-weight: bold;
-                font-size: 12px;
-                cursor: pointer;
-                border-top-left-radius: 4px;
-                border-top-right-radius: 4px;
-            }}
-            .excel-tab.active {{
-                background: #ffffff;
-                color: #107c41;
-                border-bottom: 2px solid #ffffff;
-                position: relative;
-                top: 1px;
-            }}
-            .sheet-page {{
-                display: none;
-            }}
-            .sheet-page.active {{
-                display: block;
-            }}
+            .excel-window {{ background: #ffffff; border: 2px solid #107c41; border-radius: 4px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); display: flex; flex-direction: column; height: 84vh; max-width: 1150px; }}
+            .excel-topbar {{ background: #f8fafc; padding: 12px 20px; border-bottom: 1px solid #cbd5e1; display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }}
+            .excel-content {{ flex: 1; padding: 15px; overflow-y: auto; background: #ffffff; }}
+            .tab-bar {{ background: #f3f4f6; display: flex; gap: 1px; padding: 8px 10px 0 10px; border-top: 1px solid #d1d5db; overflow-x: auto; }}
+            .excel-tab {{ background: #e5e7eb; color: #374151; border: 1px solid #d1d5db; border-bottom: none; padding: 8px 18px; font-weight: bold; font-size: 12px; cursor: pointer; border-top-left-radius: 4px; border-top-right-radius: 4px; }}
+            .excel-tab.active {{ background: #ffffff; color: #107c41; border-bottom: 2px solid #ffffff; position: relative; top: 1px; }}
+            .sheet-page {{ display: none; }}
+            .sheet-page.active {{ display: block; }}
         </style>
         <script>
             let pestanaActual = 'NORMAL';
@@ -1591,7 +1108,6 @@ def renderizar_plantilla_html(nombre_sanatorio):
             <form method="POST">
                 <input type="hidden" id="input_pestana_activa" name="pestana_activa" value="NORMAL">
                 <div class="excel-window">
-                    <!-- ENCABEZADO SUPERIOR EXACTO: Cédula, Nombre y Apellido, Edad, Sexo, Motivo -->
                     <div class="excel-topbar">
                         <div style="flex: 1; min-width: 120px;">
                             <label style="font-weight: bold; font-size: 11px; color: #334155;">Cédula (C.I.):</label>
@@ -1621,12 +1137,10 @@ def renderizar_plantilla_html(nombre_sanatorio):
                         </div>
                     </div>
 
-                    <!-- CONTENIDO DE LAS PESTAÑAS -->
                     <div class="excel-content">
                         {pages_html}
                     </div>
 
-                    <!-- BARRA DE PESTAÑAS INFERIOR -->
                     <div class="tab-bar">
                         {tabs_html}
                     </div>
@@ -1636,7 +1150,6 @@ def renderizar_plantilla_html(nombre_sanatorio):
     </body>
     </html>
     """
-
 
 @app.route('/estudios-recientes')
 def estudios_recientes():
@@ -1657,11 +1170,7 @@ def estudios_recientes():
     filas_estudios = ''
     for est in estudios:
         sanatorio_badge = est[6] or 'No especificado'
-        badge_color = (
-            '#107c41'
-            if 'Ovelar' in sanatorio_badge
-            else '#0284c7' if 'Carlos' in sanatorio_badge else '#64748b'
-        )
+        badge_color = '#107c41' if 'Ovelar' in sanatorio_badge else ('#0284c7' if 'Carlos' in sanatorio_badge else '#64748b')
         pdf_link = f'/uploads/{est[4]}' if est[4] else '#'
 
         filas_estudios += f"""
@@ -1678,10 +1187,7 @@ def estudios_recientes():
         </tr>
         """
     if not filas_estudios:
-        filas_estudios = (
-            "<tr><td colspan='6' style='padding:15px;"
-            " text-align:center;'>No hay estudios recientes registrados.</td></tr>"
-        )
+        filas_estudios = "<tr><td colspan='6' style='padding:15px; text-align:center;'>No hay estudios recientes registrados.</td></tr>"
 
     return f"""
     <!DOCTYPE html>
@@ -1726,13 +1232,11 @@ def estudios_recientes():
     </html>
     """
 
-
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
     if not session.get('logged_in'):
         return redirect(url_for('login'))
     return send_file(os.path.join(upload_folder, filename))
-
 
 @app.route('/ficha/<int:id>', methods=['GET', 'POST'])
 def ficha(id):
@@ -1746,9 +1250,7 @@ def ficha(id):
         accion = request.form.get('accion')
         if accion == 'guardar_antecedentes':
             nuevo_ant = request.form.get('antecedentes_base', '')
-            cursor.execute(
-                'UPDATE pacientes SET antecedentes = ? WHERE id = ?', (nuevo_ant, id)
-            )
+            cursor.execute('UPDATE pacientes SET antecedentes = ? WHERE id = ?', (nuevo_ant, id))
             conn.commit()
         elif accion == 'nueva_consulta':
             fecha_cons = datetime.today().strftime('%Y-%m-%d %H:%M')
@@ -1771,33 +1273,10 @@ def ficha(id):
             lee = request.form.get('lee', '')
             examen_fisico_notas = request.form.get('examen_fisico_notas', '')
 
-            cursor.execute(
-                '''
-                    INSERT INTO historial (paciente_id, fecha, motivo, pa, fc, peso, talla, imc, cintura, estudios_historial, medicacion_actual, framingham, cha2ds2, funcion_renal, rel_alb_crea, scag, asa, lee, examen_fisico_notas)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ''',
-                (
-                    id,
-                    fecha_cons,
-                    motivo_evolucion,
-                    pa,
-                    fc,
-                    peso,
-                    talla,
-                    imc,
-                    cintura,
-                    estudios_h,
-                    med,
-                    framingham,
-                    cha2ds2,
-                    funcion_renal,
-                    rel_alb_crea,
-                    scag,
-                    asa,
-                    lee,
-                    examen_fisico_notas,
-                ),
-            )
+            cursor.execute('''
+                INSERT INTO historial (paciente_id, fecha, motivo, pa, fc, peso, talla, imc, cintura, estudios_historial, medicacion_actual, framingham, cha2ds2, funcion_renal, rel_alb_crea, scag, asa, lee, examen_fisico_notas)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (id, fecha_cons, motivo_evolucion, pa, fc, peso, talla, imc, cintura, estudios_h, med, framingham, cha2ds2, funcion_renal, rel_alb_crea, scag, asa, lee, examen_fisico_notas))
             conn.commit()
         elif accion == 'subir_archivo':
             nombre_estudio = request.form.get('nombre_estudio', 'Estudio')
@@ -1806,41 +1285,17 @@ def ficha(id):
                 filename = f'Estudio_{id}_{int(datetime.now().timestamp())}_{archivo_obj.filename}'
                 filepath = os.path.join(upload_folder, filename)
                 archivo_obj.save(filepath)
-                cursor.execute(
-                    'INSERT INTO estudios (paciente_id, nombre_estudio, archivo, fecha,'
-                    ' sanatorio) VALUES (?, ?, ?, ?, ?)',
-                    (
-                        id,
-                        nombre_estudio,
-                        filename,
-                        datetime.today().strftime('%Y-%m-%d %H:%M'),
-                        'Adjunto Consultorio',
-                    ),
-                )
+                cursor.execute('INSERT INTO estudios (paciente_id, nombre_estudio, archivo, fecha, sanatorio) VALUES (?, ?, ?, ?, ?)',
+                               (id, nombre_estudio, filename, datetime.today().strftime('%Y-%m-%d %H:%M'), 'Adjunto Consultorio'))
                 conn.commit()
 
-    cursor.execute(
-        'SELECT id, cedula, nombre, nacimiento, sexo, telefono, profesion,'
-        ' direccion, alergias, antecedentes FROM pacientes WHERE id = ?',
-        (id,),
-    )
+    cursor.execute('SELECT id, cedula, nombre, nacimiento, sexo, telefono, profesion, direccion, alergias, antecedentes FROM pacientes WHERE id = ?', (id,))
     paciente = cursor.fetchone()
 
-    cursor.execute(
-        'SELECT fecha, antecedentes_consulta, motivo, consulta_actual, pa, fc,'
-        ' peso, talla, imc, cintura, estudios_historial, medicacion_actual,'
-        ' framingham, cha2ds2, funcion_renal, rel_alb_crea, scag, asa, lee,'
-        ' examen_fisico_notas FROM historial WHERE paciente_id = ? ORDER BY id'
-        ' DESC',
-        (id,),
-    )
+    cursor.execute('SELECT fecha, antecedentes_consulta, motivo, consulta_actual, pa, fc, peso, talla, imc, cintura, estudios_historial, medicacion_actual, framingham, cha2ds2, funcion_renal, rel_alb_crea, scag, asa, lee, examen_fisico_notas FROM historial WHERE paciente_id = ? ORDER BY id DESC', (id,))
     historiales = cursor.fetchall()
 
-    cursor.execute(
-        'SELECT id, nombre_estudio, archivo, fecha FROM estudios WHERE'
-        ' paciente_id = ? ORDER BY id DESC',
-        (id,),
-    )
+    cursor.execute('SELECT id, nombre_estudio, archivo, fecha FROM estudios WHERE paciente_id = ? ORDER BY id DESC', (id,))
     archivos_paciente = cursor.fetchall()
 
     conn.close()
@@ -1852,18 +1307,15 @@ def ficha(id):
     edad_txt = f'{edad_num} años' if edad_num else ''
     sexo_paciente = paciente[4] or 'Femenino'
 
-    # Resumen de la consulta anterior (sin mostrar campos vacíos)
+    # Resumen de consulta anterior (Ocultando vacíos)
     ultima_consulta_html = ''
     if len(historiales) > 0:
         ult = historiales[0]
-        campos_ult = []
-        if ult[2]:
-            campos_ult.append(f'<div><b>Motivo / Evolución:</b> {ult[2]}</div>')
-        if ult[10]:
-            campos_ult.append(f'<div><b>Estudios:</b> {ult[10]}</div>')
-        if ult[11]:
-            campos_ult.append(f'<div><b>Medicación Actual:</b> {ult[11]}</div>')
-        
+        grid_items = []
+        if ult[2]: grid_items.append(f'<div><b>Motivo / Evolución:</b> {ult[2]}</div>')
+        if ult[10]: grid_items.append(f'<div><b>Estudios:</b> {ult[10]}</div>')
+        if ult[11]: grid_items.append(f'<div><b>Medicación Actual:</b> {ult[11]}</div>')
+
         ef_items = []
         if ult[4]: ef_items.append(f'PA: {ult[4]} mmHg')
         if ult[5]: ef_items.append(f'FC: {ult[5]} lpm')
@@ -1871,13 +1323,13 @@ def ficha(id):
         if ult[7]: ef_items.append(f'Talla: {ult[7]} m')
         if ult[8]: ef_items.append(f'IMC: {ult[8]}')
         if ult[9]: ef_items.append(f'Cintura: {ult[9]} cm')
-        
+
         ef_html = f'<div style="background:#1e293b; padding:8px 12px; border-radius:4px; margin-top:10px; font-size:12px;"><b>Examen Físico:</b> {" | ".join(ef_items)}</div>' if ef_items else ''
         if ult[19]:
             ef_html += f'<div style="background:#1e293b; padding:8px 12px; border-radius:4px; margin-top:6px; font-size:12px;"><b>Notas Ex. Físico:</b> {ult[19]}</div>'
 
-        grid_html = f'<div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; font-size:13px; color:#e2e8f0;">' + "".join(campos_ult) + '</div>' if campos_ult else ''
-        
+        grid_html = f'<div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; font-size:13px; color:#e2e8f0;">' + "".join(grid_items) + '</div>' if grid_items else ''
+
         ultima_consulta_html = f"""
         <div style="background:#334155; color:#f8fafc; padding:20px; border-radius:8px; margin-bottom:20px; border:1px solid #475569; box-shadow:0 4px 10px rgba(0,0,0,0.1);">
             <div style="display:flex; justify-content:space-between; border-bottom:1px solid #475569; padding-bottom:6px; margin-bottom:12px; font-weight:bold; color:#38bdf8; font-size:14px;">
@@ -1888,12 +1340,9 @@ def ficha(id):
         </div>
         """
     else:
-        ultima_consulta_html = (
-            "<p style='color:#64748b; font-style:italic; font-size:13px;"
-            " margin-bottom:15px;'>No hay consultas anteriores registradas.</p>"
-        )
+        ultima_consulta_html = "<p style='color:#64748b; font-style:italic; font-size:13px; margin-bottom:15px;'>No hay consultas anteriores registradas.</p>"
 
-    # Listado completo de historiales (sin mostrar campos vacíos)
+    # Historial completo (Ocultando vacíos)
     historial_completo_html = ''
     for h in historiales:
         lineas_h = []
@@ -1918,20 +1367,12 @@ def ficha(id):
             if h[14]: scores_parts.append(f'F. Renal: {h[14]}')
             if h[15]: scores_parts.append(f'Rel. Alb/Crea: {h[15]}')
             if h[16]: scores_parts.append(f'SCag: {h[16]}')
-            scores_previo += f"""
-            <div style="background:#e0f2fe; padding:8px 12px; border-radius:6px; margin:8px 0; font-size:12px; color:#0369a1;">
-                <b>📊 Scores:</b> {" | ".join(scores_parts)}
-            </div>
-            """
+            scores_previo += f'<div style="background:#e0f2fe; padding:8px 12px; border-radius:6px; margin:8px 0; font-size:12px; color:#0369a1;"><b>📊 Scores:</b> {" | ".join(scores_parts)}</div>'
         if h[17] or h[18]:
             pre_parts = []
             if h[17]: pre_parts.append(f'ASA: {h[17]}')
             if h[18]: pre_parts.append(f'Índice de Lee: {h[18]}')
-            scores_previo += f"""
-            <div style="background:#fef3c7; padding:8px 12px; border-radius:6px; margin:8px 0; font-size:12px; color:#b45309;">
-                <b>🏥 Prequirúrgico:</b> {" | ".join(pre_parts)}
-            </div>
-            """
+            scores_previo += f'<div style="background:#fef3c7; padding:8px 12px; border-radius:6px; margin:8px 0; font-size:12px; color:#b45309;"><b>🏥 Prequirúrgico:</b> {" | ".join(pre_parts)}</div>'
 
         if h[10]: lineas_h.append(f'<p><b>Estudios:</b> {h[10]}</p>')
         if h[11]: lineas_h.append(f'<p><b>Medicación Actual:</b> {h[11]}</p>')
@@ -1947,10 +1388,7 @@ def ficha(id):
         </div>
         """
     if not historial_completo_html:
-        historial_completo_html = (
-            "<p style='color:#64748b; font-style:italic;'>No hay consultas"
-            ' registradas aún.</p>'
-        )
+        historial_completo_html = "<p style='color:#64748b; font-style:italic;'>No hay consultas registradas aún.</p>"
 
     archivos_html = ''
     for ar in archivos_paciente:
@@ -1964,37 +1402,21 @@ def ficha(id):
         </div>
         """
     if not archivos_html:
-        archivos_html = (
-            "<p style='color:#64748b; font-style:italic;'>No hay archivos adjuntos"
-            ' aún.</p>'
-        )
+        archivos_html = "<p style='color:#64748b; font-style:italic;'>No hay archivos adjuntos aún.</p>"
 
-    # Indicador de estudios / adjuntos para colocar debajo de Alergias
+    # Indicador de estudios debajo de Alergias
     estudios_badge_html = ''
     if len(archivos_paciente) > 0:
         nombres_estudios = ", ".join([ar[1] for ar in archivos_paciente[:3]])
-        if len(archivos_paciente) > 3:
-            nombres_estudios += "..."
-        estudios_badge_html = f"""
-        <div style="background:#334155; padding:10px 14px; border-radius:6px; border:1px solid #475569; margin-top:10px;">
-            <span style="font-weight:bold; color:#38bdf8;">Estudios / Adjuntos:</span> <span style="color:#e2e8f0;">{nombres_estudios}</span>
-        </div>
-        """
+        if len(archivos_paciente) > 3: nombres_estudios += "..."
+        estudios_badge_html = f'<div style="background:#334155; padding:10px 14px; border-radius:6px; border:1px solid #475569; margin-top:10px;"><span style="font-weight:bold; color:#38bdf8;">Estudios / Adjuntos:</span> <span style="color:#e2e8f0;">{nombres_estudios}</span></div>'
     else:
-        estudios_badge_html = """
-        <div style="background:#334155; padding:10px 14px; border-radius:6px; border:1px solid #475569; margin-top:10px;">
-            <span style="font-weight:bold; color:#38bdf8;">Estudios / Adjuntos:</span> <span style="color:#94a3b8;">Ninguno</span>
-        </div>
-        """
+        estudios_badge_html = '<div style="background:#334155; padding:10px 14px; border-radius:6px; border:1px solid #475569; margin-top:10px;"><span style="font-weight:bold; color:#38bdf8;">Estudios / Adjuntos:</span> <span style="color:#94a3b8;">Ninguno</span></div>'
 
-    # Datos para gráfico (JSON seguros)
     fechas_graf = json.dumps([h[0].split(' ')[0] for h in reversed(historiales)])
-    pesos_graf = json.dumps(
-        [float(h[6]) if h[6] else None for h in reversed(historiales)]
-    )
+    pesos_graf = json.dumps([float(h[6]) if h[6] else None for h in reversed(historiales)])
 
-    sistolica_list = []
-    diastolica_list = []
+    sistolica_list, diastolica_list = [], []
     for h in reversed(historiales):
         pa_val = h[4] or ''
         if '/' in pa_val:
@@ -2011,12 +1433,7 @@ def ficha(id):
 
     sistolica_graf = json.dumps(sistolica_list)
     diastolica_graf = json.dumps(diastolica_list)
-
-    sexo_js = (
-        'Femenino'
-        if 'Femenino' in sexo_paciente or 'Mujer' in sexo_paciente
-        else 'Masculino'
-    )
+    sexo_js = 'Femenino' if 'Femenino' in sexo_paciente or 'Mujer' in sexo_paciente else 'Masculino'
 
     return f"""
     <!DOCTYPE html>
@@ -2038,16 +1455,12 @@ def ficha(id):
                     let imc = peso / (talla * talla);
                     let val = imc.toFixed(2);
                     document.getElementById('imc').value = val;
-                    
-                    let estado = "";
-                    let color = "";
+                    let estado = "", color = "";
                     if (imc < 18.5) {{ estado = "Bajo peso"; color = "#0284c7"; }}
                     else if (imc < 25) {{ estado = "Peso normal (Eutrófico)"; color = "#107c41"; }}
                     else if (imc < 30) {{ estado = "Sobrepeso"; color = "#d97706"; }}
-                    else if (imc < 35) {{ estado = "Obesidad Grado I (Moderada)"; color = "#dc2626"; }}
-                    else if (imc < 40) {{ estado = "Obesidad Grado II (Severa)"; color = "#b91c1c"; }}
-                    else {{ estado = "Obesidad Grado III (Mórbida)"; color = "#7f1d1d"; }}
-                    
+                    else if (imc < 35) {{ estado = "Obesidad Grado I"; color = "#dc2626"; }}
+                    else {{ estado = "Obesidad"; color = "#b91c1c"; }}
                     imcTxt.innerHTML = "IMC: " + val + " — <b>" + estado + "</b>";
                     imcTxt.style.color = color;
                 }} else {{
@@ -2060,8 +1473,7 @@ def ficha(id):
                 let cintura = parseFloat(document.getElementById('cintura').value);
                 let cinturaTxt = document.getElementById('cintura_txt');
                 if (cintura > 0) {{
-                    let riesgo = "";
-                    let color = "";
+                    let riesgo = "", color = "";
                     if (sexoPaciente === "Femenino") {{
                         if (cintura >= 88) {{ riesgo = "Riesgo Cardiovascular Muy Alto (≥ 88 cm)"; color = "#b91c1c"; }}
                         else if (cintura >= 80) {{ riesgo = "Riesgo Cardiovascular Aumentado (≥ 80 cm)"; color = "#d97706"; }}
@@ -2073,85 +1485,43 @@ def ficha(id):
                     }}
                     cinturaTxt.innerHTML = "<b>" + riesgo + "</b>";
                     cinturaTxt.style.color = color;
-                }} else {{
-                    cinturaTxt.innerHTML = "";
-                }}
+                }} else {{ cinturaTxt.innerHTML = ""; }}
             }}
 
             function calcularTFG() {{
                 let scr = parseFloat(document.getElementById('tfg_scr').value);
-                if (!scr || scr <= 0) {{
-                    alert("Ingrese un valor válido de Creatinina Sérica");
-                    return;
-                }}
+                if (!scr || scr <= 0) {{ alert("Ingrese un valor válido"); return; }}
                 let kappa = (sexoPaciente === "Femenino") ? 0.7 : 0.9;
                 let alfa = (sexoPaciente === "Femenino") ? -0.241 : -0.329;
                 let factorSexo = (sexoPaciente === "Femenino") ? 1.012 : 1.0;
-                
-                let minVal = Math.min(scr / kappa, 1.0);
-                let maxVal = Math.max(scr / kappa, 1.0);
-                
-                let tfg = 142 * Math.pow(minVal, alfa) * Math.pow(maxVal, -1.200) * Math.pow(0.9938, edadPaciente) * factorSexo;
-                let val = tfg.toFixed(1);
-                
-                let estadio = "";
-                if (tfg >= 90) estadio = "G1 (Normal o alta)";
-                else if (tfg >= 60) estadio = "G2 (Levemente disminuida)";
-                else if (tfg >= 45) estadio = "G3a (Leve a moderadamente)";
-                else if (tfg >= 30) estadio = "G3b (Moderada a gravemente)";
-                else if (tfg >= 15) estadio = "G4 (Gravemente disminuida)";
-                else estadio = "G5 (Falla renal)";
-
-                let res = "TFG: " + val + " mL/min (" + estadio + ")";
-                document.getElementById('tfg_resultado').value = res;
+                let tfg = 142 * Math.pow(Math.min(scr/kappa, 1.0), alfa) * Math.pow(Math.max(scr/kappa, 1.0), -1.200) * Math.pow(0.9938, edadPaciente) * factorSexo;
+                document.getElementById('tfg_resultado').value = "TFG: " + tfg.toFixed(1) + " mL/min";
             }}
-
             function pasarTFG() {{
                 let val = document.getElementById('tfg_resultado').value;
-                if (!val) {{ alert("Calcule primero la TFG"); return; }}
-                let actual = document.getElementById('resumen_scores').value;
-                document.getElementById('resumen_scores').value = actual + (actual ? "\\n" : "") + val;
+                if (val) document.getElementById('resumen_scores').value += (document.getElementById('resumen_scores').value ? "\\n" : "") + val;
             }}
 
             function calcularRAC() {{
                 let alb = parseFloat(document.getElementById('rac_alb').value);
                 let crea = parseFloat(document.getElementById('rac_crea').value);
-                if (!alb || !crea || crea <= 0) {{
-                    alert("Ingrese valores válidos para albúmina y creatinina en orina");
-                    return;
-                }}
+                if (!alb || !crea || crea <= 0) {{ alert("Ingrese valores válidos"); return; }}
                 let rac = (alb / crea) * 1000;
-                let val = rac.toFixed(1);
-                
-                let categoria = "";
-                if (rac < 30) categoria = "A1 (Normal a leve)";
-                else if (rac <= 300) categoria = "A2 (Moderada)";
-                else categoria = "A3 (Grave)";
-
-                let res = "Relación Alb/Crea: " + val + " mg/g (" + categoria + ")";
-                document.getElementById('rac_resultado').value = res;
+                document.getElementById('rac_resultado').value = "Relación Alb/Crea: " + rac.toFixed(1) + " mg/g";
             }}
-
             function pasarRAC() {{
                 let val = document.getElementById('rac_resultado').value;
-                if (!val) {{ alert("Calcule primero la Relación Alb/Crea"); return; }}
-                let actual = document.getElementById('resumen_scores').value;
-                document.getElementById('resumen_scores').value = actual + (actual ? "\\n" : "") + val;
+                if (val) document.getElementById('resumen_scores').value += (document.getElementById('resumen_scores').value ? "\\n" : "") + val;
             }}
 
             function calcularFramingham() {{
-                let col = document.getElementById('f_col').value;
-                let hdl = document.getElementById('f_hdl').value;
-                let pas = document.getElementById('f_pas').value;
+                let col = document.getElementById('f_col').value, hdl = document.getElementById('f_hdl').value, pas = document.getElementById('f_pas').value;
                 let fum = document.getElementById('f_fum').checked ? "Fumador" : "No fumador";
-                let res = "Col: " + (col||'-') + ", HDL: " + (hdl||'-') + ", PAS: " + (pas||'-') + " | " + fum;
-                document.getElementById('framingham_input').value = res;
+                document.getElementById('framingham_input').value = `Col: ${{col||'-'}}, HDL: ${{hdl||'-'}}, PAS: ${{pas||'-'}} | ${{fum}}`;
             }}
-
             function pasarFramingham() {{
                 let val = document.getElementById('framingham_input').value;
-                let actual = document.getElementById('resumen_scores').value;
-                document.getElementById('resumen_scores').value = actual + (actual ? "\\n" : "") + "Framingham: " + val;
+                if (val) document.getElementById('resumen_scores').value += (document.getElementById('resumen_scores').value ? "\\n" : "") + "Framingham: " + val;
             }}
 
             function calcularCHA2DS2() {{
@@ -2166,11 +1536,9 @@ def ficha(id):
                 if (document.getElementById('female').checked) score += 1;
                 document.getElementById('cha2ds2_input').value = "CHA2DS2-VASc: " + score + " puntos";
             }}
-
             function pasarCHA2DS2() {{
                 let val = document.getElementById('cha2ds2_input').value;
-                let actual = document.getElementById('resumen_scores').value;
-                document.getElementById('resumen_scores').value = actual + (actual ? "\\n" : "") + val;
+                if (val) document.getElementById('resumen_scores').value += (document.getElementById('resumen_scores').value ? "\\n" : "") + val;
             }}
 
             function calcularLee() {{
@@ -2181,21 +1549,12 @@ def ficha(id):
                 if (document.getElementById('lee_cvd').checked) score += 1;
                 if (document.getElementById('lee_dm_ins').checked) score += 1;
                 if (document.getElementById('lee_creat').checked) score += 1;
-                
-                let riesgo = "Clase I (Riesgo muy bajo - 0.4%)";
-                if (score === 1) riesgo = "Clase II (Riesgo bajo - 0.9%)";
-                else if (score === 3) riesgo = "Clase III (Riesgo moderado - 7%)";
-                else if (score >= 4) riesgo = "Clase IV (Riesgo alto - >11%)";
-
-                document.getElementById('lee_input').value = "Índice de Lee: " + score + " puntos (" + riesgo + ")";
+                document.getElementById('lee_input').value = "Índice de Lee: " + score + " puntos";
             }}
-
             function pasarPreOp() {{
-                let asa = document.getElementById('asa_select').value;
-                let lee = document.getElementById('lee_input').value;
+                let asa = document.getElementById('asa_select').value, lee = document.getElementById('lee_input').value;
                 let res = "Prequirúrgico -> " + (asa ? asa + " | " : "") + lee;
-                let actual = document.getElementById('resumen_scores').value;
-                document.getElementById('resumen_scores').value = actual + (actual ? "\\n" : "") + res;
+                document.getElementById('resumen_scores').value += (document.getElementById('resumen_scores').value ? "\\n" : "") + res;
             }}
         </script>
     </head>
@@ -2203,7 +1562,6 @@ def ficha(id):
         <div style="max-width: 1350px; margin: auto;">
             <a href="/" style="color:#3498db; text-decoration:none; font-weight:bold; display:inline-block; margin-bottom:15px; font-size:15px;">⬅ Volver al Panel</a>
             
-            <!-- Tarjeta Principal del Paciente -->
             <div style="background:#1e293b; color:white; padding:25px 30px; border-radius:12px; box-shadow:0 6px 20px rgba(0,0,0,0.15); margin-bottom:25px; display:grid; grid-template-columns: 1fr 1.2fr; gap:25px; align-items:start;">
                 <div>
                     <h2 style="margin:0 0 12px 0; font-size:24px; color:#ffffff;">{paciente[2]}</h2>
@@ -2230,18 +1588,14 @@ def ficha(id):
                 </div>
             </div>
 
-            <!-- Resumen de Consulta Anterior -->
             <h4 style="color:#1e293b; font-size:15px; margin-bottom:8px;">📌 Resumen de Consulta Anterior:</h4>
             {ultima_consulta_html}
 
-            <!-- Panel Deslizable Superior: Scores y Prequirúrgico -->
             <details style="margin-bottom:25px;">
                 <summary style="background:#0284c7; color:white; padding:12px 20px; border-radius:6px; font-weight:bold; cursor:pointer; font-size:14px; list-style:none; text-align:center; box-shadow:0 2px 6px rgba(0,0,0,0.1); outline:none;">
                     📊 Abrir / Cerrar Panel de Scores y Prequirúrgico
                 </summary>
                 <div style="background:#f8fafc; border:2px solid #cbd5e1; border-top:none; border-bottom-left-radius:8px; border-bottom-right-radius:8px; padding:20px; display:flex; flex-direction:column; gap:20px;">
-                    
-                    <!-- Framingham -->
                     <div style="background:white; padding:15px; border-radius:6px; border:1px solid #e2e8f0;">
                         <label style="font-weight:bold; color:#b91c1c; display:block; margin-bottom:8px;">Framingham:</label>
                         <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:10px;">
@@ -2257,7 +1611,6 @@ def ficha(id):
                         </div>
                     </div>
 
-                    <!-- CHA2DS2-VASc -->
                     <div style="background:white; padding:15px; border-radius:6px; border:1px solid #e2e8f0;">
                         <label style="font-weight:bold; color:#b91c1c; display:block; margin-bottom:8px;">CHA2DS2-VASc:</label>
                         <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:8px; font-size:12px; margin-bottom:10px;">
@@ -2276,13 +1629,9 @@ def ficha(id):
                         </div>
                     </div>
 
-                    <!-- Función Renal: TFG y RAC (Calculadoras Reales) -->
                     <div style="background:white; padding:15px; border-radius:6px; border:1px solid #e2e8f0;">
                         <label style="font-weight:bold; color:#7e22ce; display:block; margin-bottom:8px;">Función Renal (TFG y RAC):</label>
-                        
-                        <!-- TFG Calculator -->
                         <div style="margin-bottom:12px; border-bottom:1px solid #e2e8f0; padding-bottom:10px;">
-                            <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">Tasa de Filtración Glomerular (TFG - CKD-EPI):</label>
                             <div style="display:flex; gap:10px; align-items:center; margin-bottom:6px; flex-wrap:wrap;">
                                 <input type="number" step="0.01" id="tfg_scr" placeholder="Creatinina Sérica (mg/dL)" style="flex:1; padding:8px; border:1px solid #ccc; border-radius:4px; font-size:13px; min-width:180px;">
                                 <button type="button" onclick="calcularTFG()" style="background:#7e22ce; color:white; border:none; padding:8px 16px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:13px;">Calcular TFG</button>
@@ -2292,10 +1641,7 @@ def ficha(id):
                                 <button type="button" onclick="pasarTFG()" style="background:#1e293b; color:white; border:none; padding:8px 14px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:12px;">📥 Copiar TFG</button>
                             </div>
                         </div>
-
-                        <!-- RAC Calculator -->
                         <div>
-                            <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">Relación Albúmina / Creatinina (RAC):</label>
                             <div style="display:flex; gap:10px; align-items:center; margin-bottom:6px; flex-wrap:wrap;">
                                 <input type="number" step="0.1" id="rac_alb" placeholder="Albúmina urinaria (mg/L)" style="flex:1; padding:8px; border:1px solid #ccc; border-radius:4px; font-size:13px; min-width:160px;">
                                 <input type="number" step="0.1" id="rac_crea" placeholder="Creatinina urinaria (mg/dL)" style="flex:1; padding:8px; border:1px solid #ccc; border-radius:4px; font-size:13px; min-width:160px;">
@@ -2308,7 +1654,6 @@ def ficha(id):
                         </div>
                     </div>
 
-                    <!-- Prequirúrgico -->
                     <div style="background:white; padding:15px; border-radius:6px; border:1px solid #e2e8f0;">
                         <label style="font-weight:bold; color:#b45309; display:block; margin-bottom:8px;">Prequirúrgico (ASA + Lee/RCRI):</label>
                         <div style="margin-bottom:10px;">
@@ -2333,11 +1678,10 @@ def ficha(id):
                             <button type="button" onclick="pasarPreOp()" style="background:#1e293b; color:white; border:none; padding:8px 14px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:12px;">📥 Copiar al Cuadro</button>
                         </div>
                     </div>
-
                 </div>
             </details>
 
-            <!-- Formulario Nueva Consulta / Evolución (Cuadro único Motivo / Evolución) -->
+            <!-- Formulario Nueva Consulta con el nuevo cuadro único "Motivo / Evolución" -->
             <div style="background:white; padding:35px; border-radius:10px; box-shadow:0 4px 15px rgba(0,0,0,0.05); margin-bottom:30px; border:1px solid #e2e8f0;">
                 <h3 style="color:#1e3a8a; margin-top:0; border-bottom:2px solid #e2e8f0; padding-bottom:8px;">🩺 Registrar Nueva Consulta / Evolución</h3>
                 
@@ -2349,13 +1693,11 @@ def ficha(id):
                         <textarea name="motivo_evolucion" rows="6" placeholder="Escriba aquí el motivo de consulta y la evolución detallada..." required style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:4px; font-family:Segoe UI; box-sizing:border-box; font-size:14px;"></textarea>
                     </div>
 
-                    <!-- NUEVO CUADRO EXCLUSIVO PARA COPIAR LOS SCORES -->
                     <div style="background:#f1f5f9; padding:15px; border-radius:6px; border:1px solid #cbd5e1; margin-bottom:15px;">
                         <label style="display:block; font-weight:bold; font-size:13px; color:#1e3a8a; margin-bottom:4px;">📊 Cuadro de Scores y Prequirúrgico (Resultados copiados desde el panel superior):</label>
                         <textarea id="resumen_scores" name="framingham" rows="3" placeholder="Aquí puede copiar o pegar los resultados de los scores..." style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:4px; font-family:Segoe UI; box-sizing:border-box; font-size:13px; background:white;"></textarea>
                     </div>
 
-                    <!-- EXAMEN FÍSICO CON EVALUACIÓN DE IMC Y CINTURA + ESPACIO PARA ESCRIBIR -->
                     <div style="background:#f8fafc; padding:20px; border-radius:6px; border:1px solid #cbd5e1; margin-bottom:20px;">
                         <h4 style="margin:0 0 12px 0; color:#1e293b; font-size:15px;">Examen Físico</h4>
                         <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:15px; margin-bottom:12px;">
@@ -2385,23 +1727,21 @@ def ficha(id):
                             </div>
                         </div>
                         
-                        <!-- Textos dinámicos de IMC y Cintura -->
                         <div style="margin-top:10px; border-top:1px solid #e2e8f0; padding-top:10px; margin-bottom:12px;">
                             <span id="imc_txt" style="font-size:13px; font-weight:bold; color:#64748b; display:block; margin-bottom:2px;"></span>
                             <span id="cintura_txt" style="font-size:13px; font-weight:bold; color:#64748b; display:block;"></span>
                         </div>
 
-                        <!-- Espacio para escribir notas del examen físico -->
                         <div>
                             <label style="display:block; font-weight:bold; font-size:12px; color:#334155; margin-bottom:4px;">Observaciones / Hallazgos del Examen Físico:</label>
-                            <textarea name="examen_fisico_notas" rows="2" placeholder="Ej: Ruidos cardíacos normofonéticos, sin soplos. Edemas leves en miembros inferiores..." style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:4px; font-family:Segoe UI; box-sizing:border-box; font-size:13px; background:white;"></textarea>
+                            <textarea name="examen_fisico_notas" rows="2" placeholder="Ej: Ruidos cardíacos normofonéticos, sin soplos..." style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:4px; font-family:Segoe UI; box-sizing:border-box; font-size:13px; background:white;"></textarea>
                         </div>
                     </div>
 
                     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom:20px;">
                         <div>
                             <label style="display:block; font-weight:bold; font-size:13px; color:#334155; margin-bottom:4px;">Estudios:</label>
-                            <textarea name="estudios_historial" rows="2" placeholder="Estudios solicitados o evaluados..." style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:4px; font-family:Segoe UI; box-sizing:border-box; font-size:14px;"></textarea>
+                            <textarea name="estudios_historial" rows="2" placeholder="Estudios solicitados..." style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:4px; font-family:Segoe UI; box-sizing:border-box; font-size:14px;"></textarea>
                         </div>
                         <div>
                             <label style="display:block; font-weight:bold; font-size:13px; color:#334155; margin-bottom:4px;">Medicación Actual:</label>
@@ -2413,34 +1753,27 @@ def ficha(id):
                 </form>
             </div>
 
-            <!-- BOTONES DESLIZANTES AL FINAL DE LA PÁGINA -->
-            
-            <!-- 1. Gráfico de Evolución Clínica -->
             <details style="margin-bottom:20px;">
                 <summary style="background:#0284c7; color:white; padding:12px 20px; border-radius:6px; font-weight:bold; cursor:pointer; font-size:14px; list-style:none; text-align:center; box-shadow:0 2px 6px rgba(0,0,0,0.1); outline:none;">
                     📈 Gráfico de Evolución Clínica (Presión y Peso)
                 </summary>
                 <div style="background:white; border:2px solid #cbd5e1; border-top:none; border-bottom-left-radius:8px; border-bottom-right-radius:8px; padding:25px;">
                     <h3 style="margin-top:0; color:#1e293b; font-size:18px;">Evolución Clínica (Presión y Peso)</h3>
-                    <div style="width: 100%; height: 320px;">
-                        <canvas id="graficoEvolucion"></canvas>
-                    </div>
+                    <div style="width: 100%; height: 320px;"><canvas id="graficoEvolucion"></canvas></div>
                 </div>
             </details>
 
-            <!-- 2. Archivos y Estudios -->
             <details style="margin-bottom:20px;">
                 <summary style="background:#7c3aed; color:white; padding:12px 20px; border-radius:6px; font-weight:bold; cursor:pointer; font-size:14px; list-style:none; text-align:center; box-shadow:0 2px 6px rgba(0,0,0,0.1); outline:none;">
                     📁 Archivos y Estudios (Adjuntar)
                 </summary>
                 <div style="background:white; border:2px solid #d8b4fe; border-top:none; border-bottom-left-radius:8px; border-bottom-right-radius:8px; padding:25px;">
                     <h3 style="margin-top:0; color:#6b21a8; font-size:18px; margin-bottom:15px;">Archivos y Estudios</h3>
-                    
                     <form method="POST" enctype="multipart/form-data" style="margin-bottom:25px; background:#f8fafc; padding:20px; border-radius:8px; border:1px solid #e2e8f0;">
                         <input type="hidden" name="accion" value="subir_archivo">
                         <div style="margin-bottom:12px;">
                             <label style="display:block; font-weight:bold; font-size:13px; color:#334155; margin-bottom:4px;">Nombre del Estudio / Archivo:</label>
-                            <input type="text" name="nombre_estudio" placeholder="Ej: Ecocardiograma, ECG, Laboratorio..." required style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:4px; font-size:14px;">
+                            <input type="text" name="nombre_estudio" placeholder="Ej: Ecocardiograma, ECG..." required style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:4px; font-size:14px;">
                         </div>
                         <div style="margin-bottom:15px;">
                             <label style="display:block; font-weight:bold; font-size:13px; color:#334155; margin-bottom:4px;">Seleccionar Archivo:</label>
@@ -2448,13 +1781,11 @@ def ficha(id):
                         </div>
                         <button type="submit" style="background:#7c3aed; color:white; border:none; padding:10px 20px; border-radius:6px; font-weight:bold; cursor:pointer; width:100%; font-size:14px;">📁 Subir Estudio</button>
                     </form>
-
                     <h4 style="color:#1e293b; margin-bottom:10px;">Archivos Adjuntos Registrados:</h4>
                     {archivos_html}
                 </div>
             </details>
 
-            <!-- 3. Historial Completo -->
             <details style="margin-bottom:40px;">
                 <summary style="background:#334155; color:white; padding:12px 20px; border-radius:6px; font-weight:bold; cursor:pointer; font-size:14px; list-style:none; text-align:center; box-shadow:0 2px 6px rgba(0,0,0,0.1); outline:none;">
                     📂 Historial Completo de Consultas Anteriores
@@ -2473,47 +1804,16 @@ def ficha(id):
                 data: {{
                     labels: {fechas_graf},
                     datasets: [
-                        {{
-                            label: 'PA Sistólica (mmHg)',
-                            data: {sistolica_graf},
-                            borderColor: '#ef4444',
-                            backgroundColor: '#ef4444',
-                            tension: 0.1
-                        }},
-                        {{
-                            label: 'PA Diastólica (mmHg)',
-                            data: {diastolica_graf},
-                            borderColor: '#3b82f6',
-                            backgroundColor: '#3b82f6',
-                            tension: 0.1
-                        }},
-                        {{
-                            label: 'Peso (Kg)',
-                            data: {pesos_graf},
-                            borderColor: '#10b981',
-                            backgroundColor: '#10b981',
-                            tension: 0.1,
-                            yAxisID: 'y1'
-                        }}
+                        {{ label: 'PA Sistólica (mmHg)', data: {sistolica_graf}, borderColor: '#ef4444', backgroundColor: '#ef4444', tension: 0.1 }},
+                        {{ label: 'PA Diastólica (mmHg)', data: {diastolica_graf}, borderColor: '#3b82f6', backgroundColor: '#3b82f6', tension: 0.1 }},
+                        {{ label: 'Peso (Kg)', data: {pesos_graf}, borderColor: '#10b981', backgroundColor: '#10b981', tension: 0.1, yAxisID: 'y1' }}
                     ]
                 }},
                 options: {{
-                    responsive: true,
-                    maintainAspectRatio: false,
+                    responsive: true, maintainAspectRatio: false,
                     scales: {{
-                        y: {{
-                            type: 'linear',
-                            display: true,
-                            position: 'left',
-                            title: {{ display: true, text: 'Presión Arterial (mmHg)' }}
-                        }},
-                        y1: {{
-                            type: 'linear',
-                            display: true,
-                            position: 'right',
-                            grid: {{ drawOnChartArea: false }},
-                            title: {{ display: true, text: 'Peso (Kg)' }}
-                        }}
+                        y: {{ type: 'linear', display: true, position: 'left', title: {{ display: true, text: 'Presión Arterial (mmHg)' }} }},
+                        y1: {{ type: 'linear', display: true, position: 'right', grid: {{ drawOnChartArea: false }}, title: {{ display: true, text: 'Peso (Kg)' }} }}
                     }}
                 }}
             }});
@@ -2521,7 +1821,6 @@ def ficha(id):
     </body>
     </html>
     """
-
 
 @app.route('/backup')
 def backup():
@@ -2531,12 +1830,10 @@ def backup():
         return send_file(db_path, as_attachment=True)
     return 'Base de datos no encontrada', 404
 
-
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect(url_for('login'))
-
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5002))
