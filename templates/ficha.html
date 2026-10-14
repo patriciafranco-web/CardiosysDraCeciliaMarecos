@@ -39,8 +39,8 @@
     </div>
 
     <div class="main-content">
-        <!-- Cabecera del Paciente -->
-        <div class="paciente-header" style="display: flex; justify-content: space-between; align-items: flex-start;">
+        <!-- Cabecera del Paciente Reorganizada -->
+        <div class="paciente-header" style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px; align-items: start;">
             <div>
                 <h1>{{ paciente[2] }}</h1>
                 <div class="paciente-info">
@@ -53,38 +53,57 @@
                 </div>
                 
                 {% if paciente[6] %}
-                <div>
+                <div style="margin-top: 10px;">
                     <span class="alerta-alergia">⚠️ Alergias: {{ paciente[6] }}</span>
                 </div>
                 {% endif %}
 
-                <!-- Indicador visual de Estudios / Adjuntos debajo de Alergias -->
-                <div style="background-color: #34495e; color: #ecf0f1; padding: 6px 12px; border-radius: 4px; font-size: 13px; margin-top: 8px; display: inline-block; border-left: 3px solid #3498db;">
-                    <strong>📁 Estudios / Adjuntos:</strong> 
-                    {% if estudios %}
-                        {% for est in estudios[:3] %}{{ est[2] }}{% if not loop.last %}, {% endif %}{% endfor %}
-                    {% else %}
-                        Ninguno
-                    {% endif %}
-                </div>
+                <!-- Antecedentes Principales debajo de Alergias (Editable y Ancho) -->
+                <form action="/guardar_antecedentes/{{ paciente[0] }}" method="POST" style="margin-top: 12px; background: rgba(0,0,0,0.15); padding: 12px; border-radius: 6px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <label style="font-weight: bold; font-size: 13px; color: #3498db;">Antecedentes Principales (Editable):</label>
+                        <button type="submit" style="background-color: #2ecc71; color: white; padding: 4px 12px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 12px; width: auto;">💾 Guardar</button>
+                    </div>
+                    <textarea name="antecedentes" rows="3" placeholder="Escriba los antecedentes principales..." style="width: 100%; padding: 8px; border: 1px solid #475569; border-radius: 4px; background: #34495e; color: white; resize: vertical; box-sizing: border-box; font-family: inherit; margin: 0;">{{ paciente[9] if paciente|length > 9 else '' }}</textarea>
+                </form>
             </div>
             
-            <!-- Recetario Rápido y Exportar -->
-            <div style="background-color: #34495e; padding: 15px; border-radius: 8px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);">
-                <form action="/receta/{{ paciente[0] }}" method="POST" target="_blank" style="margin: 0; display: flex; flex-direction: column; gap: 8px;">
-                    <label style="font-weight: bold; font-size: 13px; color: #ecf0f1; margin-bottom: -4px;">Diagnóstico:</label>
-                    <input type="text" name="diagnostico_receta" placeholder="Ej: Hipertensión Arterial" required style="width: 250px; padding: 8px; border: none; border-radius: 4px; font-size: 13px;">
+            <!-- Esquina Superior Derecha: Estudios Adjuntos y Recetario -->
+            <div style="display: flex; flex-direction: column; gap: 15px;">
+                <!-- Estudios / Adjuntos en la parte superior derecha -->
+                <div style="background-color: #34495e; padding: 15px; border-radius: 8px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);">
+                    <h4 style="margin: 0 0 10px 0; color: #3498db; font-size: 14px;">📁 Estudios / Adjuntos</h4>
+                    <div style="max-height: 120px; overflow-y: auto; font-size: 13px;">
+                        {% if estudios %}
+                            {% for est in estudios %}
+                            <div style="padding: 4px 0; border-bottom: 1px solid #415b76; display: flex; justify-content: space-between; align-items: center;">
+                                <span style="color: #ecf0f1;">{{ est[2] }}</span>
+                                <a href="/uploads/{{ est[3] }}" target="_blank" style="color: #3498db; text-decoration: none; font-weight: bold; font-size: 12px;">Ver</a>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <p style="color: #95a5a6; font-size: 12px; margin: 0; font-style: italic;">Ninguno registrado.</p>
+                        {% endif %}
+                    </div>
+                </div>
 
-                    <label style="font-weight: bold; font-size: 13px; color: #ecf0f1; margin-bottom: -4px;">Rx (Medicamentos):</label>
-                    <textarea name="receta" rows="2" placeholder="Ej: Losartán 50mg" required style="width: 250px; padding: 8px; border: none; border-radius: 4px; resize: none; font-size: 13px;"></textarea>
-                    
-                    <label style="font-weight: bold; font-size: 13px; color: #ecf0f1; margin-bottom: -4px;">Indicaciones de Uso:</label>
-                    <textarea name="indicaciones" rows="2" placeholder="Ej: 1 comp. al día con el desayuno" required style="width: 250px; padding: 8px; border: none; border-radius: 4px; resize: none; font-size: 13px;"></textarea>
-                    
-                    <button type="submit" style="background-color: #2ecc71; color: white; padding: 8px 15px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; text-align: center; margin-top: 5px;">📄 Imprimir Receta</button>
-                </form>
+                <!-- Recetario Rápido y Exportar -->
+                <div style="background-color: #34495e; padding: 15px; border-radius: 8px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);">
+                    <form action="/receta/{{ paciente[0] }}" method="POST" target="_blank" style="margin: 0; display: flex; flex-direction: column; gap: 8px;">
+                        <label style="font-weight: bold; font-size: 13px; color: #ecf0f1; margin-bottom: -4px;">Diagnóstico:</label>
+                        <input type="text" name="diagnostico_receta" placeholder="Ej: Hipertensión Arterial" required style="width: 100%; padding: 8px; border: none; border-radius: 4px; font-size: 13px; margin: 0;">
 
-                <a href="/exportar_historial/{{ paciente[0] }}" style="display: block; background-color: #e67e22; color: white; padding: 8px 15px; border-radius: 4px; font-weight: bold; text-align: center; text-decoration: none; margin-top: 10px; font-size: 14px;">📚 Exportar Historial PDF</a>
+                        <label style="font-weight: bold; font-size: 13px; color: #ecf0f1; margin-bottom: -4px;">Rx (Medicamentos):</label>
+                        <textarea name="receta" rows="2" placeholder="Ej: Losartán 50mg" required style="width: 100%; padding: 8px; border: none; border-radius: 4px; resize: none; font-size: 13px; margin: 0;"></textarea>
+                        
+                        <label style="font-weight: bold; font-size: 13px; color: #ecf0f1; margin-bottom: -4px;">Indicaciones de Uso:</label>
+                        <textarea name="indicaciones" rows="2" placeholder="Ej: 1 comp. al día con el desayuno" required style="width: 100%; padding: 8px; border: none; border-radius: 4px; resize: none; font-size: 13px; margin: 0;"></textarea>
+                        
+                        <button type="submit" style="background-color: #2ecc71; color: white; padding: 8px 15px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; text-align: center; margin-top: 5px; width: 100%;">📄 Imprimir Receta</button>
+                    </form>
+
+                    <a href="/exportar_historial/{{ paciente[0] }}" style="display: block; background-color: #e67e22; color: white; padding: 8px 15px; border-radius: 4px; font-weight: bold; text-align: center; text-decoration: none; margin-top: 10px; font-size: 14px;">📚 Exportar Historial PDF</a>
+                </div>
             </div>
         </div>
 
