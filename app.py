@@ -3,15 +3,8 @@ import sys
 import sqlite3
 import json
 from datetime import datetime
-from flask import Flask, request, redirect, url_for, session, send_file, render_template, make_response
+from flask import Flask, request, redirect, url_for, session, send_file, render_template
 from werkzeug.security import generate_password_hash, check_password_hash
-
-# ReportLab imports para generación de PDFs
-from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
-from reportlab.lib import colors
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 
 # Configuración de rutas apuntando al Disco Persistente en Render o entorno local
 if getattr(sys, 'frozen', False):
@@ -79,6 +72,7 @@ def init_db():
         )
     ''')
 
+    # Migraciones seguras para columnas nuevas
     for col, tipo in [('es_estudio', 'INTEGER DEFAULT 0'), ('medicacion_actual', 'TEXT')]:
         try:
             cursor.execute(f'ALTER TABLE pacientes ADD COLUMN {col} {tipo}')
