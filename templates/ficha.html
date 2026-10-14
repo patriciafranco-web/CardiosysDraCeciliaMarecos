@@ -7,9 +7,10 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; }
-        .sidebar { height: 100vh; width: 250px; background-color: #1e2b3c; color: white; position: fixed; padding-top: 20px; }
-        .sidebar h2 { text-align: center; margin-bottom: 30px; letter-spacing: 1px; }
-        .sidebar a { padding: 15px 25px; text-decoration: none; font-size: 16px; color: #cbd5e1; display: block; transition: 0.3s; }
+        .sidebar { height: 100vh; width: 250px; background-color: #1e2b3c; color: white; position: fixed; padding-top: 20px; box-sizing: border-box; display: flex; flex-direction: column; overflow-y: auto; }
+        .sidebar h2 { text-align: center; margin-bottom: 5px; letter-spacing: 1px; color: white; }
+        .sidebar .sub-title { text-align: center; font-size: 14px; color: #3498db; margin-bottom: 30px; font-weight: bold; }
+        .sidebar a { padding: 12px 25px; text-decoration: none; font-size: 15px; color: #cbd5e1; display: block; transition: 0.3s; }
         .sidebar a:hover { background-color: #2c3e50; color: white; border-left: 4px solid #3498db; }
         
         .main-content { margin-left: 250px; padding: 40px; }
@@ -26,13 +27,18 @@
 <body>
     <div class="sidebar">
         <h2>CardioSys 1.0</h2>
+        <div class="sub-title">Dra. Cecilia Marecos</div>
         <a href="/">📋 Agenda Diaria</a>
         <a href="/nuevo">➕ Nuevo Ingreso</a>
         <a href="/lista-pacientes">👥 Lista de Pacientes</a>
         <a href="/estudios-recientes">📁 Lista de Estudios</a>
         <a href="/cambiar-contrasena">🔑 Cambiar Contraseña</a>
-        <a href="/backup" style="margin-top: 30px; background-color: #e67e22; color: white; border-radius: 6px; margin-left: 20px; margin-right: 20px; text-align: center; font-weight: bold;">💾 Backup Manual</a>
-        <a href="/logout" style="margin-top: 10px; background-color: #ef4444; color: white; border-radius: 6px; margin-left: 20px; margin-right: 20px; text-align: center; font-weight: bold; font-size: 13px;">🚪 Cerrar Sesión</a>
+        
+        <!-- Botones inferiores del sidebar -->
+        <div style="margin-top: auto; margin-bottom: 25px; padding: 0 20px; display: flex; flex-direction: column; gap: 10px;">
+            <a href="/backup" style="background-color: #e67e22; color: white; border-radius: 6px; text-align: center; font-weight: bold; padding: 10px; display: block; box-sizing: border-box; text-decoration: none; font-size: 14px;">💾 Backup Manual</a>
+            <a href="/logout" style="background-color: #ef4444; color: white; border-radius: 6px; text-align: center; font-weight: bold; padding: 10px; display: block; box-sizing: border-box; text-decoration: none; font-size: 13px;">🚪 Cerrar Sesión</a>
+        </div>
     </div>
 
     <div class="main-content">
@@ -70,206 +76,4 @@
                 <div style="max-height: 180px; overflow-y: auto; font-size: 13px;">
                     {% if archivos_paciente %}
                         {% for ar in archivos_paciente %}
-                        <div style="padding: 6px 0; border-bottom: 1px solid #475569; display: flex; justify-content: space-between; align-items: center;">
-                            <span style="color: #e2e8f0;">{{ ar.nombre_estudio }}</span>
-                            <a href="/uploads/{{ ar.archivo }}" target="_blank" style="color: #38bdf8; text-decoration: none; font-weight: bold; font-size: 12px;">Ver</a>
-                        </div>
-                        {% endfor %}
-                    {% else %}
-                        <p style="color: #94a3b8; font-style: italic; margin: 0; font-size: 12px;">Ninguno registrado.</p>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-
-        <!-- Resumen de Consulta Anterior (Ocultando vacíos) -->
-        <h4 style="color:#1e293b; font-size:15px; margin-bottom:8px;">📌 Resumen de Consulta Anterior:</h4>
-        {% if historiales %}
-            {% set ult = historiales[0] %}
-            <div style="background:#334155; color:#f8fafc; padding:20px; border-radius:8px; margin-bottom:15px; border:1px solid #475569;">
-                <div style="font-weight:bold; color:#38bdf8; font-size:14px; margin-bottom:10px; border-bottom:1px solid #475569; padding-bottom:6px;">
-                    📅 Fecha de última consulta: {{ ult.fecha }}
-                </div>
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; font-size:13px; color:#e2e8f0;">
-                    {% if ult.motivo %}<div><b>Motivo / Evolución:</b> {{ ult.motivo }}</div>{% endif %}
-                </div>
-                {% if ult.pa or ult.fc or ult.peso or ult.talla or ult.imc or ult.cintura %}
-                <div style="background:#1e293b; padding:8px 12px; border-radius:4px; margin-top:10px; font-size:12px;">
-                    <b>Examen Físico:</b> 
-                    {% if ult.pa %}PA: {{ ult.pa }} mmHg{% endif %}
-                    {% if ult.fc %} | FC: {{ ult.fc }} lpm{% endif %}
-                    {% if ult.peso %} | Peso: {{ ult.peso }} kg{% endif %}
-                    {% if ult.talla %} | Talla: {{ ult.talla }} m{% endif %}
-                    {% if ult.imc %} | IMC: {{ ult.imc }}{% endif %}
-                    {% if ult.cintura %} | Cintura: {{ ult.cintura }} cm{% endif %}
-                </div>
-                {% endif %}
-            </div>
-        {% else %}
-            <p style='color:#64748b; font-style:italic; font-size:13px; margin-bottom:15px;'>No hay consultas anteriores registradas.</p>
-        {% endif %}
-
-        <!-- MEDICACIÓN ACTUAL (Editable, larga, debajo del resumen anterior, con botón de receta) -->
-        <div style="background:#1e293b; color:white; padding:20px; border-radius:8px; box-shadow:0 4px 10px rgba(0,0,0,0.1); margin-bottom:25px; border:1px solid #475569;">
-            <form method="POST" style="margin: 0;">
-                <input type="hidden" name="accion" value="guardar_medicacion">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                    <label style="font-weight:bold; font-size:14px; color:#38bdf8;">💊 Medicación Actual (Editable):</label>
-                    <button type="submit" style="background:#107c41; color:white; border:none; padding:6px 14px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:12px; width:auto;">💾 Guardar</button>
-                </div>
-                <textarea name="medicacion_actual_base" rows="4" placeholder="Escriba aquí la medicación actual del paciente..." style="width:100%; background:#334155; border:1px solid #475569; color:white; font-family:Segoe UI; font-size:13px; outline:none; resize:vertical; padding:10px; border-radius:6px; box-sizing:border-box;">{{ paciente.medicacion_actual or '' }}</textarea>
-            </form>
-            
-            <div style="margin-top: 12px; display: flex; justify-content: flex-end;">
-                <form action="/receta/{{ paciente.id }}" method="POST" target="_blank" style="margin: 0;">
-                    <input type="hidden" name="diagnostico_receta" value="Control Cardiológico / Tratamiento Actual">
-                    <input type="hidden" name="receta" value="{{ paciente.medicacion_actual or '' }}">
-                    <input type="hidden" name="indicaciones" value="Cumplir estrictamente con las dosis indicadas. Control según pauta médica.">
-                    <button type="submit" style="background:#0284c7; color:white; border:none; padding:6px 14px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:12px; width:auto;">🖨️ Imprimir Receta / Indicación</button>
-                </form>
-            </div>
-        </div>
-
-        <!-- Formulario Registrar Nueva Consulta / Evolución -->
-        <div style="background:white; padding:35px; border-radius:10px; box-shadow:0 4px 15px rgba(0,0,0,0.05); margin-bottom:30px; border:1px solid #e2e8f0;">
-            <h3 style="color:#1e3a8a; margin-top:0; border-bottom:2px solid #e2e8f0; padding-bottom:8px;">🩺 Registrar Nueva Consulta / Evolución</h3>
-            
-            <form method="POST">
-                <input type="hidden" name="accion" value="nueva_consulta">
-                
-                <div style="margin-bottom:15px;">
-                    <label style="display:block; font-weight:bold; font-size:13px; color:#334155; margin-bottom:4px;">Motivo / Evolución:</label>
-                    <textarea name="motivo_evolucion" rows="6" placeholder="Escriba aquí el motivo de consulta y la evolución detallada..." required style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:4px; font-family:Segoe UI; box-sizing:border-box; font-size:14px;"></textarea>
-                </div>
-
-                <div style="background:#f8fafc; padding:20px; border-radius:6px; border:1px solid #cbd5e1; margin-bottom:20px;">
-                    <h4 style="margin:0 0 12px 0; color:#1e293b; font-size:15px;">Examen Físico</h4>
-                    <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:15px; margin-bottom:12px;">
-                        <div>
-                            <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">PA [mmHg]:</label>
-                            <input type="text" name="pa" placeholder="120/80" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; font-size:14px;">
-                        </div>
-                        <div>
-                            <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">FC [lpm]:</label>
-                            <input type="text" name="fc" placeholder="72" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; font-size:14px;">
-                        </div>
-                        <div>
-                            <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">Peso [kg]:</label>
-                            <input type="number" step="0.1" id="peso" name="peso" placeholder="70" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; font-size:14px;">
-                        </div>
-                        <div>
-                            <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">Talla [m]:</label>
-                            <input type="number" step="0.01" id="talla" name="talla" placeholder="1.75" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; font-size:14px;">
-                        </div>
-                        <div>
-                            <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">IMC:</label>
-                            <input type="text" id="imc" name="imc" placeholder="Automático" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; background:#e2e8f0; font-size:14px;">
-                        </div>
-                        <div>
-                            <label style="font-size:12px; font-weight:bold; display:block; margin-bottom:4px;">Cintura [cm]:</label>
-                            <input type="text" id="cintura" name="cintura" placeholder="85" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; font-size:14px;">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- CUADRO DE SCORES Y PREQUIRÚRGICO (Colocado debajo del Examen Físico) -->
-                <div style="background:#f1f5f9; padding:15px; border-radius:6px; border:1px solid #cbd5e1; margin-bottom:20px;">
-                    <label style="display:block; font-weight:bold; font-size:13px; color:#1e3a8a; margin-bottom:4px;">📊 Cuadro de Scores y Prequirúrgico (Resultados copiados desde el panel inferior):</label>
-                    <textarea id="resumen_scores" name="framingham" rows="3" placeholder="Aquí puede copiar o pegar los resultados de los scores..." style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:4px; font-family:Segoe UI; box-sizing:border-box; font-size:13px; background:white;"></textarea>
-                </div>
-
-                <!-- BOTÓN DEL PANEL DE SCORES (Movido hacia abajo, justo antes de guardar) -->
-                <details style="margin-bottom:20px;">
-                    <summary style="background:#0284c7; color:white; padding:12px 20px; border-radius:6px; font-weight:bold; cursor:pointer; font-size:14px; list-style:none; text-align:center; box-shadow:0 2px 6px rgba(0,0,0,0.1); outline:none;">
-                        📊 Abrir / Cerrar Panel de Scores y Prequirúrgico
-                    </summary>
-                    <div style="background:#f8fafc; border:2px solid #cbd5e1; border-top:none; border-bottom-left-radius:8px; border-bottom-right-radius:8px; padding:20px; display:flex; flex-direction:column; gap:20px;">
-                        <!-- Framingham -->
-                        <div style="background:white; padding:15px; border-radius:6px; border:1px solid #e2e8f0;">
-                            <label style="font-weight:bold; color:#b91c1c; display:block; margin-bottom:8px;">Framingham:</label>
-                            <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:10px;">
-                                <input type="text" id="f_col" placeholder="Col. Total" style="flex:1; padding:8px; border:1px solid #ccc; border-radius:4px; font-size:13px; min-width:120px;">
-                                <input type="text" id="f_hdl" placeholder="HDL" style="flex:1; padding:8px; border:1px solid #ccc; border-radius:4px; font-size:13px; min-width:120px;">
-                                <input type="text" id="f_pas" placeholder="PA Sist." style="flex:1; padding:8px; border:1px solid #ccc; border-radius:4px; font-size:13px; min-width:120px;">
-                                <label style="font-size:13px; font-weight:bold; color:#334155;"><input type="checkbox" id="f_fum"> Fumador</label>
-                            </div>
-                            <div style="display:flex; gap:10px; align-items:center;">
-                                <button type="button" onclick="calcularFramingham()" style="background:#b91c1c; color:white; border:none; padding:8px 16px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:13px; width:auto;">Calcular</button>
-                                <input type="text" id="framingham_input" placeholder="Resultado..." style="flex:2; padding:8px; border:1px solid #ccc; border-radius:4px; font-size:13px; background:#f8fafc;">
-                                <button type="button" onclick="pasarFramingham()" style="background:#1e293b; color:white; border:none; padding:8px 14px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:12px; width:auto;">📥 Copiar al Cuadro</button>
-                            </div>
-                        </div>
-                    </div>
-                </details>
-
-                <button type="submit" style="background:#107c41; color:white; border:none; padding:14px 20px; border-radius:6px; font-weight:bold; cursor:pointer; width:100%; font-size:16px;">💾 Guardar Consulta en el Historial</button>
-            </form>
-        </div>
-
-        <!-- Archivos y Estudios (Adjuntar) -->
-        <details style="margin-bottom:20px;">
-            <summary style="background:#7c3aed; color:white; padding:12px 20px; border-radius:6px; font-weight:bold; cursor:pointer; font-size:14px; list-style:none; text-align:center;">
-                📁 Archivos y Estudios (Adjuntar)
-            </summary>
-            <div style="background:white; border:2px solid #d8b4fe; border-top:none; border-bottom-left-radius:8px; border-bottom-right-radius:8px; padding:25px;">
-                <form method="POST" enctype="multipart/form-data" style="margin-bottom:25px; background:#f8fafc; padding:20px; border-radius:8px; border:1px solid #e2e8f0;">
-                    <input type="hidden" name="accion" value="subir_archivo">
-                    <div style="margin-bottom:12px;">
-                        <label style="display:block; font-weight:bold; font-size:13px; color:#334155; margin-bottom:4px;">Nombre del Estudio / Archivo:</label>
-                        <input type="text" name="nombre_estudio" placeholder="Ej: Ecocardiograma, ECG..." required style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:4px; font-size:14px;">
-                    </div>
-                    <div style="margin-bottom:15px;">
-                        <label style="display:block; font-weight:bold; font-size:13px; color:#334155; margin-bottom:4px;">Seleccionar Archivo:</label>
-                        <input type="file" name="archivo_estudio" required style="font-size:13px;">
-                    </div>
-                    <button type="submit" style="background:#7c3aed; color:white; border:none; padding:10px 20px; border-radius:6px; font-weight:bold; cursor:pointer; width:100%; font-size:14px;">📁 Subir Estudio</button>
-                </form>
-            </div>
-        </details>
-
-        <!-- Historial Completo (Ocultando vacíos) -->
-        <details style="margin-bottom:40px;">
-            <summary style="background:#334155; color:white; padding:12px 20px; border-radius:6px; font-weight:bold; cursor:pointer; font-size:14px; list-style:none; text-align:center;">
-                📂 Historial Completo de Consultas Anteriores
-            </summary>
-            <div style="background:#f8fafc; border:2px solid #cbd5e1; border-top:none; border-bottom-left-radius:8px; border-bottom-right-radius:8px; padding:25px;">
-                {% if historiales %}
-                    {% for h in historiales %}
-                    <div style="background:white; padding:20px; border-radius:8px; margin-bottom:15px; border:1px solid #cbd5e1;">
-                        <div style="font-weight:bold; color:#1e3a8a; border-bottom:1px solid #e2e8f0; padding-bottom:8px; margin-bottom:10px;">
-                            📅 Fecha: {{ h.fecha }}
-                        </div>
-                        {% if h.motivo %}<p><b>Motivo / Evolución:</b> {{ h.motivo }}</p>{% endif %}
-                        {% if h.estudios_historial %}<p><b>Estudios:</b> {{ h.estudios_historial }}</p>{% endif %}
-                        {% if h.medicacion_actual %}<p><b>Medicación Actual:</b> {{ h.medicacion_actual }}</p>{% endif %}
-                    </div>
-                    {% endfor %}
-                {% else %}
-                    <p style='color:#64748b; font-style:italic;'>No hay consultas registradas aún.</p>
-                {% endif %}
-            </div>
-        </details>
-    </div>
-
-    <script>
-        const fechaNac = new Date("{{ paciente.nacimiento }}");
-        const fechaHoy = new Date();
-        let edadCalculada = fechaHoy.getFullYear() - fechaNac.getFullYear();
-        const diferenciaMes = fechaHoy.getMonth() - fechaNac.getMonth();
-        if (diferenciaMes < 0 || (diferenciaMes === 0 && fechaHoy.getDate() < fechaNac.getDate())) {
-            edadCalculada--;
-        }
-        document.getElementById('edadPaciente').innerText = (!isNaN(edadCalculada) && edadCalculada > 0) ? edadCalculada + " años" : "N/D";
-
-        function calcularFramingham() {
-            let col = document.getElementById('f_col').value, hdl = document.getElementById('f_hdl').value, pas = document.getElementById('f_pas').value;
-            let fum = document.getElementById('f_fum').checked ? "Fumador" : "No fumador";
-            document.getElementById('framingham_input').value = `Col: ${col||'-'}, HDL: ${hdl||'-'}, PAS: ${pas||'-'} | ${fum}`;
-        }
-        function pasarFramingham() {
-            let val = document.getElementById('framingham_input').value;
-            if (val) document.getElementById('resumen_scores').value += (document.getElementById('resumen_scores').value ? "\n" : "") + "Framingham: " + val;
-        }
-    </script>
-</body>
-</html>
+                        <div style="padding: 6px 0; border-bottom: 1px solid #475569; display
