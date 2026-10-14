@@ -6,13 +6,12 @@
     <title>CardioSys - Dra. Cecilia Marecos</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; }
-        .sidebar { height: 100vh; width: 250px; background-color: #1e2b3c; color: white; position: fixed; padding-top: 20px; box-sizing: border-box; display: flex; flex-direction: column; overflow-y: auto; }
-        .sidebar h2 { text-align: center; margin-bottom: 5px; letter-spacing: 1px; color: white; }
+        .sidebar { height: 100vh; width: 250px; background-color: #1e2b3c; color: white; position: fixed; padding-top: 20px; }
+        .sidebar h2 { text-align: center; margin-bottom: 5px; letter-spacing: 1px; }
         .sidebar .sub-title { text-align: center; font-size: 14px; color: #3498db; margin-bottom: 30px; font-weight: bold; }
-        .sidebar a { padding: 12px 25px; text-decoration: none; font-size: 15px; color: #cbd5e1; display: block; transition: 0.3s; }
+        .sidebar a { padding: 15px 25px; text-decoration: none; font-size: 16px; color: #cbd5e1; display: block; transition: 0.3s; }
         .sidebar a:hover { background-color: #2c3e50; color: white; border-left: 4px solid #3498db; }
-        
-        .main-content { margin-left: 250px; padding: 40px; box-sizing: border-box; }
+        .main-content { margin-left: 250px; padding: 40px; }
         .header { background-color: white; padding: 20px 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
         .header h1 { margin: 0; color: #2c3e50; font-size: 24px; }
         
@@ -21,7 +20,7 @@
         th, td { padding: 15px; text-align: left; border-bottom: 1px solid #ddd; }
         th { background-color: #3498db; color: white; font-weight: normal; }
         tr:hover { background-color: #f1f1f1; }
-        .btn-abrir { background-color: #2ecc71; color: white; border: none; padding: 8px 14px; border-radius: 4px; cursor: pointer; text-decoration: none; font-size: 14px; font-weight: bold;}
+        .btn-abrir { background-color: #2ecc71; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; text-decoration: none; font-size: 14px;}
         .btn-abrir:hover { background-color: #27ae60; }
     </style>
 </head>
@@ -29,17 +28,13 @@
     <div class="sidebar">
         <h2>CardioSys 1.0</h2>
         <div class="sub-title">Dra. Cecilia Marecos</div>
-        <a href="/">📋 Agenda Diaria</a>
-        <a href="/nuevo">➕ Nuevo Ingreso</a>
-        <a href="/lista-pacientes">👥 Lista de Pacientes</a>
-        <a href="/estudios-recientes">📁 Lista de Estudios</a>
-        <a href="/cambiar-contrasena">🔑 Cambiar Contraseña</a>
+        <a href="/">📋 Agenda de Hoy</a>
+        <a href="#">🔍 Buscar Paciente</a>
+        <a href="/nuevo_paciente">➕ Nuevo Ingreso</a>
+        <a href="/calculadoras">🧮 Calculadoras</a>
         
-        <!-- Botones inferiores del sidebar -->
-        <div style="margin-top: auto; margin-bottom: 25px; padding: 0 20px; display: flex; flex-direction: column; gap: 10px;">
-            <a href="/backup" style="background-color: #e67e22; color: white; border-radius: 6px; text-align: center; font-weight: bold; padding: 10px; display: block; box-sizing: border-box; text-decoration: none; font-size: 14px;">💾 Backup Manual</a>
-            <a href="/logout" style="background-color: #ef4444; color: white; border-radius: 6px; text-align: center; font-weight: bold; padding: 10px; display: block; box-sizing: border-box; text-decoration: none; font-size: 13px;">🚪 Cerrar Sesión</a>
-        </div>
+        <!-- Botón de Seguridad -->
+        <a href="/backup" style="margin-top: 50px; background-color: #e67e22; color: white; border-radius: 4px; margin-left: 20px; margin-right: 20px; text-align: center; font-weight: bold;">💾 Backup Manual</a>
     </div>
 
     <div class="main-content">
@@ -47,16 +42,16 @@
             <h1>Panel de Control / Agenda de Hoy</h1>
         </div>
 
-        <div style="margin-bottom: 20px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+        <div style="margin-bottom: 20px; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
             <form action="/" method="GET" style="display: flex; gap: 10px; margin: 0;">
-                <input type="text" name="q" placeholder="Buscar por nombre o cédula..." value="{{ busqueda }}" style="margin: 0; flex: 1; padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;" autocomplete="off">
-                <button type="submit" style="background-color: #3498db; color: white; border: none; padding: 10px 25px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px;">Buscar</button>
-                <a href="/" style="background-color: #95a5a6; color: white; padding: 10px 20px; border-radius: 6px; text-decoration: none; display: flex; align-items: center; font-weight: bold; font-size: 14px;">Limpiar</a>
+                <input type="text" name="q" placeholder="Buscar por nombre o cédula..." value="{{ busqueda }}" style="margin: 0; flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 4px;" autocomplete="off">
+                <button type="submit" style="background-color: #3498db; color: white; border: none; padding: 10px 25px; border-radius: 4px; cursor: pointer;">Buscar</button>
+                <a href="/" style="background-color: #95a5a6; color: white; padding: 10px 20px; border-radius: 4px; text-decoration: none; display: flex; align-items: center;">Limpiar</a>
             </form>
         </div>
 
         <div style="background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); overflow: hidden;">
-            <div style="padding: 20px; font-weight: bold; color: #2c3e50; border-bottom: 1px solid #eee; font-size: 16px;">Lista de Pacientes</div>
+            <div style="padding: 20px; font-weight: bold; color: #2c3e50; border-bottom: 1px solid #eee;">Lista de Pacientes</div>
             <table>
                 <thead>
                     <tr>
@@ -78,7 +73,7 @@
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="5" style="text-align: center; color: #7f8c8d; padding: 25px;">No hay pacientes registrados todavía.</td>
+                        <td colspan="5" style="text-align: center; color: #7f8c8d; padding: 20px;">No hay pacientes registrados todavía.</td>
                     </tr>
                     {% endfor %}
                 </tbody>
