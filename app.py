@@ -21,7 +21,8 @@ backup_folder = os.path.join(data_dir, 'Backups_Automaticos')
 os.makedirs(upload_folder, exist_ok=True)
 os.makedirs(backup_folder, exist_ok=True)
 
-app = Flask(__name__, template_folder='templates')
+template_dir = os.path.join(base_dir, 'templates')
+app = Flask(__name__, template_folder=template_dir)
 app.secret_key = 'cardio_elite_seguro_2026'
 
 def hacer_backup_automatico():
