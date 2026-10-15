@@ -27,13 +27,6 @@ app = Flask(__name__, template_folder=template_dir)
 app.secret_key = 'cardio_elite_seguro_2026'
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 
-@app.before_request
-def auto_login():
-    # Si no hay sesión activa y no estamos en la página de login, la iniciamos automáticamente
-    if not session.get('logged_in') and request.endpoint != 'login':
-        session['logged_in'] = True
-        session['username'] = 'draceciliamarecos'
-
 def init_db():
     try:
         conn = sqlite3.connect(db_path)
@@ -46,12 +39,14 @@ def init_db():
                 password_hash TEXT NOT NULL
             )
         ''')
+        
+        # Forzar actualización limpia del usuario y contraseña exacta
         pass_hash = generate_password_hash('cardiopy')
+        cursor.execute('DELETE FROM usuarios WHERE username = ?', ('draceciliamarecos',))
         cursor.execute('''
             INSERT INTO usuarios (username, password_hash) 
-            VALUES ('draceciliamarecos', ?) 
-            ON CONFLICT(username) DO UPDATE SET password_hash = ?
-        ''', (pass_hash, pass_hash))
+            VALUES ('draceciliamarecos', ?)
+        ''', (pass_hash,))
 
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS pacientes (
