@@ -40,7 +40,7 @@ def init_db():
             )
         ''')
         
-        # Registrar y asegurar usuario y contraseña oficial
+        # Forzar actualización limpia del usuario y la contraseña oficial 'cardiopy'
         pass_hash = generate_password_hash('cardiopy')
         cursor.execute('DELETE FROM usuarios WHERE username = ?', ('draceciliamarecos',))
         cursor.execute('''
@@ -152,21 +152,20 @@ init_db()
 def login():
     error = None
     if request.method == 'POST':
-        username = request.form.get('username', '').strip()
         password = request.form.get('password', '').strip()
         
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
-        cursor.execute('SELECT password_hash FROM usuarios WHERE username = ?', (username,))
+        cursor.execute('SELECT password_hash FROM usuarios WHERE username = ?', ('draceciliamarecos',))
         user_row = cursor.fetchone()
         conn.close()
 
         if user_row and check_password_hash(user_row[0], password):
             session['logged_in'] = True
-            session['username'] = username
+            session['username'] = 'draceciliamarecos'
             return redirect(url_for('index'))
         else:
-            error = 'Usuario o contraseña incorrectos.'
+            error = 'Contraseña incorrecta.'
             
     return render_template('login.html', error=error)
 
