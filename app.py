@@ -29,8 +29,10 @@ app.config['TEMPLATES_AUTO_RELOAD'] = True
 
 @app.before_request
 def auto_login():
-    session['logged_in'] = True
-    session['username'] = 'draceciliamarecos'
+    # Si no hay sesión activa y no estamos en la página de login, la iniciamos automáticamente
+    if not session.get('logged_in') and request.endpoint != 'login':
+        session['logged_in'] = True
+        session['username'] = 'draceciliamarecos'
 
 def init_db():
     try:
@@ -153,7 +155,17 @@ init_db()
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    return redirect(url_for('index'))
+    error = None
+    if request.method == 'POST':
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '')
+        if username == 'draceciliamarecos' and password == 'cardiopy':
+            session['logged_in'] = True
+            session['username'] = username
+            return redirect(url_for('index'))
+        else:
+            error = 'Usuario o contraseña incorrectos.'
+    return render_template('login.html', error=error)
 
 @app.route('/')
 def index():
