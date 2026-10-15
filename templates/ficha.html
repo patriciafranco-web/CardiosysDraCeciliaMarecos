@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Ficha del Paciente - CardioSys</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+    function calcularAntropometria() {
+        let p = parseFloat(document.getElementById('form_peso').value);
+        let t = parseFloat(document.getElementById('form_talla').value);
+        if (!p || !t || isNaN(p) || isNaN(t)) {
+            document.getElementById('form_imc').value = '';
+            document.getElementById('form_bsa').value = '';
+            return;
+        }
+        let imc = (p / ((t / 100) * (t / 100))).toFixed(1);
+        let clasificacionIMC = imc < 18.5 ? "Bajo peso" : imc < 25 ? "Normal" : imc < 30 ? "Sobrepeso" : imc < 35 ? "Obesidad I" : imc < 40 ? "Obesidad II" : "Obesidad III";
+        document.getElementById('form_imc').value = imc + " (" + clasificacionIMC + ")";
+        document.getElementById('form_bsa').value = Math.sqrt((p * t) / 3600).toFixed(2) + " m²";
+    }
+
+    function toggleEditarPaciente() {
+        let normal = document.getElementById('vista_normal_paciente');
+        let form = document.getElementById('form_editar_paciente');
+        if (form.style.display === 'none' || form.style.display === '') {
+            form.style.display = 'block';
+            normal.style.display = 'none';
+        } else {
+            form.style.display = 'none';
+            normal.style.display = 'flex';
+        }
+    }
+
+    function togglePanel(id) {
+        let panel = document.getElementById(id);
+        if (panel.style.display === 'none' || panel.style.display === '') {
+            panel.style.display = 'block';
+            if (id === 'panelGraficoContent') {
+                renderizarGraficoEvolucion();
+            }
+        } else {
+            panel.style.display = 'none';
+        }
+    }
+
+    function pasarAlCampoScores(texto) {
+        let cuadro = document.getElementById('cuadro_scores_copia');
+        cuadro.value += (cuadro.value ? " | " : "") + texto;
+        alert("¡Resultado transcribido al cuadro especial de Scores!");
+    }
+
+    // Calculadoras
+    function calcularFramingham() {
+        let col = parseFloat(document.getElementById('fram_col').value) || 200;
+        let hdl = parseFloat(document.getElementById('fram_hdl').value) || 50;
+        let pas = parseFloat(document.getElementById('input_pa').value ? document.getElementById('input_pa').value.split('/')[0] : 120);
+        let fumador = document.getElementById('fram_fumador').checked;
+        let dm = document.getElementById('fram_dm').checked;
+        let pts = 0;
+        if (col > 240) pts += 2; else if (col > 200) pts += 1;
+        if (hdl < 40) pts += 2;
+        if (pas >= 160) pts += 3; else if (pas >= 140) pts += 2;
+        if (fumador) pts += 2;
+        if (dm) pts += 2;
+        let riesgoCat = pts <= 2 ? "Bajo (<10%)" : pts <= 4 ? "Moderado (10-20%)" : "Alto (>20%)";
+        let res = "Framingham Risk: " + riesgoCat + " (Pts: " + pts + ")";
+        document.getElementById('res_fram').innerText = res;
+    }
+    function pasarFram() {
+        let txt = document.getElementById('res_fram').innerText;
+        if(!txt) { calcularFramingham(); txt = document.getElementById('res_fram').innerText; }
+        pasarAlCampoScores(txt);
+    }
+
+    function calcularCHAD() {
+        let puntos = 0;
+        if (document.getElementById('chad_icc').checked) puntos += 1;
+        if (document.getElementById('chad_hta').checked) puntos += 1;
+        let edadSel = document.getElementById('chad_edad').value;
+        if (edadSel === '65-74') puntos += 1;
+        if (edadSel === '75+') puntos += 2;
+        if (document.getElementById('chad_dm').checked) puntos += 1;
+        if (document.getElementById('chad_acv').checked) puntos += 2;
+        if (document.getElementById('chad_vasc').checked) puntos += 1;
+        let res = "CHA2DS2-VA: " + puntos + " pts";
+        document.getElementById('res_chad').innerText = res;
+    }
+    function pasarCHAD() {
+        let txt = document.getElementById('res_chad').innerText;
+        if (!txt) { calcularCHAD(); txt = document.getElementById('res_chad').innerText; }
+        pasarAlCampoScores(txt);
+    }
+
+    function calcularCrCl() {
+        let cr = parseFloat(document.getElementById('crcl_cr').value);
+        let peso = parseFloat(document.getElementById('form_peso').value) || 70;
+        let sexo = '{{ paciente["sexo"] or "Masculino" }}'.toLowerCase();
+        let edad = parseFloat('{{ paciente["nacimiento"] }}') || 50;
+        if (!cr || isNaN(cr) || cr <= 0) { alert("Ingrese Creatinina sérica válida."); return; }
+        let cl = ((140 - edad) * peso) / (72 * cr);
+        if (sexo.startsWith('f') || sexo.includes('mujer')) cl *= 0.85;
+        let res = "CrCl (Cockcroft-Gault): " + cl.toFixed(1) + " mL/min (Cr: " + cr + ")";
+        document.getElementById('res_crcl').innerText = res;
+    }
+    function pasarCrCl() {
+        let txt = document.getElementById('res_crcl').innerText;
+        if (!txt) { calcularCrCl(); txt = document.getElementById('res_crcl').innerText; }
+        pasarAlCampoScores(txt);
+    }
+
+    function calcularRAC() {
+        let alb = parseFloat(document.getElementById('rac_alb').value);
+        let creat = parseFloat(document.getElementById('rac_creat').value);
+        if (!alb || !creat || isNaN(alb) || isNaN(creat) || creat === 0) { alert("Ingrese valores válidos."); return; }
+        let racVal = (alb / creat) * 100;
+        let estadio = racVal < 30 ? "A1 (Normal a leve)" : racVal <= 300 ? "A2 (Moderada)" : "A3 (Severa)";
+        let res = "RAC: " + racVal.toFixed(1) + " mg/g [" + estadio + "]";
+        document.getElementById('res_rac').innerText = res;
+    }
+    function pasarRAC() {
+        let txt = document.getElementById('res_rac').innerText;
+        if (!txt) { calcularRAC(); txt = document.getElementById('res_rac').innerText; }
+        pasarAlCampoScores(txt);
+    }
+
+    function calcularPreOp() {
+        let riesgo = document.getElementById('pre_riesgo').value;
+        let asa = document.getElementById('pre_asa').value;
+        let puntosLee = 0;
+        if (document.getElementById('lee_alto').checked) puntosLee += 1;
+        if (document.getElementById('lee_isq').checked) puntosLee += 1;
+        if (document.getElementById('lee_icc').checked) puntosLee += 1;
+        if (document.getElementById('lee_acv').checked) puntosLee += 1;
+        if (document.getElementById('lee_dm').checked) puntosLee += 1;
+        if (document.getElementById('lee_cr').checked) puntosLee += 1;
+        let claseLee = puntosLee === 0 ? 'I' : puntosLee === 1 ? 'II' : 'III';
+        let res = "Pre-Op: " + asa + " | RCRI Clase " + claseLee + " (" + puntosLee + " pts) | " + riesgo;
+        document.getElementById('res_preop').innerText = res;
+    }
+    function pasarPreOp() {
+        let txt = document.getElementById('res_preop').innerText;
+        if (!txt) { calcularPreOp(); txt = document.getElementById('res_preop').innerText; }
+        pasarAlCampoScores(txt);
+    }
+
+    let miGrafico = null;
+    function renderizarGraficoEvolucion() {
+        let ctx = document.getElementById('graficoEvolucionCanvas').getContext('2d');
+        if (miGrafico) { miGrafico.destroy(); }
+        
+        let fechas = [];
+        let presionesSys = [];
+        let pesos = [];
+
+        let dataEl = document.getElementById('app-historiales-data');
+        let historialesData = [];
+        if (dataEl) {
+            try {
+                historialesData = JSON.parse(dataEl.getAttribute('data-historiales') || '[]');
+            } catch(e) { historialesData = []; }
+        }
+        
+        if (historialesData && historialesData.length > 0) {
+            historialesData.forEach(function(h) {
+                fechas.push(h.fecha || '');
+                let paStr = h.pas || '120';
+                let sysVal = parseFloat(paStr.split('/')[0]) || 120;
+                presionesSys.push(sysVal);
+                pesos.push(parseFloat(h.peso) || 70);
+            });
+        } else {
+            fechas.push('Sin registros');
+            presionesSys.push(120);
+            pesos.push(70);
+        }
+
+        miGrafico = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: fechas,
+                datasets: [
+                    { label: 'PA Sistólica (mmHg)', data: presionesSys, borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', tension: 0.2 },
+                    { label: 'Peso (Kg)', data: pesos, borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', tension: 0.2 }
+                ]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+    }
+    </script>
+</head>
+<body style="font-family:Segoe UI; background:#f4f7f6; margin:0; display:flex; height:100vh;">
+    <div id="app-historiales-data" data-historiales='{{ historiales_json | safe }}' style="display:none;"></div>
+
+    <!-- Sidebar -->
+    <div style="width:260px; background:#1e293b; color:white; padding:20px; box-sizing:border-box; display:flex; flex-direction:column; height:100vh;">
+        <h2 style="color:white; margin-top:0; margin-bottom:5px;">CardioSys 1.0</h2>
+        <p style="color:#38bdf8; font-size:15px; font-weight:bold; margin-top:0; margin-bottom:5px;">Dra. Cecilia Marecos Viana</p>
+        <p style="color:#94a3b8; font-size:11px; margin-top:0; margin-bottom:25px; line-height:1.2;">Reg. Prof. 13943<br>Cardiología Clínica y Diagnóstica</p>
+        <ul style="list-style:none; padding:0; margin-top:0; flex:1;">
+            <li style="margin:15px 0;"><a href="/" style="color:white; text-decoration:none;">📋 Lista de Pacientes</a></li>
+            <li style="margin:15px 0;"><a href="/nuevo" style="color:white; text-decoration:none;">➕ Nuevo Paciente</a></li>
+            <li style="margin:15px 0;"><a href="/estudios-lista" style="color:white; text-decoration:none;">📁 Lista de Estudios</a></li>
+            <li style="margin:15px 0;"><a href="/estudios-nuevo" style="color:white; text-decoration:none;">➕ Nuevo Estudio</a></li>
+            <li style="margin:15px 0;"><a href="/cambiar-password" style="color:white; text-decoration:none;">🔑 Cambiar Contraseña</a></li>
+        </ul>
+        <div style="margin-bottom:20px;">
+            <a href="/backup" style="display:block; background:#e67e22; color:white; padding:12px; text-align:center; text-decoration:none; border-radius:6px; font-weight:bold;">💾 Backup Manual</a>
+            <a href="/logout" style="display:block; background:#ef4444; color:white; padding:8px; text-align:center; text-decoration:none; border-radius:6px; font-size:12px; font-weight:bold; margin-top:8px;">🚪 Cerrar Sesión</a>
+        </div>
+    </div>
+
+    <!-- Contenido Principal -->
+    <div style="flex:1; padding:30px; overflow-y:auto;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+            <a href="/" style="color:#3498db; text-decoration:none; font-weight:bold;">⬅ Volver al Panel</a>
+        </div>
+
+        <!-- TARJETA SUPERIOR PRINCIPAL -->
+        <div style="background:#1e293b; color:white; padding:25px; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.1); margin-bottom:20px;">
+            <div id="vista_normal_paciente" style="display:flex; justify-content:space-between; align-items:flex-start;">
+                <div style="flex:2;">
+                    <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+                        <h1 style="margin:0; font-size:26px;">{{ paciente['nombre'] }}</h1>
+                        {% if paciente['tiene_estudios'] == 'Sí' %}
+                        <span style="background:#22c55e; color:white; padding:3px 10px; border-radius:12px; font-size:12px; font-weight:bold;">📁 Trae Estudios Previos</span>
+                        {% endif %}
+                    </div>
+                    <div style="display:flex; gap:20px; font-size:14px; color:#cbd5e1; flex-wrap:wrap; margin-bottom:10px;">
+                        {% if paciente['cedula'] %}<span><b>C.I.:</b> {{ paciente['cedula'] }}</span>{% endif %}
+                        {% if paciente['nacimiento'] %}<span><b>Edad:</b> {{ paciente['nacimiento'] }} años</span>{% endif %}
+                        {% if paciente['sexo'] %}<span><b>Sexo:</b> {{ paciente['sexo'] }}</span>{% endif %}
+                        {% if paciente['profesion'] %}<span><b>Profesión:</b> {{ paciente['profesion'] }}</span>{% endif %}
+                        {% if paciente['sanatorio'] %}<span><b>Sanatorio:</b> {{ paciente['sanatorio'] }}</span>{% endif %}
+                        {% if paciente['direccion'] %}<span><b>Procedencia:</b> {{ paciente['direccion'] }}</span>{% endif %}
+                        {% if paciente['telefono'] %}<span><b>Teléfono:</b> {{ paciente['telefono'] }}</span>{% endif %}
+                    </div>
+                    
+                    {% if paciente['antecedentes'] %}
+                    <div style="font-size:13px; color:#94a3b8; background:rgba(255,255,255,0.05); padding:8px 10px; border-radius:6px;">
+                        <span><b>Estudios:</b> {{ paciente['antecedentes'] }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div style="display:flex; flex-direction:column; align-items:flex-end; gap:12px;">
+                    <button type="button" onclick="toggleEditarPaciente()" style="background:#3b82f6; color:white; border:none; padding:8px 14px; border-radius:6px; font-weight:bold; cursor:pointer; font-size:13px;">✏️ Editar Datos</button>
+                    
+                    <div>
+                        {% if paciente['alergias'] and paciente['alergias'].lower() != 'ninguna' and paciente['alergias'].strip() != '' %}
+                        <div style="background:#e74c3c; color:white; padding:6px 12px; border-radius:4px; font-weight:bold; font-size:12px; text-align:right;">
+                            ⚠️ Alergias: {{ paciente['alergias'] }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Formulario de Edición -->
+            <div id="form_editar_paciente" style="display:none; background:rgba(255,255,255,0.05); padding:15px; border-radius:6px; border:1px solid #475569;">
+                <h3 style="margin-top:0; color:#38bdf8; font-size:16px;">Editar Datos del Paciente</h3>
+                <form method="POST" action="/actualizar_paciente/{{ paciente['id'] }}">
+                    <div style="display:flex; gap:10px; margin-bottom:10px;">
+                        <div style="flex:2;"><label style="font-size:11px;">Nombre y Apellido:</label><input type="text" name="nombre" value="{{ paciente['nombre'] }}" required style="padding:6px; font-size:12px; width:100%; border-radius:4px; border:none;"></div>
+                        <div style="flex:1;"><label style="font-size:11px;">C.I.:</label><input type="text" name="cedula" value="{{ paciente['cedula'] }}" style="padding:6px; font-size:12px; width:100%; border-radius:4px; border:none;"></div>
+                        <div style="flex:1;"><label style="font-size:11px;">Edad:</label><input type="number" name="nacimiento" value="{{ paciente['nacimiento'] }}" style="padding:6px; font-size:12px; width:100%; border-radius:4px; border:none;"></div>
+                    </div>
+                    <div style="display:flex; gap:10px; margin-bottom:10px;">
+                        <div style="flex:1;"><label style="font-size:11px;">Profesión:</label><input type="text" name="profesion" value="{{ paciente['profesion'] }}" style="padding:6px; font-size:12px; width:100%; border-radius:4px; border:none;"></div>
+                        <div style="flex:1;"><label style="font-size:11px;">Procedencia / Ciudad:</label><input type="text" name="direccion" value="{{ paciente['direccion'] }}" style="padding:6px; font-size:12px; width:100%; border-radius:4px; border:none;"></div>
+                        <div style="flex:1;"><label style="font-size:11px;">Sanatorio:</label><input type="text" name="sanatorio" value="{{ paciente['sanatorio'] }}" style="padding:6px; font-size:12px; width:100%; border-radius:4px; border:none;"></div>
+                    </div>
+                    <div style="display:flex; gap:10px; margin-bottom:10px;">
+                        <div style="flex:2;"><label style="font-size:11px;">Estudios:</label><input type="text" name="antecedentes" value="{{ paciente['antecedentes'] }}" style="padding:6px; font-size:12px; width:100%; border-radius:4px; border:none;"></div>
+                        <div style="flex:1;"><label style="font-size:11px; color:#f87171;">Alergias:</label><input type="text" name="alergias" value="{{ paciente['alergias'] }}" style="padding:6px; font-size:12px; width:100%; border-radius:4px; border:none;"></div>
+                    </div>
+                    <input type="hidden" name="sexo" value="{{ paciente['sexo'] }}">
+                    <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:10px;">
+                        <button type="button" onclick="toggleEditarPaciente()" style="background:#64748b; color:white; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; font-size:12px;">Cancelar</button>
+                        <button type="submit" style="background:#10b981; color:white; border:none; padding:6px 12px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:12px;">💾 Guardar Cambios</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- ANTECEDENTES PRINCIPALES -->
+        <div style="background:#1e293b; color:white; padding:20px; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.1); margin-bottom:20px;">
+            <form method="POST" action="/actualizar_antecedentes_principales/{{ paciente['id'] }}">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <label style="color:#38bdf8; font-weight:bold; font-size:14px;">Antecedentes Principales (Editable):</label>
+                    <button type="submit" style="background:#10b981; color:white; border:none; padding:6px 16px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:12px;">💾 Guardar</button>
+                </div>
+                <textarea name="antecedentes_principales" rows="2" placeholder="Ej: HTA, Diabetes, Dislipidemia..." style="width:100%; padding:10px; background:rgba(255,255,255,0.05); color:white; border:1px solid #475569; border-radius:4px; box-sizing:border-box; font-family:inherit; font-size:13px;">{{ paciente['antecedentes_principales'] or paciente['antecedentes'] or '' }}</textarea>
+            </form>
+        </div>
+
+        <!-- RESUMEN DE CONSULTA ANTERIOR -->
+        <div style="background:#1e293b; color:white; padding:20px; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.1); margin-bottom:20px;">
+            <form method="POST" action="/actualizar_resumen_anterior/{{ paciente['id'] }}">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <label style="color:#38bdf8; font-weight:bold; font-size:14px;">📌 Resumen de Consulta Anterior (Evolución y Tratamiento):</label>
+                    <button type="submit" style="background:#10b981; color:white; border:none; padding:4px 12px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:11px;">💾 Guardar</button>
+                </div>
+                <textarea name="resumen_anterior" rows="4" placeholder="Fecha de última consulta y Evolución / Tratamiento anterior..." style="width:100%; padding:10px; background:rgba(255,255,255,0.05); color:white; border:1px solid #475569; border-radius:4px; box-sizing:border-box; font-family:inherit; font-size:13px;">{{ paciente['resumen_anterior'] or '' }}</textarea>
+            </form>
+        </div>
+
+        <!-- PLAN / TRATAMIENTO / INDICACIONES -->
+        <div style="background:white; padding:25px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.05); border-top:4px solid #e74c3c; margin-bottom:25px;">
+            <form method="POST" action="/actualizar_tratamiento_actual/{{ paciente['id'] }}">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <label style="font-weight:bold; font-size:14px; color:#2c3e50;">Plan / Tratamiento / Indicaciones (Anclado y Editable):</label>
+                    <button type="submit" style="background:#10b981; color:white; border:none; padding:6px 16px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:12px;">💾 Guardar Tratamiento</button>
+                </div>
+                <textarea name="tratamiento_actual" rows="5" placeholder="Escriba aquí el plan, medicamentos y prescripción detallada..." style="width:100%; padding:12px; margin:8px 0 15px 0; border:1px solid #ccc; border-radius:6px; box-sizing:border-box; font-family:inherit; font-size:14px; background:#fdfefe;">{{ paciente['tratamiento_actual'] or '' }}</textarea>
+            </form>
+            
+            <form method="POST" action="/generar_plan_pdf/{{ paciente['id'] }}" target="_blank" style="margin-top:10px;">
+                <input type="hidden" name="tratamiento" value="{{ paciente['tratamiento_actual'] or '' }}">
+                <button type="submit" style="background:#e74c3c; color:white; border:none; padding:12px; border-radius:6px; font-weight:bold; cursor:pointer; width:100%; font-size:14px;">🖨️ Generar PDF Oficial con Membrete</button>
+            </form>
+        </div>
+
+        <!-- REGISTRAR NUEVA CONSULTA Y EXAMEN FÍSICO -->
+        <div style="background:white; padding:25px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.05); margin-bottom:30px;">
+            <h3 style="margin-top:0; color:#2c3e50; border-bottom:1px solid #eee; padding-bottom:10px;">🩺 Registrar Nueva Consulta / Evolución</h3>
+            
+            <form method="POST">
+                <div style="margin-bottom: 15px;">
+                    <label style="font-weight:bold; font-size:13px; color:#2c3e50; display:block; margin-bottom:5px;">Evolución del Paciente:</label>
+                    <textarea name="evolucion" rows="4" placeholder="Escriba aquí la evolución clínica..." style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; box-sizing:border-box; font-family:inherit; font-size:13px; background:#fdfefe;"></textarea>
+                </div>
+                
+                <div style="margin-bottom:15px;">
+                    <label style="font-weight:bold; font-size:13px; color:#0284c7; display:block; margin-bottom:5px;">📊 Scores / Notas auxiliares:</label>
+                    <input type="text" id="cuadro_scores_copia" name="scores_copiados" placeholder="Los resultados de las calculadoras irán aquí..." style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:6px; background:#f8fafc; font-size:13px; box-sizing:border-box;">
+                </div>
+
+                <h4 style="margin-top:15px; margin-bottom:10px; color:#2c3e50; border-top:1px solid #eee; padding-top:15px;">Examen Físico y Signos Vitales</h4>
+                
+                <div style="display:flex; gap:10px; margin-bottom:15px;">
+                    <div style="flex:1;"><label style="font-size:11px; font-weight:bold;">PA:</label><input type="text" id="input_pa" name="pas" placeholder="120/80" style="width:100%; padding:8px; margin-top:4px; border:1px solid #ccc; border-radius:4px;"></div>
+                    <div style="flex:1;"><label style="font-size:11px; font-weight:bold;">FC:</label><input type="text" name="fc" placeholder="75" style="width:100%; padding:8px; margin-top:4px; border:1px solid #ccc; border-radius:4px;"></div>
+                    <div style="flex:1;"><label style="font-size:11px; font-weight:bold;">Peso (Kg):</label><input type="text" name="peso" id="form_peso" placeholder="75.5" oninput="calcularAntropometria()" style="width:100%; padding:8px; margin-top:4px; border:1px solid #ccc; border-radius:4px;"></div>
+                    <div style="flex:1;"><label style="font-size:11px; font-weight:bold;">Talla (cm):</label><input type="text" name="talla" id="form_talla" placeholder="170" oninput="calcularAntropometria()" style="width:100%; padding:8px; margin-top:4px; border:1px solid #ccc; border-radius:4px;"></div>
+                </div>
+
+                <div style="display:flex; gap:10px; margin-bottom:20px;">
+                    <div style="flex:1;"><label style="font-size:11px; font-weight:bold;">Cintura (cm):</label><input type="text" name="cintura" id="form_cintura" placeholder="88" style="width:100%; padding:8px; margin-top:4px; border:1px solid #ccc; border-radius:4px;"></div>
+                    <div style="flex:1;"><label style="font-size:11px; font-weight:bold;">IMC:</label><input type="text" name="imc" id="form_imc" placeholder="Auto" style="width:100%; padding:8px; margin-top:4px; border:1px solid #ccc; border-radius:4px; background:#f8fafc;" readonly></div>
+                    <div style="flex:1;"><label style="font-size:11px; font-weight:bold;">BSA m²:</label><input type="text" name="bsa" id="form_bsa" placeholder="Auto" style="width:100%; padding:8px; margin-top:4px; border:1px solid #cbd5e1; border-radius:4px; background:#f8fafc;" readonly></div>
+                </div>
+                
+                <button type="submit" style="background:#2ecc71; color:white; border:none; padding:12px 20px; border-radius:6px; font-weight:bold; cursor:pointer; width:100%; margin-bottom:15px;">💾 Guardar Consulta en Historial</button>
+            </form>
+        </div>
+
+        <!-- PANELES ADICIONALES (Calculadoras) -->
+        <div style="margin-bottom:15px;">
+            <button type="button" onclick="togglePanel('panelScoresContent')" style="background:#0284c7; color:white; border:none; padding:12px; border-radius:6px; font-weight:bold; cursor:pointer; width:100%; font-size:14px; text-align:center;">📊 Panel de Scores y Prequirúrgico (Calculadoras)</button>
+            <div id="panelScoresContent" style="display:none; background:#f8fafc; border:1px solid #cbd5e1; padding:20px; border-radius:6px; margin-top:10px; flex-direction:column; gap:15px;">
+                
+                <!-- 1. Framingham / Riesgo CV -->
+                <div style="border:1px solid #93c5fd; background:white; padding:15px; border-radius:6px;">
+                    <h4 style="margin-top:0; color:#1d4ed8; font-size:14px;">⚡ Framingham / Riesgo Cardiovascular</h4>
+                    <div style="display:flex; flex-wrap:wrap; gap:15px; font-size:13px; align-items:center; margin-bottom:10px;">
+                        <label>Colesterol Total (mg/dL): <input type="number" id="fram_col" value="200" style="padding:4px; width:70px; border:1px solid #ccc; border-radius:4px;"></label>
+                        <label>HDL (mg/dL): <input type="number" id="fram_hdl" value="50" style="padding:4px; width:70px; border:1px solid #ccc; border-radius:4px;"></label>
+                        <label><input type="checkbox" id="fram_fumador"> Fumador</label>
+                        <label><input type="checkbox" id="fram_dm"> Diabetes</label>
+                    </div>
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <button type="button" onclick="calcularFramingham()" style="background:#1d4ed8; color:white; border:none; padding:6px 14px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:12px;">Calcular</button>
+                        <button type="button" onclick="pasarFram()" style="background:#0f172a; color:white; border:none; padding:6px 14px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:12px;">📥 Transcribir a Scores</button>
+                        <span id="res_fram" style="font-weight:bold; color:#1e293b; font-size:13px;"></span>
+                    </div>
+                </div>
+
+                <!-- 2. CHA2DS2-VA -->
+                <div style="border:1px solid #93c5fd; background:white; padding:15px; border-radius:6px;">
+                    <h4 style="margin-top:0; color:#1d4ed8; font-size:14px;">⚡ Calculadora CHA₂DS₂-VA</h4>
+                    <div style="display:flex; flex-wrap:wrap; gap:15px; font-size:13px; align-items:center; margin-bottom:10px;">
+                        <label><input type="checkbox" id="chad_icc"> ICC (+1)</label>
+                        <label><input type="checkbox" id="chad_hta"> HTA (+1)</label>
+                        <label>Edad: 
+                            <select id="chad_edad" style="padding:4px; border-radius:4px; border:1px solid #ccc;">
+                                <option value="<65">&lt;65</option>
+                                <option value="65-74">65-74 (+1)</option>
+                                <option value="75+">≥75 (+2)</option>
+                            </select>
+                        </label>
+                        <label><input type="checkbox" id="chad_dm"> DM (+1)</label>
+                        <label><input type="checkbox" id="chad_acv"> ACV/AIT (+2)</label>
+                        <label><input type="checkbox" id="chad_vasc"> Vasculopatía (+1)</label>
+                    </div>
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <button type="button" onclick="calcularCHAD()" style="background:#1d4ed8; color:white; border:none; padding:6px 14px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:12px;">Calcular</button>
+                        <button type="button" onclick="pasarCHAD()" style="background:#0f172a; color:white; border:none; padding:6px 14px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:12px;">📥 Transcribir a Scores</button>
+                        <span id="res_chad" style="font-weight:bold; color:#1e293b; font-size:13px;"></span>
+                    </div>
+                </div>
+
+                <!-- 3. Función Renal (CrCl) -->
+                <div style="border:1px solid #93c5fd; background:white; padding:15px; border-radius:6px;">
+                    <h4 style="margin-top:0; color:#1d4ed8; font-size:14px;">⚡ Función Renal (Cockcroft-Gault)</h4>
+                    <div style="display:flex; gap:15px; font-size:13px; align-items:center; margin-bottom:10px;">
+                        <label>Creatinina Sérica (mg/dL): <input type="number" step="0.1" id="crcl_cr" placeholder="1.0" style="padding:4px; width:80px; border:1px solid #ccc; border-radius:4px;"></label>
+                    </div>
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <button type="button" onclick="calcularCrCl()" style="background:#1d4ed8; color:white; border:none; padding:6px 14px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:12px;">Calcular</button>
+                        <button type="button" onclick="pasarCrCl()" style="background:#0f172a; color:white; border:none; padding:6px 14px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:12px;">📥 Transcribir a Scores</button>
+                        <span id="res_crcl" style="font-weight:bold; color:#1e293b; font-size:13px;"></span>
+                    </div>
+                </div>
+
+                <!-- 4. Relación Albúmina / Creatinina (RAC) -->
+                <div style="border:1px solid #93c5fd; background:white; padding:15px; border-radius:6px;">
+                    <h4 style="margin-top:0; color:#1d4ed8; font-size:14px;">⚡ Relación Albúmina / Creatinina (RAC)</h4>
+                    <div style="display:flex; gap:15px; font-size:13px; align-items:center; margin-bottom:10px;">
+                        <label>Albúmina (mg/L): <input type="number" step="0.1" id="rac_alb" placeholder="15" style="padding:4px; width:70px; border:1px solid #ccc; border-radius:4px;"></label>
+                        <label>Creatinina Orina (mg/dL): <input type="number" step="0.1" id="rac_creat" placeholder="100" style="padding:4px; width:70px; border:1px solid #ccc; border-radius:4px;"></label>
+                    </div>
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <button type="button" onclick="calcularRAC()" style="background:#1d4ed8; color:white; border:none; padding:6px 14px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:12px;">Calcular</button>
+                        <button type="button" onclick="pasarRAC()" style="background:#0f172a; color:white; border:none; padding:6px 14px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:12px;">📥 Transcribir a Scores</button>
+                        <span id="res_rac" style="font-weight:bold; color:#1e293b; font-size:13px;"></span>
+                    </div>
+                </div>
+
+                <!-- 5. Prequirúrgico Lee y ASA -->
+                <div style="border:1px solid #93c5fd; background:white; padding:15px; border-radius:6px;">
+                    <h4 style="margin-top:0; color:#1d4ed8; font-size:14px;">⚡ Prequirúrgico (Índice de Lee / RCRI y ASA)</h4>
+                    <div style="display:flex; flex-wrap:wrap; gap:15px; font-size:13px; align-items:center; margin-bottom:10px;">
+                        <label><input type="checkbox" id="lee_alto"> Cirugía de alto riesgo (+1)</label>
+                        <label><input type="checkbox" id="lee_isq"> Cardiopatía isquémica (+1)</label>
+                        <label><input type="checkbox" id="lee_icc"> Insuficiencia cardíaca (+1)</label>
+                        <label><input type="checkbox" id="lee_acv"> Historia de ACV/AIT (+1)</label>
+                        <label><input type="checkbox" id="lee_dm"> Diabetes preoperatoria (+1)</label>
+                        <label><input type="checkbox" id="lee_cr"> Creatinina > 2 mg/dL (+1)</label>
+                    </div>
+                    <div style="display:flex; gap:15px; font-size:13px; align-items:center; margin-bottom:10px;">
+                        <label>Riesgo Quirúrgico: 
+                            <select id="pre_riesgo" style="padding:4px; border-radius:4px; border:1px solid #ccc;">
+                                <option value="Bajo Riesgo">Bajo Riesgo</option>
+                                <option value="Riesgo Intermedio">Riesgo Intermedio</option>
+                                <option value="Alto Riesgo">Alto Riesgo</option>
+                            </select>
+                        </label>
+                        <label>Clasificación ASA: 
+                            <select id="pre_asa" style="padding:4px; border-radius:4px; border:1px solid #ccc;">
+                                <option value="ASA I">ASA I</option>
+                                <option value="ASA II">ASA II</option>
+                                <option value="ASA III" selected>ASA III</option>
+                                <option value="ASA IV">ASA IV</option>
+                            </select>
+                        </label>
+                    </div>
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <button type="button" onclick="calcularPreOp()" style="background:#1d4ed8; color:white; border:none; padding:6px 14px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:12px;">Calcular</button>
+                        <button type="button" onclick="pasarPreOp()" style="background:#0f172a; color:white; border:none; padding:6px 14px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:12px;">📥 Transcribir a Scores</button>
+                        <span id="res_preop" style="font-weight:bold; color:#1e293b; font-size:13px;"></span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div style="margin-bottom:15px;">
+            <button type="button" onclick="togglePanel('panelGraficoContent')" style="background:#4f46e5; color:white; border:none; padding:12px; border-radius:6px; font-weight:bold; cursor:pointer; width:100%; font-size:14px; text-align:center;">📈 Evolución Clínica (Gráfico)</button>
+            <div id="panelGraficoContent" style="display:none; background:white; border:1px solid #cbd5e1; padding:20px; border-radius:6px; margin-top:10px; height:300px;">
+                <canvas id="graficoEvolucionCanvas"></canvas>
+            </div>
+        </div>
+
+        <div style="margin-bottom:15px;">
+            <button type="button" onclick="togglePanel('panelEstudiosContent')" style="background:#7c3aed; color:white; border:none; padding:12px; border-radius:6px; font-weight:bold; cursor:pointer; width:100%; font-size:14px; text-align:center;">📁 Archivos y Estudios</button>
+            <div id="panelEstudiosContent" style="display:none; background:white; border:1px solid #cbd5e1; padding:20px; border-radius:6px; margin-top:10px;">
+                <form method="POST" enctype="multipart/form-data">
+                    <input type="hidden" name="accion" value="subir_estudio">
+                    <label style="font-weight:bold; font-size:13px; display:block; margin-bottom:5px;">Nombre del Estudio:</label>
+                    <input type="text" name="nombre_estudio" placeholder="Ej: Ecocardiograma..." style="width:100%; padding:8px; margin-bottom:10px; border:1px solid #ccc; border-radius:4px;">
+                    <input type="file" name="archivo_estudio" style="margin-bottom:15px;">
+                    <button type="submit" style="background:#7c3aed; color:white; border:none; padding:10px 20px; border-radius:6px; font-weight:bold; cursor:pointer; width:100%;">📤 Subir Estudio</button>
+                </form>
+                <h4 style="margin-top:20px; color:#2c3e50;">Estudios Adjuntos:</h4>
+                <ul style="padding-left:20px;">
+                    {% for est in estudios %}
+                    <li style="margin-bottom:8px; font-size:13px;">
+                        <b>{{ est['nombre_estudio'] }}</b> ({{ est['fecha'] }}) - <a href="/uploads/{{ est['archivo'] }}" target="_blank" style="color:#3b82f6; font-weight:bold;">Ver / Descargar Archivo</a>
+                    </li>
+                    {% else %}
+                    <p style="color:#7f8c8d; font-size:13px;">No hay estudios adjuntos.</p>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <!-- HISTORIAL CLÍNICO COMPLETO -->
+        <div style="margin-bottom:30px;">
+            <button type="button" onclick="togglePanel('panelHistorialContent')" style="background:#334155; color:white; border:none; padding:12px; border-radius:6px; font-weight:bold; cursor:pointer; width:100%; font-size:14px; text-align:center;">📚 Historial Clínico Completo</button>
+            <div id="panelHistorialContent" style="display:none; background:white; border:1px solid #cbd5e1; padding:20px; border-radius:6px; margin-top:10px; max-height:500px; overflow-y:auto;">
+                {% for h in historiales|reverse %}
+                <div style="background:#f8fafc; border:1px solid #e2e8f0; border-left:4px solid #3498db; padding:15px; border-radius:6px; margin-bottom:15px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e2e8f0; padding-bottom:8px; margin-bottom:8px;">
+                        <span style="font-size:12px; color:#64748b;"><b>Fecha:</b> {{ h['fecha'] }}</span>
+                        <a href="/imprimir_historial_pdf/{{ h['id'] }}" target="_blank" style="background:#3b82f6; color:white; padding:4px 10px; border-radius:4px; font-size:11px; text-decoration:none; font-weight:bold;">🖨️ Imprimir PDF</a>
+                    </div>
+                    <div style="font-size:13px; color:#1e293b; white-space: pre-wrap; display: flex; flex-direction: column; gap: 6px;">
+                        {% if h['motivo'] or h['diagnostico'] %}
+                            <div><b>Evolución:</b> {{ h['motivo'] or h['diagnostico'] }}</div>
+                        {% endif %}
+                        {% if h['scores'] %}
+                            <div><b>Scores:</b> {{ h['scores'] }}</div>
+                        {% endif %}
+                        {% if h['pas'] or h['peso'] %}
+                            <div><b>Examen Físico / Signos Vitales:</b> PA: {{ h['pas'] }} mmHg | FC: {{ h['fc'] }} lpm | Peso: {{ h['peso'] }} Kg | Talla: {{ h['talla'] }} cm | IMC: {{ h['imc'] }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% else %}
+                <p style="color:#7f8c8d; font-size:14px;">No hay consultas previas registradas.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</body>
+</html>

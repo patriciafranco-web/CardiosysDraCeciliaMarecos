@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Lista de Estudios - CardioSys</title>
+</head>
+<body style="font-family:Segoe UI; background:#f4f7f6; margin:0; display:flex; height:100vh;">
+    <!-- Sidebar -->
+    <div style="width:260px; background:#1e293b; color:white; padding:20px; box-sizing:border-box; display:flex; flex-direction:column; height:100vh;">
+        <h2 style="color:white; margin-top:0; margin-bottom:5px;">CardioSys 1.0</h2>
+        <p style="color:#38bdf8; font-size:15px; font-weight:bold; margin-top:0; margin-bottom:5px;">Dra. Cecilia Marecos Viana</p>
+        <p style="color:#94a3b8; font-size:11px; margin-top:0; margin-bottom:25px; line-height:1.2;">Reg. Prof. 13943<br>Cardiología Clínica y Diagnóstica</p>
+        <ul style="list-style:none; padding:0; margin-top:0; flex:1;">
+            <li style="margin:15px 0;"><a href="/" style="color:white; text-decoration:none;">📋 Lista de Pacientes</a></li>
+            <li style="margin:15px 0;"><a href="/nuevo" style="color:white; text-decoration:none;">➕ Nuevo Paciente</a></li>
+            <li style="margin:15px 0;"><a href="/estudios-lista" style="color:white; text-decoration:none; font-weight:bold; color:#38bdf8;">📁 Lista de Estudios</a></li>
+            <li style="margin:15px 0;"><a href="/estudios-nuevo" style="color:white; text-decoration:none;">➕ Nuevo Estudio</a></li>
+            <li style="margin:15px 0;"><a href="/cambiar-password" style="color:white; text-decoration:none;">🔑 Cambiar Contraseña</a></li>
+        </ul>
+        <div style="margin-bottom:20px;">
+            <a href="/backup" style="display:block; background:#e67e22; color:white; padding:12px; text-align:center; text-decoration:none; border-radius:6px; font-weight:bold;">💾 Backup Manual</a>
+            <a href="/logout" style="display:block; background:#ef4444; color:white; padding:8px; text-align:center; text-decoration:none; border-radius:6px; font-size:12px; font-weight:bold; margin-top:8px;">🚪 Cerrar Sesión</a>
+        </div>
+    </div>
+
+    <!-- Contenido Principal -->
+    <div style="flex:1; padding:30px; overflow-y:auto;">
+        <div style="background:white; padding:20px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.05); margin-bottom:20px;">
+            <h2 style="margin:0; color:#2c3e50;">Catálogo General de Estudios</h2>
+        </div>
+
+        <div style="background:white; padding:25px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+            <!-- Buscador -->
+            <form method="GET" action="/estudios-lista" style="display:flex; gap:10px; margin-bottom:20px;">
+                <input type="text" name="q" value="{{ busqueda }}" placeholder="Buscar estudio por nombre..." style="flex:1; padding:10px; border:1px solid #ccc; border-radius:6px; font-size:14px;">
+                <button type="submit" style="background:#3498db; color:white; border:none; padding:10px 20px; border-radius:6px; font-weight:bold; cursor:pointer;">Buscar</button>
+                <a href="/estudios-lista" style="background:#95a5a6; color:white; padding:10px 20px; border-radius:6px; text-decoration:none; font-weight:bold; font-size:14px; display:inline-block; text-align:center; line-height:20px;">Limpiar</a>
+            </form>
+
+            <!-- Tabla de Registros -->
+            <table style="width:100%; border-collapse:collapse; text-align:left;">
+                <thead>
+                    <tr style="background:#3498db; color:white; font-size:13px;">
+                        <th style="padding:12px;">Fecha de Subida</th>
+                        <th style="padding:12px;">Nombre del Estudio</th>
+                        <th style="padding:12px;">Descripción</th>
+                        <th style="padding:12px; text-align:center;">Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for est in estudios %}
+                    <tr style="border-bottom:1px solid #e2e8f0; font-size:13px;">
+                        <td style="padding:12px; color:#64748b;">{{ est[4] }}</td>
+                        <td style="padding:12px; font-weight:bold; color:#1e293b;">{{ est[1] }}</td>
+                        <td style="padding:12px; color:#475569;">{{ est[2] or '-' }}</td>
+                        <td style="padding:12px; text-align:center;">
+                            <a href="/uploads/{{ est[3] }}" target="_blank" style="background:#3b82f6; color:white; padding:6px 14px; border-radius:4px; text-decoration:none; font-weight:bold; font-size:12px;">Ver Archivo</a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4" style="padding:20px; text-align:center; color:#7f8c8d; font-size:14px;">No hay estudios generales registrados o coincidentes con la búsqueda.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>
