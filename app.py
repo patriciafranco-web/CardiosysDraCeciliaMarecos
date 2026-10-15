@@ -27,6 +27,11 @@ app = Flask(__name__, template_folder=template_dir)
 app.secret_key = 'cardio_elite_seguro_2026'
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 
+@app.before_request
+def auto_login():
+    session['logged_in'] = True
+    session['username'] = 'draceciliamarecos'
+
 def init_db():
     try:
         conn = sqlite3.connect(db_path)
@@ -39,8 +44,6 @@ def init_db():
                 password_hash TEXT NOT NULL
             )
         ''')
-        
-        # Forzar actualización limpia del usuario y contraseña exacta
         pass_hash = generate_password_hash('cardiopy')
         cursor.execute('DELETE FROM usuarios WHERE username = ?', ('draceciliamarecos',))
         cursor.execute('''
@@ -150,17 +153,7 @@ init_db()
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    error = None
-    if request.method == 'POST':
-        username = request.form.get('username', '').strip()
-        password = request.form.get('password', '')
-        if username == 'draceciliamarecos' and password == 'cardiopy':
-            session['logged_in'] = True
-            session['username'] = username
-            return redirect(url_for('index'))
-        else:
-            error = 'Usuario o contraseña incorrectos.'
-    return render_template('login.html', error=error)
+    return redirect(url_for('index'))
 
 @app.route('/')
 def index():
