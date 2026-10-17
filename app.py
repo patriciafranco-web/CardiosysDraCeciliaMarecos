@@ -62,6 +62,7 @@ def init_db():
                 antecedentes_principales TEXT,
                 resumen_anterior TEXT,
                 tratamiento_actual TEXT,
+                indicaciones_actual TEXT,
                 fecha_cita TEXT,
                 tiene_estudios TEXT,
                 es_estudio INTEGER DEFAULT 0
@@ -114,6 +115,7 @@ def init_db():
             ('antecedentes_principales', 'TEXT'),
             ('resumen_anterior', 'TEXT'),
             ('tratamiento_actual', 'TEXT'),
+            ('indicaciones_actual', 'TEXT'),
             ('sanatorio', 'TEXT'),
             ('tiene_estudios', 'TEXT'),
             ('es_estudio', 'INTEGER DEFAULT 0')
@@ -470,17 +472,34 @@ def actualizar_tratamiento_actual(id):
         return redirect(url_for('login'))
     try:
         tratamiento = request.form.get('tratamiento_actual', '')
+        indicaciones = request.form.get('indicaciones_actual', '')
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
-        cursor.execute('UPDATE pacientes SET tratamiento_actual = ? WHERE id = ?', (tratamiento, id))
+        cursor.execute('UPDATE pacientes SET tratamiento_actual = ?, indicaciones_actual = ? WHERE id = ?', (tratamiento, indicaciones, id))
         conn.commit()
         conn.close()
         return redirect(url_for('ficha', id=id))
     except Exception as e:
         return f"<h3>Error al actualizar tratamiento:</h3><pre>{traceback.format_exc()}</pre>", 500
 
-@app.route('/generar_plan_pdf/<int:id>', methods=['POST'])
-def generar_plan_pdf(id):
+def obtener_membrete_html():
+    return f"""
+    <div style="border-bottom: 2px solid #2c3e50; padding-bottom: 12px; margin-bottom: 20px; display: flex; align-items: center; gap: 20px;">
+        <div>
+            <img src="/static/logo_cardiologia.png" alt="Logo" style="width: 85px; height: auto; object-fit: contain;">
+        </div>
+        <div style="flex: 1; font-family: 'Segoe UI', Arial, sans-serif;">
+            <h3 style="margin: 0 0 4px 0; color: #111; font-size: 16px; font-weight: bold; letter-spacing: 0.5px;">DRA. CECILIA MONSERRAT MARECOS VIANA</h3>
+            <p style="margin: 0 0 2px 0; color: #333; font-size: 12px;">Especialista en Cardiología Clínica – Medicina Interna</p>
+            <p style="margin: 0 0 2px 0; color: #333; font-size: 11px;">Ecocardiograma Doppler Color, Mapeo de Presión Arterial, Ergometría, Holter 24 horas</p>
+            <p style="margin: 0 0 2px 0; color: #333; font-size: 11px;">Miembro Titular de la Sociedad Paraguaya de Cardiología y Cirugía Cardiovascular</p>
+            <p style="margin: 0; color: #333; font-size: 11px;">Asunción – Coronel Oviedo, Py.</p>
+        </div>
+    </div>
+    """
+
+@app.route('/generar_receta_pdf/<int:id>', methods=['POST'])
+def generar_receta_pdf(id):
     if not session.get('logged_in'):
         return redirect(url_for('login'))
     tratamiento = request.form.get('tratamiento', '')
@@ -496,63 +515,80 @@ def generar_plan_pdf(id):
     <html lang="es">
     <head>
         <meta charset="UTF-8">
-        <title>Receta e Indicaciones - {p['nombre']}</title>
+        <title>Receta - {p['nombre']}</title>
         <style>
-            body {{ font-family: 'Segoe UI', Arial, sans-serif; padding: 20px; color: #333; max-width: 800px; margin: auto; }}
-            .seccion-receta {{ height: 48vh; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; padding-bottom: 10px; border-bottom: 2px dashed #94a3b8; margin-bottom: 20px; }}
-            .seccion-indicacion {{ height: 45vh; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; }}
-            .header {{ border-bottom: 2px solid #2c3e50; padding-bottom: 10px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }}
-            .footer {{ border-top: 1px solid #ccc; padding-top: 10px; text-align: center; font-size: 13px; color: #555; }}
-            .content {{ background: #f8fafc; padding: 15px; border-radius: 6px; border: 1px solid #e2e8f0; white-space: pre-wrap; font-size: 14px; flex: 1; overflow: hidden; }}
+            body {{ font-family: 'Segoe UI', Arial, sans-serif; padding: 25px; color: #333; max-width: 800px; margin: auto; height: 90vh; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; }}
+            .footer {{ border-top: 1px solid #ccc; padding-top: 15px; text-align: center; font-size: 14px; color: #555; }}
+            .content {{ background: #f8fafc; padding: 20px; border-radius: 6px; border: 1px solid #e2e8f0; white-space: pre-wrap; font-size: 15px; flex: 1; margin-top: 10px; }}
         </style>
     </head>
     <body>
-        <!-- PARTE SUPERIOR: RECETA -->
-        <div class="seccion-receta">
-            <div>
-                <div class="header">
-                    <div>
-                        <h3 style="margin:0; color:#2c3e50; font-size:16px;">DRA. CECILIA MONSERRAT MARECOS VIANA</h3>
-                        <p style="margin:3px 0 0 0; color:#7f8c8d; font-size:11px;">Especialista en Cardiología Clínica – Medicina Interna | Asunción – Coronel Oviedo, Py.</p>
-                    </div>
-                    <div style="text-align:right;">
-                        <p style="margin:0; font-size:12px;">Fecha: {datetime.now().strftime('%d/%m/%Y')}</p>
-                    </div>
-                </div>
-                <div style="background: #e2e8f0; padding: 8px 12px; border-radius: 4px; margin-bottom: 12px; font-size: 13px;">
-                    <strong>Paciente:</strong> {p['nombre']} &nbsp;&nbsp;|&nbsp;&nbsp; <strong>C.I.:</strong> {p['cedula']}
-                </div>
-                <h4 style="color:#2c3e50; margin:0 0 5px 0; font-size:14px;">RECETA MÉDICA:</h4>
-                <div class="content">{tratamiento}</div>
+        <div>
+            {obtener_membrete_html()}
+            
+            <div style="background: #e2e8f0; padding: 8px 12px; border-radius: 4px; margin-bottom: 15px; font-size: 13px; display: flex; justify-content: space-between;">
+                <span><strong>Paciente:</strong> {p['nombre']} &nbsp;&nbsp;|&nbsp;&nbsp; <strong>C.I.:</strong> {p['cedula']}</span>
+                <span><strong>Fecha:</strong> {datetime.now().strftime('%d/%m/%Y')}</span>
             </div>
-            <div class="footer">
-                <p style="margin:0;">_________________________________________ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Firma y Sello</p>
-            </div>
+            
+            <h4 style="color:#2c3e50; margin:0 0 5px 0; font-size:14px;">RECETA MÉDICA:</h4>
+            <div class="content">{tratamiento}</div>
         </div>
-
-        <!-- PARTE INFERIOR: INDICACIONES -->
-        <div class="seccion-indicacion">
-            <div>
-                <div class="header">
-                    <div>
-                        <h3 style="margin:0; color:#2c3e50; font-size:16px;">DRA. CECILIA MONSERRAT MARECOS VIANA</h3>
-                        <p style="margin:3px 0 0 0; color:#7f8c8d; font-size:11px;">Especialista en Cardiología Clínica – Medicina Interna | Asunción – Coronel Oviedo, Py.</p>
-                    </div>
-                    <div style="text-align:right;">
-                        <p style="margin:0; font-size:12px;">Fecha: {datetime.now().strftime('%d/%m/%Y')}</p>
-                    </div>
-                </div>
-                <div style="background: #e2e8f0; padding: 8px 12px; border-radius: 4px; margin-bottom: 12px; font-size: 13px;">
-                    <strong>Paciente:</strong> {p['nombre']} &nbsp;&nbsp;|&nbsp;&nbsp; <strong>C.I.:</strong> {p['cedula']}
-                </div>
-                <h4 style="color:#2c3e50; margin:0 0 5px 0; font-size:14px;">INDICACIONES / PLAN:</h4>
-                <div class="content">{tratamiento}</div>
-            </div>
-            <div class="footer">
-                <p style="margin:0;">_________________________________________ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Firma y Sello</p>
-            </div>
+        
+        <div class="footer">
+            <p style="margin:0;">_________________________________________</p>
+            <p style="margin:4px 0 0 0; font-weight:bold; font-size:13px;">Firma y Sello</p>
         </div>
+        
+        <script>
+            window.onload = function() {{ window.print(); }}
+        </script>
+    </body>
+    </html>
+    """
 
+@app.route('/generar_indicaciones_pdf/<int:id>', methods=['POST'])
+def generar_indicaciones_pdf(id):
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+    indicaciones = request.form.get('indicaciones', '')
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM pacientes WHERE id = ?', (id,))
+    p = cursor.fetchone()
+    conn.close()
+
+    return f"""
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <title>Indicaciones - {p['nombre']}</title>
+        <style>
+            body {{ font-family: 'Segoe UI', Arial, sans-serif; padding: 25px; color: #333; max-width: 800px; margin: auto; height: 90vh; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; }}
+            .footer {{ border-top: 1px solid #ccc; padding-top: 15px; text-align: center; font-size: 14px; color: #555; }}
+            .content {{ background: #f8fafc; padding: 20px; border-radius: 6px; border: 1px solid #e2e8f0; white-space: pre-wrap; font-size: 15px; flex: 1; margin-top: 10px; }}
+        </style>
+    </head>
+    <body>
+        <div>
+            {obtener_membrete_html()}
+            
+            <div style="background: #e2e8f0; padding: 8px 12px; border-radius: 4px; margin-bottom: 15px; font-size: 13px; display: flex; justify-content: space-between;">
+                <span><strong>Paciente:</strong> {p['nombre']} &nbsp;&nbsp;|&nbsp;&nbsp; <strong>C.I.:</strong> {p['cedula']}</span>
+                <span><strong>Fecha:</strong> {datetime.now().strftime('%d/%m/%Y')}</span>
+            </div>
+            
+            <h4 style="color:#2c3e50; margin:0 0 5px 0; font-size:14px;">INDICACIONES MÉDICAS / PLAN:</h4>
+            <div class="content">{indicaciones}</div>
+        </div>
+        
+        <div class="footer">
+            <p style="margin:0;">_________________________________________</p>
+            <p style="margin:4px 0 0 0; font-weight:bold; font-size:13px;">Firma y Sello</p>
+        </div>
+        
         <script>
             window.onload = function() {{ window.print(); }}
         </script>
@@ -590,24 +626,16 @@ def imprimir_historial_pdf(h_id):
         <meta charset="UTF-8">
         <title>Consulta - {h['nombre']}</title>
         <style>
-            body {{ font-family: 'Segoe UI', Arial, sans-serif; padding: 40px; color: #333; max-width: 800px; margin: auto; }}
-            .header {{ border-bottom: 2px solid #2c3e50; padding-bottom: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }}
+            body {{ font-family: 'Segoe UI', Arial, sans-serif; padding: 30px; color: #333; max-width: 800px; margin: auto; }}
             .box {{ background: #f8fafc; padding: 15px; border-radius: 6px; border: 1px solid #e2e8f0; margin-bottom: 15px; font-size: 14px; white-space: pre-wrap; }}
         </style>
     </head>
     <body>
-        <div class="header">
-            <div>
-                <h2 style="margin:0; color:#2c3e50;">Dra. Cecilia Monserrat Marecos Viana</h2>
-                <p style="margin:5px 0 0 0; color:#7f8c8d; font-size:13px;">Especialista en Cardiología Clínica – Medicina Interna | Asunción – Coronel Oviedo, Py.</p>
-            </div>
-            <div style="text-align:right;">
-                <p style="margin:0; font-size:14px;">Fecha: {h['fecha']}</p>
-            </div>
-        </div>
+        {obtener_membrete_html()}
         
-        <div style="background: #e2e8f0; padding: 10px 15px; border-radius: 6px; margin-bottom: 20px; font-size: 14px;">
-            <strong>Paciente:</strong> {h['nombre']} &nbsp;&nbsp;|&nbsp;&nbsp; <strong>C.I.:</strong> {h['cedula']}
+        <div style="background: #e2e8f0; padding: 10px 15px; border-radius: 6px; margin-bottom: 20px; font-size: 14px; display: flex; justify-content: space-between;">
+            <span><strong>Paciente:</strong> {h['nombre']} &nbsp;&nbsp;|&nbsp;&nbsp; <strong>C.I.:</strong> {h['cedula']}</span>
+            <span><strong>Fecha:</strong> {h['fecha']}</span>
         </div>
         
         <div class="box">
