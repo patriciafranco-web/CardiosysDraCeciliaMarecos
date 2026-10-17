@@ -40,7 +40,6 @@ def init_db():
             )
         ''')
         
-        # Forzar actualización limpia del usuario y la contraseña oficial 'cardiopy'
         pass_hash = generate_password_hash('cardiopy')
         cursor.execute('DELETE FROM usuarios WHERE username = ?', ('draceciliamarecos',))
         cursor.execute('''
@@ -54,7 +53,6 @@ def init_db():
                 cedula TEXT NOT NULL,
                 nombre TEXT NOT NULL,
                 nacimiento TEXT,
-                sexo TEXT,
                 telefono TEXT,
                 profesion TEXT,
                 sanatorio TEXT,
@@ -153,7 +151,6 @@ def login():
     error = None
     if request.method == 'POST':
         password = request.form.get('password', '').strip()
-        
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
         cursor.execute('SELECT password_hash FROM usuarios WHERE username = ?', ('draceciliamarecos',))
@@ -166,7 +163,6 @@ def login():
             return redirect(url_for('index'))
         else:
             error = 'Contraseña incorrecta.'
-            
     return render_template('login.html', error=error)
 
 @app.route('/')
@@ -199,8 +195,7 @@ def nuevo():
         try:
             cedula = request.form.get('cedula', '').strip()
             nombre = request.form.get('nombre', '').strip()
-            edad = request.form.get('nacimiento', '').strip() or request.form.get('edad', '').strip()
-            sexo = request.form.get('sexo', '').strip()
+            nacimiento = request.form.get('nacimiento', '').strip()
             telefono = request.form.get('telefono', '').strip()
             profesion = request.form.get('profesion', '').strip()
             sanatorio = request.form.get('sanatorio', '').strip()
@@ -216,15 +211,31 @@ def nuevo():
             conn = sqlite3.connect(db_path)
             cursor = conn.cursor()
             cursor.execute('''
-                INSERT INTO pacientes (cedula, nombre, nacimiento, sexo, telefono, profesion, sanatorio, direccion, alergias, antecedentes, antecedentes_principales, tiene_estudios, fecha_cita, es_estudio) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
-            ''', (cedula, nombre, edad, sexo, telefono, profesion, sanatorio, direccion, alergias, antecedentes_texto, antecedentes_texto, tiene_estudios, fecha_cita))
+                INSERT INTO pacientes (cedula, nombre, nacimiento, telefono, profesion, sanatorio, direccion, alergias, antecedentes, antecedentes_principales, tiene_estudios, fecha_cita, es_estudio) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
+            ''', (cedula, nombre, nacimiento, telefono, profesion, sanatorio, direccion, alergias, antecedentes_texto, antecedentes_texto, tiene_estudios, fecha_cita))
             conn.commit()
             conn.close()
             return redirect(url_for('index'))
         except Exception as e:
             return f"<h3>Error al crear paciente:</h3><pre>{traceback.format_exc()}</pre>", 500
     return render_template('nuevo_paciente.html')
+
+@app.route('/eliminar_paciente/<int:id>', methods=['POST'])
+def eliminar_paciente(id):
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+    try:
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        cursor.execute('DELETE FROM historial WHERE paciente_id = ?', (id,))
+        cursor.execute('DELETE FROM estudios WHERE paciente_id = ?', (id,))
+        cursor.execute('DELETE FROM pacientes WHERE id = ?', (id,))
+        conn.commit()
+        conn.close()
+        return redirect(url_for('index'))
+    except Exception as e:
+        return f"<h3>Error al eliminar paciente:</h3><pre>{traceback.format_exc()}</pre>", 500
 
 @app.route('/estudios-lista', methods=['GET'])
 def estudios_lista():
@@ -403,7 +414,7 @@ def actualizar_paciente(id):
     try:
         nombre = request.form.get('nombre')
         cedula = request.form.get('cedula')
-        edad = request.form.get('nacimiento') or request.form.get('edad')
+        nacimiento = request.form.get('nacimiento')
         profesion = request.form.get('profesion')
         direccion = request.form.get('direccion')
         sanatorio = request.form.get('sanatorio')
@@ -416,7 +427,7 @@ def actualizar_paciente(id):
             UPDATE pacientes 
             SET nombre = ?, cedula = ?, nacimiento = ?, profesion = ?, direccion = ?, sanatorio = ?, antecedentes = ?, alergias = ?
             WHERE id = ?
-        ''', (nombre, cedula, edad, profesion, direccion, sanatorio, antecedentes, alergias, id))
+        ''', (nombre, cedula, nacimiento, profesion, direccion, sanatorio, antecedentes, alergias, id))
         conn.commit()
         conn.close()
         return redirect(url_for('ficha', id=id))
@@ -485,37 +496,63 @@ def generar_plan_pdf(id):
     <html lang="es">
     <head>
         <meta charset="UTF-8">
-        <title>Receta / Plan - {p['nombre']}</title>
+        <title>Receta e Indicaciones - {p['nombre']}</title>
         <style>
-            body {{ font-family: 'Segoe UI', Arial, sans-serif; padding: 40px; color: #333; max-width: 800px; margin: auto; }}
-            .header {{ border-bottom: 2px solid #2c3e50; padding-bottom: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }}
-            .footer {{ margin-top: 80px; border-top: 1px solid #ccc; padding-top: 20px; text-align: center; font-size: 14px; color: #555; }}
-            .content {{ background: #f8fafc; padding: 20px; border-radius: 6px; border: 1px solid #e2e8f0; white-space: pre-wrap; font-size: 15px; min-height: 200px; }}
+            body {{ font-family: 'Segoe UI', Arial, sans-serif; padding: 20px; color: #333; max-width: 800px; margin: auto; }}
+            .seccion-receta {{ height: 48vh; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; padding-bottom: 10px; border-bottom: 2px dashed #94a3b8; margin-bottom: 20px; }}
+            .seccion-indicacion {{ height: 45vh; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; }}
+            .header {{ border-bottom: 2px solid #2c3e50; padding-bottom: 10px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }}
+            .footer {{ border-top: 1px solid #ccc; padding-top: 10px; text-align: center; font-size: 13px; color: #555; }}
+            .content {{ background: #f8fafc; padding: 15px; border-radius: 6px; border: 1px solid #e2e8f0; white-space: pre-wrap; font-size: 14px; flex: 1; overflow: hidden; }}
         </style>
     </head>
     <body>
-        <div class="header">
+        <!-- PARTE SUPERIOR: RECETA -->
+        <div class="seccion-receta">
             <div>
-                <h2 style="margin:0; color:#2c3e50;">Dra. Cecilia Marecos Viana</h2>
-                <p style="margin:5px 0 0 0; color:#7f8c8d; font-size:14px;">Especialista en Cardiología Clínica | Reg. Prof. 13943</p>
+                <div class="header">
+                    <div>
+                        <h3 style="margin:0; color:#2c3e50; font-size:16px;">DRA. CECILIA MONSERRAT MARECOS VIANA</h3>
+                        <p style="margin:3px 0 0 0; color:#7f8c8d; font-size:11px;">Especialista en Cardiología Clínica – Medicina Interna | Asunción – Coronel Oviedo, Py.</p>
+                    </div>
+                    <div style="text-align:right;">
+                        <p style="margin:0; font-size:12px;">Fecha: {datetime.now().strftime('%d/%m/%Y')}</p>
+                    </div>
+                </div>
+                <div style="background: #e2e8f0; padding: 8px 12px; border-radius: 4px; margin-bottom: 12px; font-size: 13px;">
+                    <strong>Paciente:</strong> {p['nombre']} &nbsp;&nbsp;|&nbsp;&nbsp; <strong>C.I.:</strong> {p['cedula']}
+                </div>
+                <h4 style="color:#2c3e50; margin:0 0 5px 0; font-size:14px;">RECETA MÉDICA:</h4>
+                <div class="content">{tratamiento}</div>
             </div>
-            <div style="text-align:right;">
-                <p style="margin:0; font-size:14px;">Fecha: {datetime.now().strftime('%d/%m/%Y')}</p>
+            <div class="footer">
+                <p style="margin:0;">_________________________________________ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Firma y Sello</p>
             </div>
         </div>
-        
-        <div style="background: #e2e8f0; padding: 12px 15px; border-radius: 6px; margin-bottom: 25px; font-size: 15px;">
-            <strong>Paciente:</strong> {p['nombre']} &nbsp;&nbsp;|&nbsp;&nbsp; <strong>C.I.:</strong> {p['cedula']}
+
+        <!-- PARTE INFERIOR: INDICACIONES -->
+        <div class="seccion-indicacion">
+            <div>
+                <div class="header">
+                    <div>
+                        <h3 style="margin:0; color:#2c3e50; font-size:16px;">DRA. CECILIA MONSERRAT MARECOS VIANA</h3>
+                        <p style="margin:3px 0 0 0; color:#7f8c8d; font-size:11px;">Especialista en Cardiología Clínica – Medicina Interna | Asunción – Coronel Oviedo, Py.</p>
+                    </div>
+                    <div style="text-align:right;">
+                        <p style="margin:0; font-size:12px;">Fecha: {datetime.now().strftime('%d/%m/%Y')}</p>
+                    </div>
+                </div>
+                <div style="background: #e2e8f0; padding: 8px 12px; border-radius: 4px; margin-bottom: 12px; font-size: 13px;">
+                    <strong>Paciente:</strong> {p['nombre']} &nbsp;&nbsp;|&nbsp;&nbsp; <strong>C.I.:</strong> {p['cedula']}
+                </div>
+                <h4 style="color:#2c3e50; margin:0 0 5px 0; font-size:14px;">INDICACIONES / PLAN:</h4>
+                <div class="content">{tratamiento}</div>
+            </div>
+            <div class="footer">
+                <p style="margin:0;">_________________________________________ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Firma y Sello</p>
+            </div>
         </div>
-        
-        <h3 style="color:#2c3e50; margin-bottom:10px;">Plan / Tratamiento / Indicaciones:</h3>
-        <div class="content">{tratamiento}</div>
-        
-        <div class="footer">
-            <p style="margin:0;">_________________________________________</p>
-            <p style="margin:5px 0 0 0; font-weight:bold;">Firma y Sello</p>
-        </div>
-        
+
         <script>
             window.onload = function() {{ window.print(); }}
         </script>
@@ -561,8 +598,8 @@ def imprimir_historial_pdf(h_id):
     <body>
         <div class="header">
             <div>
-                <h2 style="margin:0; color:#2c3e50;">Dra. Cecilia Marecos Viana</h2>
-                <p style="margin:5px 0 0 0; color:#7f8c8d; font-size:14px;">Cardiología Clínica y Diagnóstica | Reg. Prof. 13943</p>
+                <h2 style="margin:0; color:#2c3e50;">Dra. Cecilia Monserrat Marecos Viana</h2>
+                <p style="margin:5px 0 0 0; color:#7f8c8d; font-size:13px;">Especialista en Cardiología Clínica – Medicina Interna | Asunción – Coronel Oviedo, Py.</p>
             </div>
             <div style="text-align:right;">
                 <p style="margin:0; font-size:14px;">Fecha: {h['fecha']}</p>
