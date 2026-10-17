@@ -358,7 +358,7 @@ def ficha(id):
                                    (nombre_estudio, filename, datetime.now().strftime('%Y-%m-%d'), 'Consultorio', id))
                     conn.commit()
             else:
-                # SE CAMBIÓ AQUÍ PARA GUARDAR SOLO LA FECHA SIN HORARIO
+                # SE GUARDA SOLO LA FECHA SIN HORARIO
                 fecha_cons = datetime.now().strftime('%Y-%m-%d')
                 evolucion = request.form.get('evolucion', '').strip()
                 scores = request.form.get('scores_copiados', '').strip()
