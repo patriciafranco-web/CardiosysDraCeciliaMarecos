@@ -94,11 +94,9 @@
     function calcularCrCl() {
         let cr = parseFloat(document.getElementById('crcl_cr').value);
         let peso = parseFloat(document.getElementById('form_peso').value) || 70;
-        let sexo = '{{ paciente["sexo"] or "Masculino" }}'.toLowerCase();
         let edad = parseFloat('{{ paciente["nacimiento"] }}') || 50;
         if (!cr || isNaN(cr) || cr <= 0) { alert("Ingrese Creatinina sérica válida."); return; }
         let cl = ((140 - edad) * peso) / (72 * cr);
-        if (sexo.startsWith('f') || sexo.includes('mujer')) cl *= 0.85;
         let res = "CrCl (Cockcroft-Gault): " + cl.toFixed(1) + " mL/min (Cr: " + cr + ")";
         document.getElementById('res_crcl').innerText = res;
     }
@@ -213,6 +211,9 @@
     <div style="flex:1; padding:30px; overflow-y:auto;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
             <a href="/" style="color:#3498db; text-decoration:none; font-weight:bold;">⬅ Volver al Panel</a>
+            <form action="/eliminar_paciente/{{ paciente['id'] }}" method="POST" onsubmit="return confirm('¿Está segura de que desea eliminar este paciente de prueba?');">
+                <button type="submit" style="background:#ef4444; color:white; border:none; padding:6px 12px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:12px;">🗑️ Eliminar Paciente</button>
+            </form>
         </div>
 
         <!-- TARJETA SUPERIOR PRINCIPAL -->
@@ -227,8 +228,7 @@
                     </div>
                     <div style="display:flex; gap:20px; font-size:14px; color:#cbd5e1; flex-wrap:wrap; margin-bottom:10px;">
                         {% if paciente['cedula'] %}<span><b>C.I.:</b> {{ paciente['cedula'] }}</span>{% endif %}
-                        {% if paciente['nacimiento'] %}<span><b>Edad:</b> {{ paciente['nacimiento'] }} años</span>{% endif %}
-                        {% if paciente['sexo'] %}<span><b>Sexo:</b> {{ paciente['sexo'] }}</span>{% endif %}
+                        {% if paciente['nacimiento'] %}<span><b>Nacimiento / Edad:</b> {{ paciente['nacimiento'] }}</span>{% endif %}
                         {% if paciente['profesion'] %}<span><b>Profesión:</b> {{ paciente['profesion'] }}</span>{% endif %}
                         {% if paciente['sanatorio'] %}<span><b>Sanatorio:</b> {{ paciente['sanatorio'] }}</span>{% endif %}
                         {% if paciente['direccion'] %}<span><b>Procedencia:</b> {{ paciente['direccion'] }}</span>{% endif %}
@@ -262,7 +262,7 @@
                     <div style="display:flex; gap:10px; margin-bottom:10px;">
                         <div style="flex:2;"><label style="font-size:11px;">Nombre y Apellido:</label><input type="text" name="nombre" value="{{ paciente['nombre'] }}" required style="padding:6px; font-size:12px; width:100%; border-radius:4px; border:none;"></div>
                         <div style="flex:1;"><label style="font-size:11px;">C.I.:</label><input type="text" name="cedula" value="{{ paciente['cedula'] }}" style="padding:6px; font-size:12px; width:100%; border-radius:4px; border:none;"></div>
-                        <div style="flex:1;"><label style="font-size:11px;">Edad:</label><input type="number" name="nacimiento" value="{{ paciente['nacimiento'] }}" style="padding:6px; font-size:12px; width:100%; border-radius:4px; border:none;"></div>
+                        <div style="flex:1;"><label style="font-size:11px;">Nacimiento / Edad:</label><input type="text" name="nacimiento" value="{{ paciente['nacimiento'] }}" style="padding:6px; font-size:12px; width:100%; border-radius:4px; border:none;"></div>
                     </div>
                     <div style="display:flex; gap:10px; margin-bottom:10px;">
                         <div style="flex:1;"><label style="font-size:11px;">Profesión:</label><input type="text" name="profesion" value="{{ paciente['profesion'] }}" style="padding:6px; font-size:12px; width:100%; border-radius:4px; border:none;"></div>
@@ -273,7 +273,6 @@
                         <div style="flex:2;"><label style="font-size:11px;">Estudios:</label><input type="text" name="antecedentes" value="{{ paciente['antecedentes'] }}" style="padding:6px; font-size:12px; width:100%; border-radius:4px; border:none;"></div>
                         <div style="flex:1;"><label style="font-size:11px; color:#f87171;">Alergias:</label><input type="text" name="alergias" value="{{ paciente['alergias'] }}" style="padding:6px; font-size:12px; width:100%; border-radius:4px; border:none;"></div>
                     </div>
-                    <input type="hidden" name="sexo" value="{{ paciente['sexo'] }}">
                     <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:10px;">
                         <button type="button" onclick="toggleEditarPaciente()" style="background:#64748b; color:white; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; font-size:12px;">Cancelar</button>
                         <button type="submit" style="background:#10b981; color:white; border:none; padding:6px 12px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:12px;">💾 Guardar Cambios</button>
@@ -316,7 +315,7 @@
             
             <form method="POST" action="/generar_plan_pdf/{{ paciente['id'] }}" target="_blank" style="margin-top:10px;">
                 <input type="hidden" name="tratamiento" value="{{ paciente['tratamiento_actual'] or '' }}">
-                <button type="submit" style="background:#e74c3c; color:white; border:none; padding:12px; border-radius:6px; font-weight:bold; cursor:pointer; width:100%; font-size:14px;">🖨️ Generar PDF Oficial con Membrete</button>
+                <button type="submit" style="background:#e74c3c; color:white; border:none; padding:12px; border-radius:6px; font-weight:bold; cursor:pointer; width:100%; font-size:14px;">🖨️ Imprimir Receta e Indicaciones (Horizontal - 2 en 1)</button>
             </form>
         </div>
 
@@ -485,7 +484,9 @@
                 <ul style="padding-left:20px;">
                     {% for est in estudios %}
                     <li style="margin-bottom:8px; font-size:13px;">
-                        <b>{{ est['nombre_estudio'] }}</b> ({{ est['fecha'] }}) - <a href="/uploads/{{ est['archivo'] }}" target="_blank" style="color:#3b82f6; font-weight:bold;">Ver / Descargar Archivo</a>
+                        <b>{{ est['nombre_estudio'] }}</b> ({{ est['fecha'] }}) - 
+                        <a href="/uploads/{{ est['archivo'] }}" target="_blank" style="color:#3b82f6; font-weight:bold; margin-right:10px;">👁️ Ver Archivo</a>
+                        <a href="/uploads/{{ est['archivo'] }}" download style="color:#10b981; font-weight:bold;">📥 Descargar</a>
                     </li>
                     {% else %}
                     <p style="color:#7f8c8d; font-size:13px;">No hay estudios adjuntos.</p>
