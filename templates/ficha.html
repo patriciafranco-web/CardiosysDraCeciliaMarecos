@@ -303,20 +303,41 @@
             </form>
         </div>
 
-        <!-- PLAN / TRATAMIENTO / INDICACIONES -->
+        <!-- PLAN / TRATAMIENTO Y INDICACIONES SEPARADAS -->
         <div style="background:white; padding:25px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.05); border-top:4px solid #e74c3c; margin-bottom:25px;">
             <form method="POST" action="/actualizar_tratamiento_actual/{{ paciente['id'] }}">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                    <label style="font-weight:bold; font-size:14px; color:#2c3e50;">Plan / Tratamiento / Indicaciones (Anclado y Editable):</label>
-                    <button type="submit" style="background:#10b981; color:white; border:none; padding:6px 16px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:12px;">💾 Guardar Tratamiento</button>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                    <h3 style="margin:0; font-size:15px; color:#2c3e50;">Prescripción Médica y Plan</h3>
+                    <button type="submit" style="background:#10b981; color:white; border:none; padding:8px 20px; border-radius:6px; font-weight:bold; cursor:pointer; font-size:13px;">💾 Guardar Todo</button>
                 </div>
-                <textarea name="tratamiento_actual" rows="5" placeholder="Escriba aquí el plan, medicamentos y prescripción detallada..." style="width:100%; padding:12px; margin:8px 0 15px 0; border:1px solid #ccc; border-radius:6px; box-sizing:border-box; font-family:inherit; font-size:14px; background:#fdfefe;">{{ paciente['tratamiento_actual'] or '' }}</textarea>
+
+                <div style="display:flex; gap:20px; margin-bottom:15px;">
+                    <!-- Receta Médica -->
+                    <div style="flex:1;">
+                        <label style="font-weight:bold; font-size:13px; color:#2c3e50; display:block; margin-bottom:5px;">💊 Receta (Medicamentos):</label>
+                        <textarea name="tratamiento_actual" rows="6" placeholder="Escriba aquí los medicamentos y dosis..." style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; box-sizing:border-box; font-family:inherit; font-size:13px; background:#fdfefe;">{{ paciente['tratamiento_actual'] or '' }}</textarea>
+                    </div>
+
+                    <!-- Indicaciones -->
+                    <div style="flex:1;">
+                        <label style="font-weight:bold; font-size:13px; color:#2c3e50; display:block; margin-bottom:5px;">📋 Indicaciones / Plan:</label>
+                        <textarea name="indicaciones_actual" rows="6" placeholder="Escriba aquí las indicaciones generales y estilo de vida..." style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; box-sizing:border-box; font-family:inherit; font-size:13px; background:#fdfefe;">{{ paciente['indicaciones_actual'] or '' }}</textarea>
+                    </div>
+                </div>
             </form>
             
-            <form method="POST" action="/generar_plan_pdf/{{ paciente['id'] }}" target="_blank" style="margin-top:10px;">
-                <input type="hidden" name="tratamiento" value="{{ paciente['tratamiento_actual'] or '' }}">
-                <button type="submit" style="background:#e74c3c; color:white; border:none; padding:12px; border-radius:6px; font-weight:bold; cursor:pointer; width:100%; font-size:14px;">🖨️ Imprimir Receta e Indicaciones (Horizontal - 2 en 1)</button>
-            </form>
+            <!-- Botones de Impresión Vertical Separados -->
+            <div style="display:flex; gap:15px; margin-top:15px; border-top:1px solid #eee; padding-top:15px;">
+                <form method="POST" action="/generar_receta_pdf/{{ paciente['id'] }}" target="_blank" style="flex:1;">
+                    <input type="hidden" name="tratamiento" value="{{ paciente['tratamiento_actual'] or '' }}">
+                    <button type="submit" style="background:#3b82f6; color:white; border:none; padding:10px; border-radius:6px; font-weight:bold; cursor:pointer; width:100%; font-size:13px;">🖨️ Imprimir Receta (Vertical)</button>
+                </form>
+
+                <form method="POST" action="/generar_indicaciones_pdf/{{ paciente['id'] }}" target="_blank" style="flex:1;">
+                    <input type="hidden" name="indicaciones" value="{{ paciente['indicaciones_actual'] or '' }}">
+                    <button type="submit" style="background:#7c3aed; color:white; border:none; padding:10px; border-radius:6px; font-weight:bold; cursor:pointer; width:100%; font-size:13px;">🖨️ Imprimir Indicaciones (Vertical)</button>
+                </form>
+            </div>
         </div>
 
         <!-- REGISTRAR NUEVA CONSULTA Y EXAMEN FÍSICO -->
@@ -485,8 +506,8 @@
                     {% for est in estudios %}
                     <li style="margin-bottom:8px; font-size:13px;">
                         <b>{{ est['nombre_estudio'] }}</b> ({{ est['fecha'] }}) - 
-                        <a href="/uploads/{{ est['archivo'] }}" target="_blank" style="color:#3b82f6; font-weight:bold; margin-right:10px;">👁️ Ver Archivo</a>
-                        <a href="/uploads/{{ est['archivo'] }}" download style="color:#10b981; font-weight:bold;">📥 Descargar</a>
+                        <a href="/ver_estudio/{{ est['archivo'] }}" target="_blank" style="color:#3b82f6; font-weight:bold; margin-right:10px;">👁️ Ver Archivo</a>
+                        <a href="/uploads/{{ est['archivo'] }}" style="color:#10b981; font-weight:bold;">📥 Descargar</a>
                     </li>
                     {% else %}
                     <p style="color:#7f8c8d; font-size:13px;">No hay estudios adjuntos.</p>
