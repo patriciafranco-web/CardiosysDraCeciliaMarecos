@@ -5,7 +5,7 @@ import csv
 import json
 import traceback
 from datetime import datetime
-from flask import Flask, request, redirect, url_for, session, send_file, render_template
+from flask import Flask, request, redirect, url_for, session, send_file, render_template, render_template_string
 from werkzeug.security import generate_password_hash, check_password_hash
 
 if getattr(sys, 'frozen', False):
@@ -280,7 +280,7 @@ def estudios_nuevo():
                 archivo.save(filepath)
                 
                 if archivo.filename.endswith(('.csv', '.xlsx', '.txt')):
-                    with open(filepath, mode='r', encoding='utf-8') as f:
+                    with open(filepath, mode='r', encoding='utf-8', errors='ignore') as f:
                         lector = csv.reader(f)
                         next(lector, None)
                         for fila in lector:
@@ -408,6 +408,65 @@ def ficha(id):
         return render_template('ficha.html', paciente=paciente, historiales=historiales, estudios=estudios, historiales_json=historiales_json)
     except Exception as e:
         return f"<h3>Error en la Ficha:</h3><pre>{traceback.format_exc()}</pre>", 500
+
+@app.route('/ver_estudio/<filename>')
+def ver_estudio(filename):
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+    
+    filepath = os.path.join(upload_folder, filename)
+    if not os.path.exists(filepath):
+        return "Archivo no encontrado", 404
+        
+    ext = filename.lower().split('.')[-1]
+    
+    # Si es CSV, TXT o XLSX, lo leemos y mostramos como tabla interactiva HTML
+    if ext in ['csv', 'txt', 'xlsx', 'xls']:
+        filas = []
+        try:
+            with open(filepath, mode='r', encoding='utf-8', errors='ignore') as f:
+                lector = csv.reader(f)
+                for fila in lector:
+                    filas.append(fila)
+        except Exception as e:
+            return f"Error al leer el archivo: {e}"
+            
+        tabla_html = "<table border='1' style='border-collapse:collapse; width:100%; font-family:Segoe UI; font-size:13px; text-align:left;'>"
+        for i, fila in enumerate(filas):
+            tabla_html += "<tr>"
+            for celda in fila:
+                tag = "th" if i == 0 else "td"
+                bg = "background:#f1f5f9;" if i == 0 else ""
+                tabla_html += f"<{tag} style='padding:8px; border:1px solid #cbd5e1; {bg}'>{celda}</{tag}>"
+            tabla_html += "</tr>"
+        tabla_html += "</table>"
+        
+        return render_template_string("""
+        <!DOCTYPE html>
+        <html lang="es">
+        <head><meta charset="UTF-8"><title>Vista Previa de Estudio</title></head>
+        <body style="font-family:Segoe UI; padding:30px; background:#f8fafc;">
+            <div style="background:white; padding:25px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.1); max-width:900px; margin:auto;">
+                <h3 style="color:#2c3e50; margin-top:0;">📊 Vista Previa de Planilla / Estudio: {{ filename }}</h3>
+                <div style="overflow-x:auto; margin-top:15px;">
+                    {{ tabla | safe }}
+                </div>
+                <div style="margin-top:20px; text-align:right;">
+                    <a href="/uploads/{{ filename }}" download style="background:#10b981; color:white; padding:8px 16px; border-radius:4px; text-decoration:none; font-weight:bold; font-size:13px;">📥 Descargar Archivo Original</a>
+                </div>
+            </div>
+        </body>
+        </html>
+        """, filename=filename, tabla=tabla_html)
+    else:
+        # Para PDFs e imágenes, se visualizan directamente
+        return send_file(filepath)
+
+@app.route('/uploads/<filename>')
+def uploaded_file(filename):
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+    return send_file(os.path.join(upload_folder, filename), as_attachment=True)
 
 @app.route('/actualizar_paciente/<int:id>', methods=['POST'])
 def actualizar_paciente(id):
@@ -650,12 +709,6 @@ def imprimir_historial_pdf(h_id):
     </body>
     </html>
     """
-
-@app.route('/uploads/<filename>')
-def uploaded_file(filename):
-    if not session.get('logged_in'):
-        return redirect(url_for('login'))
-    return send_file(os.path.join(upload_folder, filename))
 
 @app.route('/backup')
 def backup():
