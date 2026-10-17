@@ -290,14 +290,14 @@ def estudios_nuevo():
                                 est_name = fila[0].strip()
                                 est_desc = fila[1].strip() if len(fila) > 1 else ''
                                 cursor.execute('INSERT INTO estudios_generales (nombre_estudio, descripcion, archivo, fecha) VALUES (?, ?, ?, ?)',
-                                               (est_name, est_desc, filename, datetime.now().strftime('%Y-%m-%d %H:%M')))
+                                               (est_name, est_desc, filename, datetime.now().strftime('%Y-%m-%d')))
                     conn.commit()
                     mensaje = "¡Estudios importados masivamente con éxito!"
                 else:
                     if not nombre_est:
                         nombre_est = archivo.filename
                     cursor.execute('INSERT INTO estudios_generales (nombre_estudio, descripcion, archivo, fecha) VALUES (?, ?, ?, ?)',
-                                   (nombre_est, descripcion, filename, datetime.now().strftime('%Y-%m-%d %H:%M')))
+                                   (nombre_est, descripcion, filename, datetime.now().strftime('%Y-%m-%d')))
                     conn.commit()
                     mensaje = "¡Estudio guardado correctamente!"
             conn.close()
@@ -355,10 +355,11 @@ def ficha(id):
                     filepath = os.path.join(upload_folder, filename)
                     archivo_obj.save(filepath)
                     cursor.execute('INSERT INTO estudios (nombre_estudio, archivo, fecha, sanatorio, paciente_id) VALUES (?, ?, ?, ?, ?)',
-                                   (nombre_estudio, filename, datetime.now().strftime('%Y-%m-%d %H:%M'), 'Consultorio', id))
+                                   (nombre_estudio, filename, datetime.now().strftime('%Y-%m-%d'), 'Consultorio', id))
                     conn.commit()
             else:
-                fecha_cons = datetime.now().strftime('%Y-%m-%d %H:%M')
+                # SE CAMBIÓ AQUÍ PARA GUARDAR SOLO LA FECHA SIN HORARIO
+                fecha_cons = datetime.now().strftime('%Y-%m-%d')
                 evolucion = request.form.get('evolucion', '').strip()
                 scores = request.form.get('scores_copiados', '').strip()
                 
@@ -668,12 +669,15 @@ def generar_plan_pdf(id):
                 border-radius: 8px;
                 background: #fff;
             }}
-            .footer {{
-                border-top: 1px solid #ccc;
-                padding-top: 6px;
+            .footer-aviso {{
+                border-top: 1px dashed #e2e8f0;
+                padding-top: 8px;
+                margin-top: 10px;
                 text-align: center;
                 font-size: 11px;
-                color: #555;
+                font-weight: bold;
+                color: #e74c3c;
+                letter-spacing: 0.5px;
             }}
             .content {{
                 background: #f8fafc;
@@ -689,7 +693,7 @@ def generar_plan_pdf(id):
     </head>
     <body>
         <div class="container">
-            <!-- COLUMNA IZQUIERDA: RECETA -->
+            <!-- COLUMNA IZQUIERDA: RECETA CON AVISO -->
             <div class="columna">
                 <div>
                     {obtener_membrete_html()}
@@ -700,12 +704,12 @@ def generar_plan_pdf(id):
                     <h4 style="color:#2c3e50; margin:0 0 4px 0; font-size:12px;">RECETA MÉDICA:</h4>
                     <div class="content">{tratamiento}</div>
                 </div>
-                <div class="footer">
-                    <p style="margin:0;">_________________________________________ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Firma y Sello</p>
+                <div class="footer-aviso">
+                    POR FAVOR NO CAMBIAR RECETA MEDICA
                 </div>
             </div>
 
-            <!-- COLUMNA DERECHA: INDICACIONES -->
+            <!-- COLUMNA DERECHA: INDICACIONES CON AVISO -->
             <div class="columna">
                 <div>
                     {obtener_membrete_html()}
@@ -716,8 +720,8 @@ def generar_plan_pdf(id):
                     <h4 style="color:#2c3e50; margin:0 0 4px 0; font-size:12px;">INDICACIONES MÉDICAS / PLAN:</h4>
                     <div class="content">{indicaciones}</div>
                 </div>
-                <div class="footer">
-                    <p style="margin:0;">_________________________________________ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Firma y Sello</p>
+                <div class="footer-aviso">
+                    POR FAVOR NO CAMBIAR RECETA MEDICA
                 </div>
             </div>
         </div>
