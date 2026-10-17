@@ -4,6 +4,8 @@ import sqlite3
 import csv
 import json
 import traceback
+import zipfile
+import xml.etree.ElementTree as ET
 from datetime import datetime
 from flask import Flask, request, redirect, url_for, session, send_file, render_template, render_template_string
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -420,8 +422,48 @@ def ver_estudio(filename):
         
     ext = filename.lower().split('.')[-1]
     
-    # Si es CSV, TXT o XLSX, lo leemos y mostramos como tabla interactiva HTML
-    if ext in ['csv', 'txt', 'xlsx', 'xls']:
+    if ext == 'xlsx':
+        try:
+            filas_tabla = []
+            with zipfile.ZipFile(filepath, 'r') as z:
+                shared_strings = []
+                if 'xl/sharedStrings.xml' in z.namelist():
+                    tree_ss = ET.fromstring(z.read('xl/sharedStrings.xml'))
+                    for si in tree_ss.findall('.//{http://schemas.openxmlformats.org/spreadsheetml/2006/main}t'):
+                        shared_strings.append(si.text if si.text else '')
+                
+                if 'xl/worksheets/sheet1.xml' in z.namelist():
+                    tree_ws = ET.fromstring(z.read('xl/worksheets/sheet1.xml'))
+                    for row in tree_ws.findall('.//{http://schemas.openxmlformats.org/spreadsheetml/2006/main}row'):
+                        fila_actual = []
+                        for c in row.findall('.//{http://schemas.openxmlformats.org/spreadsheetml/2006/main}c'):
+                            v = c.find('{http://schemas.openxmlformats.org/spreadsheetml/2006/main}v')
+                            val = ""
+                            if v is not None and v.text is not None:
+                                if c.attrib.get('t') == 's':
+                                    idx = int(v.text)
+                                    val = shared_strings[idx] if idx < len(shared_strings) else v.text
+                                else:
+                                    val = v.text
+                            fila_actual.append(val)
+                        if fila_actual:
+                            filas_tabla.append(fila_actual)
+            
+            tabla_html = "<table border='1' style='border-collapse:collapse; width:100%; font-family:Segoe UI; font-size:13px; text-align:left;'>"
+            for i, fila in enumerate(filas_tabla):
+                tabla_html += "<tr>"
+                for celda in fila:
+                    tag = "th" if i == 0 else "td"
+                    bg = "background:#1e293b; color:white;" if i == 0 else ""
+                    tabla_html += f"<{tag} style='padding:9px 10px; border:1px solid #cbd5e1; {bg}'>{celda}</{tag}>"
+                tabla_html += "</tr>"
+            tabla_html += "</table>"
+            if not filas_tabla:
+                tabla_html = "<p>El archivo Excel está vacío o no se pudo extraer la primera hoja.</p>"
+        except Exception as e:
+            return f"<h3>Error al procesar el archivo Excel:</h3><pre>{e}</pre>"
+            
+    elif ext in ['csv', 'txt']:
         filas = []
         try:
             with open(filepath, mode='r', encoding='utf-8', errors='ignore') as f:
@@ -436,37 +478,43 @@ def ver_estudio(filename):
             tabla_html += "<tr>"
             for celda in fila:
                 tag = "th" if i == 0 else "td"
-                bg = "background:#f1f5f9;" if i == 0 else ""
-                tabla_html += f"<{tag} style='padding:8px; border:1px solid #cbd5e1; {bg}'>{celda}</{tag}>"
+                bg = "background:#1e293b; color:white;" if i == 0 else ""
+                tabla_html += f"<{tag} style='padding:9px 10px; border:1px solid #cbd5e1; {bg}'>{celda}</{tag}>"
             tabla_html += "</tr>"
         tabla_html += "</table>"
-        
-        return render_template_string("""
-        <!DOCTYPE html>
-        <html lang="es">
-        <head><meta charset="UTF-8"><title>Vista Previa de Estudio</title></head>
-        <body style="font-family:Segoe UI; padding:30px; background:#f8fafc;">
-            <div style="background:white; padding:25px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.1); max-width:900px; margin:auto;">
-                <h3 style="color:#2c3e50; margin-top:0;">📊 Vista Previa de Planilla / Estudio: {{ filename }}</h3>
-                <div style="overflow-x:auto; margin-top:15px;">
-                    {{ tabla | safe }}
-                </div>
-                <div style="margin-top:20px; text-align:right;">
-                    <a href="/uploads/{{ filename }}" download style="background:#10b981; color:white; padding:8px 16px; border-radius:4px; text-decoration:none; font-weight:bold; font-size:13px;">📥 Descargar Archivo Original</a>
-                </div>
-            </div>
-        </body>
-        </html>
-        """, filename=filename, tabla=tabla_html)
     else:
-        # Para PDFs e imágenes, se visualizan directamente
         return send_file(filepath)
+        
+    return render_template_string("""
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <title>Vista Previa de Estudio</title>
+        <style>
+            body { font-family: 'Segoe UI', Arial, sans-serif; padding: 30px; background: #f8fafc; color: #333; }
+            .container { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); max-width: 1000px; margin: auto; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 15px;">
+                <h3 style="color: #2c3e50; margin: 0;">📊 Vista Previa: {{ filename }}</h3>
+                <a href="/uploads/{{ filename }}" download style="background: #10b981; color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 13px;">📥 Descargar Archivo Original</a>
+            </div>
+            <div style="overflow-x:auto;">
+                {{ tabla | safe }}
+            </div>
+        </div>
+    </body>
+    </html>
+    """, filename=filename, tabla=tabla_html)
 
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
     if not session.get('logged_in'):
         return redirect(url_for('login'))
-    return send_file(os.path.join(upload_folder, filename), as_attachment=True)
+    return send_file(os.path.join(upload_folder, filename))
 
 @app.route('/actualizar_paciente/<int:id>', methods=['POST'])
 def actualizar_paciente(id):
@@ -543,74 +591,27 @@ def actualizar_tratamiento_actual(id):
 
 def obtener_membrete_html():
     return f"""
-    <div style="border-bottom: 2px solid #2c3e50; padding-bottom: 12px; margin-bottom: 20px; display: flex; align-items: center; gap: 20px;">
+    <div style="border-bottom: 2px solid #2c3e50; padding-bottom: 8px; margin-bottom: 10px; display: flex; align-items: center; gap: 15px;">
         <div>
-            <img src="/static/logo_cardiologia.png" alt="Logo" style="width: 85px; height: auto; object-fit: contain;">
+            <img src="/static/logo_cardiologia.png" alt="Logo" style="width: 65px; height: auto; object-fit: contain;">
         </div>
         <div style="flex: 1; font-family: 'Segoe UI', Arial, sans-serif;">
-            <h3 style="margin: 0 0 4px 0; color: #111; font-size: 16px; font-weight: bold; letter-spacing: 0.5px;">DRA. CECILIA MONSERRAT MARECOS VIANA</h3>
-            <p style="margin: 0 0 2px 0; color: #333; font-size: 12px;">Especialista en Cardiología Clínica – Medicina Interna</p>
-            <p style="margin: 0 0 2px 0; color: #333; font-size: 11px;">Ecocardiograma Doppler Color, Mapeo de Presión Arterial, Ergometría, Holter 24 horas</p>
-            <p style="margin: 0 0 2px 0; color: #333; font-size: 11px;">Miembro Titular de la Sociedad Paraguaya de Cardiología y Cirugía Cardiovascular</p>
-            <p style="margin: 0; color: #333; font-size: 11px;">Asunción – Coronel Oviedo, Py.</p>
+            <h3 style="margin: 0 0 2px 0; color: #111; font-size: 13px; font-weight: bold; letter-spacing: 0.5px;">DRA. CECILIA MONSERRAT MARECOS VIANA</h3>
+            <p style="margin: 0 0 1px 0; color: #333; font-size: 10px;">Especialista en Cardiología Clínica – Medicina Interna</p>
+            <p style="margin: 0 0 1px 0; color: #333; font-size: 9px;">Ecocardiograma Doppler Color, Mapeo de Presión Arterial, Ergometría, Holter 24 horas</p>
+            <p style="margin: 0 0 1px 0; color: #333; font-size: 9px;">Miembro Titular de la Sociedad Paraguaya de Cardiología y Cirugía Cardiovascular</p>
+            <p style="margin: 0; color: #333; font-size: 9px;">Asunción – Coronel Oviedo, Py.</p>
         </div>
     </div>
     """
 
-@app.route('/generar_receta_pdf/<int:id>', methods=['POST'])
-def generar_receta_pdf(id):
+@app.route('/generar_plan_pdf/<int:id>', methods=['POST'])
+def generar_plan_pdf(id):
     if not session.get('logged_in'):
         return redirect(url_for('login'))
     tratamiento = request.form.get('tratamiento', '')
-    conn = sqlite3.connect(db_path)
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
-    cursor.execute('SELECT * FROM pacientes WHERE id = ?', (id,))
-    p = cursor.fetchone()
-    conn.close()
-
-    return f"""
-    <!DOCTYPE html>
-    <html lang="es">
-    <head>
-        <meta charset="UTF-8">
-        <title>Receta - {p['nombre']}</title>
-        <style>
-            body {{ font-family: 'Segoe UI', Arial, sans-serif; padding: 25px; color: #333; max-width: 800px; margin: auto; height: 90vh; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; }}
-            .footer {{ border-top: 1px solid #ccc; padding-top: 15px; text-align: center; font-size: 14px; color: #555; }}
-            .content {{ background: #f8fafc; padding: 20px; border-radius: 6px; border: 1px solid #e2e8f0; white-space: pre-wrap; font-size: 15px; flex: 1; margin-top: 10px; }}
-        </style>
-    </head>
-    <body>
-        <div>
-            {obtener_membrete_html()}
-            
-            <div style="background: #e2e8f0; padding: 8px 12px; border-radius: 4px; margin-bottom: 15px; font-size: 13px; display: flex; justify-content: space-between;">
-                <span><strong>Paciente:</strong> {p['nombre']} &nbsp;&nbsp;|&nbsp;&nbsp; <strong>C.I.:</strong> {p['cedula']}</span>
-                <span><strong>Fecha:</strong> {datetime.now().strftime('%d/%m/%Y')}</span>
-            </div>
-            
-            <h4 style="color:#2c3e50; margin:0 0 5px 0; font-size:14px;">RECETA MÉDICA:</h4>
-            <div class="content">{tratamiento}</div>
-        </div>
-        
-        <div class="footer">
-            <p style="margin:0;">_________________________________________</p>
-            <p style="margin:4px 0 0 0; font-weight:bold; font-size:13px;">Firma y Sello</p>
-        </div>
-        
-        <script>
-            window.onload = function() {{ window.print(); }}
-        </script>
-    </body>
-    </html>
-    """
-
-@app.route('/generar_indicaciones_pdf/<int:id>', methods=['POST'])
-def generar_indicaciones_pdf(id):
-    if not session.get('logged_in'):
-        return redirect(url_for('login'))
     indicaciones = request.form.get('indicaciones', '')
+    
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
@@ -623,31 +624,51 @@ def generar_indicaciones_pdf(id):
     <html lang="es">
     <head>
         <meta charset="UTF-8">
-        <title>Indicaciones - {p['nombre']}</title>
+        <title>Receta e Indicaciones - {p['nombre']}</title>
         <style>
-            body {{ font-family: 'Segoe UI', Arial, sans-serif; padding: 25px; color: #333; max-width: 800px; margin: auto; height: 90vh; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; }}
-            .footer {{ border-top: 1px solid #ccc; padding-top: 15px; text-align: center; font-size: 14px; color: #555; }}
-            .content {{ background: #f8fafc; padding: 20px; border-radius: 6px; border: 1px solid #e2e8f0; white-space: pre-wrap; font-size: 15px; flex: 1; margin-top: 10px; }}
+            @page {{ size: A4 landscape; margin: 8mm; }}
+            body {{ font-family: 'Segoe UI', Arial, sans-serif; padding: 0; color: #333; margin: auto; box-sizing: border-box; }}
+            .container {{ display: flex; width: 100%; height: 96vh; gap: 15px; }}
+            .columna {{ flex: 1; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; padding: 12px; border: 1.5px dashed #94a3b8; border-radius: 8px; background: #fff; }}
+            .footer {{ border-top: 1px solid #ccc; padding-top: 6px; text-align: center; font-size: 11px; color: #555; }}
+            .content {{ background: #f8fafc; padding: 10px; border-radius: 4px; border: 1px solid #e2e8f0; white-space: pre-wrap; font-size: 13px; flex: 1; margin-top: 6px; }}
         </style>
     </head>
     <body>
-        <div>
-            {obtener_membrete_html()}
-            
-            <div style="background: #e2e8f0; padding: 8px 12px; border-radius: 4px; margin-bottom: 15px; font-size: 13px; display: flex; justify-content: space-between;">
-                <span><strong>Paciente:</strong> {p['nombre']} &nbsp;&nbsp;|&nbsp;&nbsp; <strong>C.I.:</strong> {p['cedula']}</span>
-                <span><strong>Fecha:</strong> {datetime.now().strftime('%d/%m/%Y')}</span>
+        <div class="container">
+            <!-- COLUMNA IZQUIERDA: RECETA -->
+            <div class="columna">
+                <div>
+                    {obtener_membrete_html()}
+                    <div style="background: #e2e8f0; padding: 5px 8px; border-radius: 4px; margin-bottom: 6px; font-size: 11px; display: flex; justify-content: space-between;">
+                        <span><strong>Paciente:</strong> {p['nombre']} | <strong>C.I.:</strong> {p['cedula']}</span>
+                        <span><strong>Fecha:</strong> {datetime.now().strftime('%d/%m/%Y')}</span>
+                    </div>
+                    <h4 style="color:#2c3e50; margin:0 0 4px 0; font-size:12px;">RECETA MÉDICA:</h4>
+                    <div class="content">{tratamiento}</div>
+                </div>
+                <div class="footer">
+                    <p style="margin:0;">_________________________________________ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Firma y Sello</p>
+                </div>
             </div>
-            
-            <h4 style="color:#2c3e50; margin:0 0 5px 0; font-size:14px;">INDICACIONES MÉDICAS / PLAN:</h4>
-            <div class="content">{indicaciones}</div>
+
+            <!-- COLUMNA DERECHA: INDICACIONES -->
+            <div class="columna">
+                <div>
+                    {obtener_membrete_html()}
+                    <div style="background: #e2e8f0; padding: 5px 8px; border-radius: 4px; margin-bottom: 6px; font-size: 11px; display: flex; justify-content: space-between;">
+                        <span><strong>Paciente:</strong> {p['nombre']} | <strong>C.I.:</strong> {p['cedula']}</span>
+                        <span><strong>Fecha:</strong> {datetime.now().strftime('%d/%m/%Y')}</span>
+                    </div>
+                    <h4 style="color:#2c3e50; margin:0 0 4px 0; font-size:12px;">INDICACIONES MÉDICAS / PLAN:</h4>
+                    <div class="content">{indicaciones}</div>
+                </div>
+                <div class="footer">
+                    <p style="margin:0;">_________________________________________ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Firma y Sello</p>
+                </div>
+            </div>
         </div>
-        
-        <div class="footer">
-            <p style="margin:0;">_________________________________________</p>
-            <p style="margin:4px 0 0 0; font-weight:bold; font-size:13px;">Firma y Sello</p>
-        </div>
-        
+
         <script>
             window.onload = function() {{ window.print(); }}
         </script>
