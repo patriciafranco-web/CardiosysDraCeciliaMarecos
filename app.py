@@ -449,17 +449,16 @@ def ver_estudio(filename):
                         if fila_actual:
                             filas_tabla.append(fila_actual)
             
-            tabla_html = "<table border='1' style='border-collapse:collapse; width:100%; font-family:Segoe UI; font-size:13px; text-align:left;'>"
+            tabla_html = "<table class='excel-table'>"
             for i, fila in enumerate(filas_tabla):
                 tabla_html += "<tr>"
                 for celda in fila:
                     tag = "th" if i == 0 else "td"
-                    bg = "background:#1e293b; color:white;" if i == 0 else ""
-                    tabla_html += f"<{tag} style='padding:9px 10px; border:1px solid #cbd5e1; {bg}'>{celda}</{tag}>"
+                    tabla_html += f"<{tag}>{celda}</{tag}>"
                 tabla_html += "</tr>"
             tabla_html += "</table>"
             if not filas_tabla:
-                tabla_html = "<p>El archivo Excel está vacío o no se pudo extraer la primera hoja.</p>"
+                tabla_html = "<p style='text-align:center; color:#64748b;'>El archivo Excel está vacío o no se pudo extraer la primera hoja.</p>"
         except Exception as e:
             return f"<h3>Error al procesar el archivo Excel:</h3><pre>{e}</pre>"
             
@@ -473,13 +472,12 @@ def ver_estudio(filename):
         except Exception as e:
             return f"Error al leer el archivo: {e}"
             
-        tabla_html = "<table border='1' style='border-collapse:collapse; width:100%; font-family:Segoe UI; font-size:13px; text-align:left;'>"
+        tabla_html = "<table class='excel-table'>"
         for i, fila in enumerate(filas):
             tabla_html += "<tr>"
             for celda in fila:
                 tag = "th" if i == 0 else "td"
-                bg = "background:#1e293b; color:white;" if i == 0 else ""
-                tabla_html += f"<{tag} style='padding:9px 10px; border:1px solid #cbd5e1; {bg}'>{celda}</{tag}>"
+                tabla_html += f"<{tag}>{celda}</{tag}>"
             tabla_html += "</tr>"
         tabla_html += "</table>"
     else:
@@ -490,19 +488,28 @@ def ver_estudio(filename):
     <html lang="es">
     <head>
         <meta charset="UTF-8">
-        <title>Vista Previa de Estudio</title>
+        <title>Vista Previa de Estudio - CardioSys</title>
         <style>
-            body { font-family: 'Segoe UI', Arial, sans-serif; padding: 30px; background: #f8fafc; color: #333; }
-            .container { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); max-width: 1000px; margin: auto; }
+            body { font-family: 'Segoe UI', Arial, sans-serif; padding: 30px; background: #f1f5f9; color: #333; }
+            .container { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); max-width: 1100px; margin: auto; }
+            .header-box { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 20px; }
+            .btn-download { background: #10b981; color: white; padding: 10px 18px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 13px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+            .btn-download:hover { background: #059669; }
+            .table-responsive { overflow-x: auto; border: 1px solid #cbd5e1; border-radius: 6px; }
+            table.excel-table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; background: white; }
+            table.excel-table th { background: #1e293b; color: white; padding: 10px 12px; border: 1px solid #cbd5e1; font-weight: 600; }
+            table.excel-table td { padding: 8px 12px; border: 1px solid #cbd5e1; color: #1e293b; }
+            table.excel-table tr:nth-child(even) { background: #f8fafc; }
+            table.excel-table tr:hover { background: #f1f5f9; }
         </style>
     </head>
     <body>
         <div class="container">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 15px;">
-                <h3 style="color: #2c3e50; margin: 0;">📊 Vista Previa: {{ filename }}</h3>
-                <a href="/uploads/{{ filename }}" download style="background: #10b981; color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 13px;">📥 Descargar Archivo Original</a>
+            <div class="header-box">
+                <h3 style="color: #1e293b; margin: 0; font-size: 18px;">📊 Vista Ordenada de Estudio: {{ filename }}</h3>
+                <a href="/uploads/{{ filename }}" download class="btn-download">📥 Descargar Archivo Original</a>
             </div>
-            <div style="overflow-x:auto;">
+            <div class="table-responsive">
                 {{ tabla | safe }}
             </div>
         </div>
