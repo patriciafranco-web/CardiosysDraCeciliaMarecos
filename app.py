@@ -637,6 +637,12 @@ def generar_plan_pdf(id):
                 size: A4 landscape;
                 margin: 8mm;
             }}
+            @media print {{
+                html, body {{
+                    width: 297mm;
+                    height: 210mm;
+                }}
+            }}
             body {{
                 font-family: 'Segoe UI', Arial, sans-serif;
                 margin: 0;
@@ -647,7 +653,7 @@ def generar_plan_pdf(id):
             .container {{
                 display: flex;
                 width: 100%;
-                height: 98vh;
+                height: 96vh;
                 gap: 15px;
                 box-sizing: border-box;
             }}
