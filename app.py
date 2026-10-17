@@ -632,14 +632,20 @@ def generar_plan_pdf(id):
     <head>
         <meta charset="UTF-8">
         <title>Receta e Indicaciones - {p['nombre']}</title>
-        <style>
-            @page {{ size: A4 landscape; margin: 8mm; }}
-            body {{ font-family: 'Segoe UI', Arial, sans-serif; padding: 0; color: #333; margin: auto; box-sizing: border-box; }}
-            .container {{ display: flex; width: 100%; height: 96vh; gap: 15px; }}
-            .columna {{ flex: 1; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; padding: 12px; border: 1.5px dashed #94a3b8; border-radius: 8px; background: #fff; }}
-            .footer {{ border-top: 1px solid #ccc; padding-top: 6px; text-align: center; font-size: 11px; color: #555; }}
-            .content {{ background: #f8fafc; padding: 10px; border-radius: 4px; border: 1px solid #e2e8f0; white-space: pre-wrap; font-size: 13px; flex: 1; margin-top: 6px; }}
-        </style>
+<style>
+    @page { 
+        size: A4 landscape; 
+        margin: 8mm; 
+    }
+    @media print {
+        body { -webkit-print-color-adjust: exact; }
+    }
+    body { font-family: 'Segoe UI', Arial, sans-serif; padding: 0; color: #333; margin: auto; box-sizing: border-box; }
+    .container { display: flex; width: 100%; height: 96vh; gap: 15px; }
+    .columna { flex: 1; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; padding: 12px; border: 1.5px dashed #94a3b8; border-radius: 8px; background: #fff; }
+    .footer { border-top: 1px solid #ccc; padding-top: 6px; text-align: center; font-size: 11px; color: #555; }
+    .content { background: #f8fafc; padding: 10px; border-radius: 4px; border: 1px solid #e2e8f0; white-space: pre-wrap; font-size: 13px; flex: 1; margin-top: 6px; }
+</style>
     </head>
     <body>
         <div class="container">
