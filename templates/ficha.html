@@ -303,7 +303,7 @@
             </form>
         </div>
 
-        <!-- PLAN / TRATAMIENTO Y INDICACIONES SEPARADAS -->
+<!-- PLAN / TRATAMIENTO Y INDICACIONES SEPARADAS -->
         <div style="background:white; padding:25px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.05); border-top:4px solid #e74c3c; margin-bottom:25px;">
             <form method="POST" action="/actualizar_tratamiento_actual/{{ paciente['id'] }}">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
@@ -326,18 +326,12 @@
                 </div>
             </form>
             
-            <!-- Botones de Impresión Vertical Separados -->
-            <div style="display:flex; gap:15px; margin-top:15px; border-top:1px solid #eee; padding-top:15px;">
-                <form method="POST" action="/generar_receta_pdf/{{ paciente['id'] }}" target="_blank" style="flex:1;">
-                    <input type="hidden" name="tratamiento" value="{{ paciente['tratamiento_actual'] or '' }}">
-                    <button type="submit" style="background:#3b82f6; color:white; border:none; padding:10px; border-radius:6px; font-weight:bold; cursor:pointer; width:100%; font-size:13px;">🖨️ Imprimir Receta (Vertical)</button>
-                </form>
-
-                <form method="POST" action="/generar_indicaciones_pdf/{{ paciente['id'] }}" target="_blank" style="flex:1;">
-                    <input type="hidden" name="indicaciones" value="{{ paciente['indicaciones_actual'] or '' }}">
-                    <button type="submit" style="background:#7c3aed; color:white; border:none; padding:10px; border-radius:6px; font-weight:bold; cursor:pointer; width:100%; font-size:13px;">🖨️ Imprimir Indicaciones (Vertical)</button>
-                </form>
-            </div>
+            <!-- ÚNICO BOTÓN DE IMPRESIÓN 2 EN 1 (Horizontal) -->
+            <form method="POST" action="/generar_plan_pdf/{{ paciente['id'] }}" target="_blank" style="margin-top:15px; border-top:1px solid #eee; padding-top:15px;">
+                <input type="hidden" name="tratamiento" value="{{ paciente['tratamiento_actual'] or '' }}">
+                <input type="hidden" name="indicaciones" value="{{ paciente['indicaciones_actual'] or '' }}">
+                <button type="submit" style="background:#e74c3c; color:white; border:none; padding:12px; border-radius:6px; font-weight:bold; cursor:pointer; width:100%; font-size:14px;">🖨️ Imprimir Receta e Indicaciones en una Hoja (Horizontal 2 en 1)</button>
+            </form>
         </div>
 
         <!-- REGISTRAR NUEVA CONSULTA Y EXAMEN FÍSICO -->
