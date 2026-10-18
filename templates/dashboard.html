@@ -63,7 +63,8 @@
                     <tr style="border-bottom:1px solid #e2e8f0; font-size:13px;">
                         <td style="padding:12px;">{{ p['cedula'] }}</td>
                         <td style="padding:12px; font-weight:bold; color:#1e293b;">{{ p['nombre'] }}</td>
-                        <td style="padding:12px;">{% if p['nacimiento'] %}{{ p['nacimiento'] }} años{% endif %}</td>
+                        <!-- CORREGIDO AQUÍ PARA USAR EL FILTRO DE EDAD -->
+                        <td style="padding:12px;">{{ p['nacimiento'] | edad }}</td>
                         <td style="padding:12px;">{{ p['profesion'] or '' }}</td>
                         <td style="padding:12px;">{{ p['direccion'] or '' }}</td>
                         <td style="padding:12px; text-align:center;">
