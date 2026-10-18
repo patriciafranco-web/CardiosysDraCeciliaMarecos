@@ -29,6 +29,25 @@ app = Flask(__name__, template_folder=template_dir)
 app.secret_key = 'cardio_elite_seguro_2026'
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 
+# --- FUNCIÓN PARA CALCULAR LA EDAD EXACTA ---
+def calcular_edad(nacimiento_str):
+    if not nacimiento_str:
+        return "N/D"
+    try:
+        for fmt in ('%Y-%m-%d', '%d/%m/%Y', '%Y/%m/%d'):
+            try:
+                f_nac = datetime.strptime(nacimiento_str.strip(), fmt)
+                hoy = datetime.today()
+                edad = hoy.year - f_nac.year - ((hoy.month, hoy.day) < (f_nac.month, f_nac.day))
+                return f"{edad} años"
+            except ValueError:
+                continue
+        return nacimiento_str
+    except Exception:
+        return "N/D"
+
+app.jinja_env.filters['edad'] = calcular_edad
+
 def init_db():
     try:
         conn = sqlite3.connect(db_path)
@@ -358,7 +377,6 @@ def ficha(id):
                                    (nombre_estudio, filename, datetime.now().strftime('%Y-%m-%d'), 'Consultorio', id))
                     conn.commit()
             else:
-                # SE GUARDA SOLO LA FECHA SIN HORARIO
                 fecha_cons = datetime.now().strftime('%Y-%m-%d')
                 evolucion = request.form.get('evolucion', '').strip()
                 scores = request.form.get('scores_copiados', '').strip()
