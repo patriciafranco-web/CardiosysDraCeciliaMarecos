@@ -211,7 +211,7 @@
     <div style="flex:1; padding:30px; overflow-y:auto;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
             <a href="/" style="color:#3498db; text-decoration:none; font-weight:bold;">⬅ Volver al Panel</a>
-            <form action="/eliminar_paciente/{{ paciente['id'] }}" method="POST" onsubmit="return confirm('¿Está segura de que desea eliminar este paciente de prueba?');">
+            <form action="/eliminar_paciente/{{ paciente['id'] }}" method="POST" onsubmit="return confirm('¿Está segura de que desea eliminar este paciente?');">
                 <button type="submit" style="background:#ef4444; color:white; border:none; padding:6px 12px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:12px;">🗑️ Eliminar Paciente</button>
             </form>
         </div>
@@ -228,7 +228,7 @@
                     </div>
                     <div style="display:flex; gap:20px; font-size:14px; color:#cbd5e1; flex-wrap:wrap; margin-bottom:10px;">
                         {% if paciente['cedula'] %}<span><b>C.I.:</b> {{ paciente['cedula'] }}</span>{% endif %}
-                        {% if paciente['nacimiento'] %}<span><b>Nacimiento / Edad:</b> {{ paciente['nacimiento'] }}</span>{% endif %}
+                        {% if paciente['nacimiento'] %}<span><b>Edad:</b> {{ paciente['nacimiento'] | edad }}</span>{% endif %}
                         {% if paciente['profesion'] %}<span><b>Profesión:</b> {{ paciente['profesion'] }}</span>{% endif %}
                         {% if paciente['sanatorio'] %}<span><b>Sanatorio:</b> {{ paciente['sanatorio'] }}</span>{% endif %}
                         {% if paciente['direccion'] %}<span><b>Procedencia:</b> {{ paciente['direccion'] }}</span>{% endif %}
@@ -262,7 +262,7 @@
                     <div style="display:flex; gap:10px; margin-bottom:10px;">
                         <div style="flex:2;"><label style="font-size:11px;">Nombre y Apellido:</label><input type="text" name="nombre" value="{{ paciente['nombre'] }}" required style="padding:6px; font-size:12px; width:100%; border-radius:4px; border:none;"></div>
                         <div style="flex:1;"><label style="font-size:11px;">C.I.:</label><input type="text" name="cedula" value="{{ paciente['cedula'] }}" style="padding:6px; font-size:12px; width:100%; border-radius:4px; border:none;"></div>
-                        <div style="flex:1;"><label style="font-size:11px;">Nacimiento / Edad:</label><input type="text" name="nacimiento" value="{{ paciente['nacimiento'] }}" style="padding:6px; font-size:12px; width:100%; border-radius:4px; border:none;"></div>
+                        <div style="flex:1;"><label style="font-size:11px;">Nacimiento (AAAA-MM-DD):</label><input type="text" name="nacimiento" value="{{ paciente['nacimiento'] }}" style="padding:6px; font-size:12px; width:100%; border-radius:4px; border:none;"></div>
                     </div>
                     <div style="display:flex; gap:10px; margin-bottom:10px;">
                         <div style="flex:1;"><label style="font-size:11px;">Profesión:</label><input type="text" name="profesion" value="{{ paciente['profesion'] }}" style="padding:6px; font-size:12px; width:100%; border-radius:4px; border:none;"></div>
@@ -303,7 +303,7 @@
             </form>
         </div>
 
-<!-- PLAN / TRATAMIENTO Y INDICACIONES SEPARADAS -->
+        <!-- PLAN / TRATAMIENTO Y INDICACIONES SEPARADAS -->
         <div style="background:white; padding:25px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.05); border-top:4px solid #e74c3c; margin-bottom:25px;">
             <form method="POST" action="/actualizar_tratamiento_actual/{{ paciente['id'] }}">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
