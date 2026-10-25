@@ -9,6 +9,10 @@ import xml.etree.ElementTree as ET
 from datetime import datetime
 from flask import Flask, request, redirect, url_for, session, send_file, render_template, render_template_string
 from werkzeug.security import generate_password_hash, check_password_hash
+import docx
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet
 
 if getattr(sys, 'frozen', False):
     base_dir = os.path.dirname(sys.executable)
@@ -370,11 +374,74 @@ def ficha(id):
                 nombre_estudio = request.form.get('nombre_estudio', 'Estudio')
                 archivo_obj = request.files.get('archivo_estudio')
                 if archivo_obj and archivo_obj.filename:
-                    filename = f'Estudio_{id}_{int(datetime.now().timestamp())}_{archivo_obj.filename}'
-                    filepath = os.path.join(upload_folder, filename)
-                    archivo_obj.save(filepath)
+                    original_filename = archivo_obj.filename
+                    timestamp = int(datetime.now().timestamp())
+                    filename_original = f'Estudio_{id}_{timestamp}_{original_filename}'
+                    filepath_original = os.path.join(upload_folder, filename_original)
+                    archivo_obj.save(filepath_original)
+                    
+                    ext = original_filename.lower().split('.')[-1]
+                    filename_a_guardar = filename_original
+                    
+                    # CONVERSIÓN AUTOMÁTICA A PDF SI ES EXCEL O WORD
+                    if ext in ['xlsx', 'xls']:
+                        pdf_name = f'Estudio_{id}_{timestamp}_convertido.pdf'
+                        pdf_path = os.path.join(upload_folder, pdf_name)
+                        try:
+                            texto_excel = []
+                            with zipfile.ZipFile(filepath_original, 'r') as z:
+                                shared_strings = []
+                                if 'xl/sharedStrings.xml' in z.namelist():
+                                    tree_ss = ET.fromstring(z.read('xl/sharedStrings.xml'))
+                                    for si in tree_ss.findall('.//{http://schemas.openxmlformats.org/spreadsheetml/2006/main}t'):
+                                        shared_strings.append(si.text if si.text else '')
+                                if 'xl/worksheets/sheet1.xml' in z.namelist():
+                                    tree_ws = ET.fromstring(z.read('xl/worksheets/sheet1.xml'))
+                                    for row in tree_ws.findall('.//{http://schemas.openxmlformats.org/spreadsheetml/2006/main}row'):
+                                        fila_txt = []
+                                        for c in row.findall('.//{http://schemas.openxmlformats.org/spreadsheetml/2006/main}c'):
+                                            v = c.find('{http://schemas.openxmlformats.org/spreadsheetml/2006/main}v')
+                                            val = ""
+                                            if v is not None and v.text is not None:
+                                                if c.attrib.get('t') == 's':
+                                                    idx = int(v.text)
+                                                    val = shared_strings[idx] if idx < len(shared_strings) else v.text
+                                                else:
+                                                    val = v.text
+                                            fila_txt.append(val)
+                                        if fila_txt:
+                                            texto_excel.append(" | ".join(fila_txt))
+                            
+                            doc = SimpleDocTemplate(pdf_path, pagesize=letter)
+                            styles = getSampleStyleSheet()
+                            story = [Paragraph(f"<b>Reporte Excel Convertido: {nombre_estudio}</b>", styles['Heading1']), Spacer(1, 12)]
+                            for linea in texto_excel:
+                                story.append(Paragraph(linea, styles['Normal']))
+                                story.append(Spacer(1, 4))
+                            doc.build(story)
+                            filename_a_guardar = pdf_name
+                        except Exception as ex:
+                            print("Error convirtiendo Excel a PDF:", ex)
+
+                    elif ext == 'docx':
+                        pdf_name = f'Estudio_{id}_{timestamp}_convertido.pdf'
+                        pdf_path = os.path.join(upload_folder, pdf_name)
+                        try:
+                            doc_word = docx.Document(filepath_original)
+                            doc_pdf = SimpleDocTemplate(pdf_path, pagesize=letter)
+                            styles = getSampleStyleSheet()
+                            story = [Paragraph(f"<b>Documento Word: {nombre_estudio}</b>", styles['Heading1']), Spacer(1, 12)]
+                            for para in doc_word.paragraphs:
+                                if para.text.strip():
+                                    story.append(Paragraph(para.text, styles['Normal']))
+                                    story.append(Spacer(1, 6))
+                            doc_pdf.build(story)
+                            filename_a_guardar = pdf_name
+                        except Exception as ex:
+                            print("Error convirtiendo Word a PDF:", ex)
+
                     cursor.execute('INSERT INTO estudios (nombre_estudio, archivo, fecha, sanatorio, paciente_id) VALUES (?, ?, ?, ?, ?)',
-                                   (nombre_estudio, filename, datetime.now().strftime('%Y-%m-%d'), 'Consultorio', id))
+                                   (nombre_estudio, filename_a_guardar, datetime.now().strftime('%Y-%m-%d'), 'Consultorio', id))
                     conn.commit()
             else:
                 fecha_cons = datetime.now().strftime('%Y-%m-%d')
@@ -440,107 +507,42 @@ def ver_estudio(filename):
         return "Archivo no encontrado", 404
         
     ext = filename.lower().split('.')[-1]
+    if ext == 'pdf':
+        return send_file(filepath, mimetype='application/pdf', as_attachment=False)
     
-    if ext == 'xlsx':
-        try:
-            filas_tabla = []
-            with zipfile.ZipFile(filepath, 'r') as z:
-                shared_strings = []
-                if 'xl/sharedStrings.xml' in z.namelist():
-                    tree_ss = ET.fromstring(z.read('xl/sharedStrings.xml'))
-                    for si in tree_ss.findall('.//{http://schemas.openxmlformats.org/spreadsheetml/2006/main}t'):
-                        shared_strings.append(si.text if si.text else '')
-                
-                if 'xl/worksheets/sheet1.xml' in z.namelist():
-                    tree_ws = ET.fromstring(z.read('xl/worksheets/sheet1.xml'))
-                    for row in tree_ws.findall('.//{http://schemas.openxmlformats.org/spreadsheetml/2006/main}row'):
-                        fila_actual = []
-                        for c in row.findall('.//{http://schemas.openxmlformats.org/spreadsheetml/2006/main}c'):
-                            v = c.find('{http://schemas.openxmlformats.org/spreadsheetml/2006/main}v')
-                            val = ""
-                            if v is not None and v.text is not None:
-                                if c.attrib.get('t') == 's':
-                                    idx = int(v.text)
-                                    val = shared_strings[idx] if idx < len(shared_strings) else v.text
-                                else:
-                                    val = v.text
-                            fila_actual.append(val)
-                        if fila_actual:
-                            filas_tabla.append(fila_actual)
-            
-            tabla_html = "<table class='excel-table'>"
-            for i, fila in enumerate(filas_tabla):
-                tabla_html += "<tr>"
-                for celda in fila:
-                    tag = "th" if i == 0 else "td"
-                    tabla_html += f"<{tag}>{celda}</{tag}>"
-                tabla_html += "</tr>"
-            tabla_html += "</table>"
-            if not filas_tabla:
-                tabla_html = "<p style='text-align:center; color:#64748b;'>El archivo Excel está vacío o no se pudo extraer la primera hoja.</p>"
-        except Exception as e:
-            return f"<h3>Error al procesar el archivo Excel:</h3><pre>{e}</pre>"
-            
-    elif ext in ['csv', 'txt']:
-        filas = []
-        try:
-            with open(filepath, mode='r', encoding='utf-8', errors='ignore') as f:
-                lector = csv.reader(f)
-                for fila in lector:
-                    filas.append(fila)
-        except Exception as e:
-            return f"Error al leer el archivo: {e}"
-            
-        tabla_html = "<table class='excel-table'>"
-        for i, fila in enumerate(filas):
-            tabla_html += "<tr>"
-            for celda in fila:
-                tag = "th" if i == 0 else "td"
-                tabla_html += f"<{tag}>{celda}</{tag}>"
-            tabla_html += "</tr>"
-        tabla_html += "</table>"
-    else:
-        return send_file(filepath)
-        
-    return render_template_string("""
-    <!DOCTYPE html>
-    <html lang="es">
-    <head>
-        <meta charset="UTF-8">
-        <title>Vista Previa de Estudio - CardioSys</title>
-        <style>
-            body { font-family: 'Segoe UI', Arial, sans-serif; padding: 30px; background: #f1f5f9; color: #333; }
-            .container { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); max-width: 1100px; margin: auto; }
-            .header-box { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 20px; }
-            .btn-download { background: #10b981; color: white; padding: 10px 18px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 13px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-            .btn-download:hover { background: #059669; }
-            .table-responsive { overflow-x: auto; border: 1px solid #cbd5e1; border-radius: 6px; }
-            table.excel-table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; background: white; }
-            table.excel-table th { background: #1e293b; color: white; padding: 10px 12px; border: 1px solid #cbd5e1; font-weight: 600; }
-            table.excel-table td { padding: 8px 12px; border: 1px solid #cbd5e1; color: #1e293b; }
-            table.excel-table tr:nth-child(even) { background: #f8fafc; }
-            table.excel-table tr:hover { background: #f1f5f9; }
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <div class="header-box">
-                <h3 style="color: #1e293b; margin: 0; font-size: 18px;">📊 Vista Ordenada de Estudio: {{ filename }}</h3>
-                <a href="/uploads/{{ filename }}" download class="btn-download">📥 Descargar Archivo Original</a>
-            </div>
-            <div class="table-responsive">
-                {{ tabla | safe }}
-            </div>
-        </div>
-    </body>
-    </html>
-    """, filename=filename, tabla=tabla_html)
+    return send_file(filepath, as_attachment=False)
+
+@app.route('/eliminar_estudio/<int:est_id>', methods=['POST'])
+def eliminar_estudio(est_id):
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+    try:
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        cursor.execute('SELECT archivo, paciente_id FROM estudios WHERE id = ?', (est_id,))
+        est = cursor.fetchone()
+        if est:
+            archivo, paciente_id = est[0], est[1]
+            filepath = os.path.join(upload_folder, archivo)
+            if os.path.exists(filepath):
+                try:
+                    os.remove(filepath)
+                except Exception:
+                    pass
+            cursor.execute('DELETE FROM estudios WHERE id = ?', (est_id,))
+            conn.commit()
+            conn.close()
+            return redirect(url_for('ficha', id=paciente_id))
+        conn.close()
+        return redirect(url_for('index'))
+    except Exception as e:
+        return f"<h3>Error al eliminar estudio:</h3><pre>{traceback.format_exc()}</pre>", 500
 
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
     if not session.get('logged_in'):
         return redirect(url_for('login'))
-    return send_file(os.path.join(upload_folder, filename))
+    return send_file(os.path.join(upload_folder, filename), as_attachment=False)
 
 @app.route('/actualizar_paciente/<int:id>', methods=['POST'])
 def actualizar_paciente(id):
@@ -689,7 +691,7 @@ def generar_plan_pdf(id):
             }}
             .footer-aviso {{
                 border-top: 1px dashed #e2e8f0;
-                padding-top: 8px;
+                padding-top: 8mm;
                 margin-top: 10px;
                 text-align: center;
                 font-size: 11px;
