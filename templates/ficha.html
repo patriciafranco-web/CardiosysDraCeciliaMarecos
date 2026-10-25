@@ -281,7 +281,7 @@
             </div>
         </div>
 
-        <!-- 1. REGISTRAR NUEVA CONSULTA Y EXAMEN FÍSICO (SUBIDO ARRIBA) -->
+        <!-- 1. REGISTRAR NUEVA CONSULTA Y EXAMEN FÍSICO -->
         <div style="background:white; padding:25px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.05); margin-bottom:25px;">
             <h3 style="margin-top:0; color:#2c3e50; border-bottom:1px solid #eee; padding-bottom:10px;">🩺 Registrar Nueva Consulta / Evolución</h3>
             
@@ -315,7 +315,7 @@
             </form>
         </div>
 
-        <!-- 2. PRESCRIPCIÓN MÉDICA Y PLAN (DEBAJO DE LA CONSULTA) -->
+        <!-- 2. PRESCRIPCIÓN MÉDICA Y PLAN -->
         <div style="background:white; padding:25px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.05); border-top:4px solid #e74c3c; margin-bottom:25px;">
             <form method="POST" action="/actualizar_tratamiento_actual/{{ paciente['id'] }}">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
@@ -343,27 +343,6 @@
                 <input type="hidden" name="tratamiento" value="{{ paciente['tratamiento_actual'] or '' }}">
                 <input type="hidden" name="indicaciones" value="{{ paciente['indicaciones_actual'] or '' }}">
                 <button type="submit" style="background:#e74c3c; color:white; border:none; padding:12px; border-radius:6px; font-weight:bold; cursor:pointer; width:100%; font-size:14px;">🖨️ Imprimir Receta e Indicaciones en una Hoja (Horizontal 2 en 1)</button>
-            </form>
-        </div>
-
-        <!-- 3. ANTECEDENTES Y RESUMEN ANTERIOR (UBICADOS MÁS ABAJO, DESANCLADOS) -->
-        <div style="background:#1e293b; color:white; padding:20px; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.1); margin-bottom:20px;">
-            <form method="POST" action="/actualizar_antecedentes_principales/{{ paciente['id'] }}">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                    <label style="color:#38bdf8; font-weight:bold; font-size:14px;">Antecedentes Principales (Editable):</label>
-                    <button type="submit" style="background:#10b981; color:white; border:none; padding:6px 16px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:12px;">💾 Guardar</button>
-                </div>
-                <textarea name="antecedentes_principales" rows="2" placeholder="Ej: HTA, Diabetes, Dislipidemia..." style="width:100%; padding:10px; background:rgba(255,255,255,0.05); color:white; border:1px solid #475569; border-radius:4px; box-sizing:border-box; font-family:inherit; font-size:13px;">{{ paciente['antecedentes_principales'] or paciente['antecedentes'] or '' }}</textarea>
-            </form>
-        </div>
-
-        <div style="background:#1e293b; color:white; padding:20px; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.1); margin-bottom:25px;">
-            <form method="POST" action="/actualizar_resumen_anterior/{{ paciente['id'] }}">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                    <label style="color:#38bdf8; font-weight:bold; font-size:14px;">📌 Resumen de Consulta Anterior (Evolución y Tratamiento):</label>
-                    <button type="submit" style="background:#10b981; color:white; border:none; padding:4px 12px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:11px;">💾 Guardar</button>
-                </div>
-                <textarea name="resumen_anterior" rows="4" placeholder="Fecha de última consulta y Evolución / Tratamiento anterior..." style="width:100%; padding:10px; background:rgba(255,255,255,0.05); color:white; border:1px solid #475569; border-radius:4px; box-sizing:border-box; font-family:inherit; font-size:13px;">{{ paciente['resumen_anterior'] or '' }}</textarea>
             </form>
         </div>
 
