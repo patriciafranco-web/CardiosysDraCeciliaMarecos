@@ -473,7 +473,7 @@
                     <input type="file" name="archivo_estudio" style="margin-bottom:15px;">
                     <button type="submit" style="background:#7c3aed; color:white; border:none; padding:10px 20px; border-radius:6px; font-weight:bold; cursor:pointer; width:100%;">📤 Subir Estudio</button>
                 </form>
-<h4 style="margin-top:20px; color:#2c3e50;">Estudios Adjuntos:</h4>
+                <h4 style="margin-top:20px; color:#2c3e50;">Estudios Adjuntos:</h4>
                 <ul style="padding-left:0; list-style:none;">
                     {% for est in estudios %}
                     <li style="margin-bottom:8px; font-size:13px; display:flex; justify-content:space-between; align-items:center; background:#f8fafc; padding:8px 12px; border-radius:6px; border:1px solid #e2e8f0;">
@@ -490,8 +490,10 @@
                     <p style="color:#7f8c8d; font-size:13px;">No hay estudios adjuntos.</p>
                     {% endfor %}
                 </ul>
+            </div>
+        </div>
 
-        <!-- HISTORIAL CLÍNICO COMPLETO -->
+        <!-- HISTORIAL CLÍNICO COMPLETO (RESTAURADO) -->
         <div style="margin-bottom:30px;">
             <button type="button" onclick="togglePanel('panelHistorialContent')" style="background:#334155; color:white; border:none; padding:12px; border-radius:6px; font-weight:bold; cursor:pointer; width:100%; font-size:14px; text-align:center;">📚 Historial Clínico Completo</button>
             <div id="panelHistorialContent" style="display:none; background:white; border:1px solid #cbd5e1; padding:20px; border-radius:6px; margin-top:10px; max-height:500px; overflow-y:auto;">
