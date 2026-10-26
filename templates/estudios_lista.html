@@ -28,7 +28,12 @@
     <div style="flex: 1; padding: 30px; overflow-y: auto;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <h2 style="color: #1e293b; margin: 0;">📁 Catálogo General de Estudios</h2>
-            <a href="/estudios-nuevo" style="background: #3b82f6; color: white; padding: 10px 18px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 13px;">➕ Subir Nuevo Estudio</a>
+            <div style="display: flex; gap: 10px;">
+                <form action="/eliminar_todos_estudios_generales" method="POST" style="margin: 0;" onsubmit="return confirm('¿Está segura de que desea ELIMINAR TODOS los estudios del catálogo de un solo golpe?');">
+                    <button type="submit" style="background: #dc2626; color: white; border: none; padding: 10px 18px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 13px;">🗑️ Vaciar Todo el Catálogo</button>
+                </form>
+                <a href="/estudios-nuevo" style="background: #3b82f6; color: white; padding: 10px 18px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 13px;">➕ Subir Nuevo Estudio</a>
+            </div>
         </div>
 
         <!-- Buscador -->
