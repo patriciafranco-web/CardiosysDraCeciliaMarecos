@@ -140,7 +140,7 @@
                     </div>
                 </div>
 
-                <!-- SECCIÓN 2: FICHA DE NUEVA CONSULTA Y EVOLUCIÓN (DE SEGUIDO) -->
+                <!-- SECCIÓN 2: PRIMERA CONSULTA Y EVOLUCIÓN -->
                 <h4 style="color: #334155; margin-bottom: 12px; margin-top: 30px; font-size: 15px; background: #f8fafc; padding: 8px 12px; border-left: 4px solid #10b981; border-radius: 4px;">2. Primera Consulta y Evolución Inicial</h4>
 
                 <div style="margin-bottom: 15px;">
@@ -167,13 +167,9 @@
                     <div style="flex: 1;"><label style="font-size: 11px; font-weight: bold;">BSA m²:</label><input type="text" id="form_bsa" placeholder="Auto" style="width: 100%; padding: 8px; margin-top: 4px; border: 1px solid #cbd5e1; border-radius: 4px; background: #f8fafc;" readonly></div>
                 </div>
 
-                <!-- PRESCRIPCIÓN MÉDICA Y PLAN (CON EL BOTÓN GUARDAR TODO) -->
+                <!-- SECCIÓN 3: PRESCRIPCIÓN MÉDICA Y PLAN -->
                 <div style="background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-top: 4px solid #e74c3c; margin-bottom: 25px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                        <h3 style="margin: 0; font-size: 15px; color: #2c3e50;">Prescripción Médica y Plan</h3>
-                        <button type="submit" style="background: #10b981; color: white; border: none; padding: 8px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 13px;">💾 Guardar Todo</button>
-                    </div>
-
+                    <h3 style="margin: 0; font-size: 15px; color: #2c3e50; margin-bottom: 15px;">Prescripción Médica y Plan</h3>
                     <div style="display: flex; gap: 20px; margin-bottom: 15px;">
                         <div style="flex: 1;">
                             <label style="font-weight: bold; font-size: 13px; color: #2c3e50; display: block; margin-bottom: 5px;">💊 Receta (Medicamentos):</label>
@@ -184,6 +180,13 @@
                             <textarea name="indicaciones_actual" rows="6" placeholder="Escriba aquí las indicaciones generales y estilo de vida..." style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-family: inherit; font-size: 13px; background: #fdfefe;"></textarea>
                         </div>
                     </div>
+                </div>
+
+                <!-- Botones de Acción -->
+                <div style="display: flex; justify-content: flex-end; gap: 10px; border-top: 2px solid #e2e8f0; padding-top: 20px;">
+                    <a href="/" style="background: #64748b; color: white; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 13px; display: inline-flex; align-items: center;">Cancelar</a>
+                    <button type="submit" name="accion_form" value="guardar" style="background: #10b981; color: white; border: none; padding: 12px 25px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 14px;">💾 Guardar Paciente</button>
+                    <button type="submit" name="accion_form" value="imprimir" style="background: #e74c3c; color: white; border: none; padding: 12px 25px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 14px;">🖨️ Guardar e Imprimir Receta</button>
                 </div>
             </form>
         </div>
