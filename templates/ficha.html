@@ -473,20 +473,23 @@
                     <input type="file" name="archivo_estudio" style="margin-bottom:15px;">
                     <button type="submit" style="background:#7c3aed; color:white; border:none; padding:10px 20px; border-radius:6px; font-weight:bold; cursor:pointer; width:100%;">📤 Subir Estudio</button>
                 </form>
-                <h4 style="margin-top:20px; color:#2c3e50;">Estudios Adjuntos:</h4>
-                <ul style="padding-left:20px;">
+<h4 style="margin-top:20px; color:#2c3e50;">Estudios Adjuntos:</h4>
+                <ul style="padding-left:0; list-style:none;">
                     {% for est in estudios %}
-                    <li style="margin-bottom:8px; font-size:13px;">
-                        <b>{{ est['nombre_estudio'] }}</b> ({{ est['fecha'] }}) - 
-                        <a href="/ver_estudio/{{ est['archivo'] }}" target="_blank" style="color:#3b82f6; font-weight:bold; margin-right:10px;">👁️ Ver Archivo</a>
-                        <a href="/uploads/{{ est['archivo'] }}" style="color:#10b981; font-weight:bold;">📥 Descargar</a>
+                    <li style="margin-bottom:8px; font-size:13px; display:flex; justify-content:space-between; align-items:center; background:#f8fafc; padding:8px 12px; border-radius:6px; border:1px solid #e2e8f0;">
+                        <span><b>{{ est['nombre_estudio'] }}</b> <span style="color:#64748b; font-size:11px;">({{ est['fecha'] }})</span></span>
+                        <div style="display:flex; gap:12px; align-items:center;">
+                            <a href="/ver_estudio/{{ est['archivo'] }}" target="_blank" style="color:#3b82f6; font-weight:bold; text-decoration:none;">👁️ Ver</a>
+                            <a href="/uploads/{{ est['archivo'] }}" download style="color:#10b981; font-weight:bold; text-decoration:none;">📥 Descargar</a>
+                            <form action="/eliminar_estudio/{{ est['id'] }}" method="POST" style="margin:0;" onsubmit="return confirm('¿Está segura de que desea eliminar este estudio?');">
+                                <button type="submit" style="background:#ef4444; color:white; border:none; padding:4px 8px; border-radius:4px; font-weight:bold; cursor:pointer; font-size:11px;">🗑️ Eliminar</button>
+                            </form>
+                        </div>
                     </li>
                     {% else %}
                     <p style="color:#7f8c8d; font-size:13px;">No hay estudios adjuntos.</p>
                     {% endfor %}
                 </ul>
-            </div>
-        </div>
 
         <!-- HISTORIAL CLÍNICO COMPLETO -->
         <div style="margin-bottom:30px;">
