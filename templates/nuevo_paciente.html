@@ -2,104 +2,208 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Nuevo Paciente - CardioSys</title>
+    <title>Nuevo Paciente y Consulta - CardioSys</title>
+    <script>
+    function calcularAntropometria() {
+        let p = parseFloat(document.getElementById('form_peso').value);
+        let t = parseFloat(document.getElementById('form_talla').value);
+        if (!p || !t || isNaN(p) || isNaN(t)) {
+            document.getElementById('form_imc').value = '';
+            document.getElementById('form_bsa').value = '';
+            return;
+        }
+        let imc = (p / ((t / 100) * (t / 100))).toFixed(1);
+        let clasificacionIMC = imc < 18.5 ? "Bajo peso" : imc < 25 ? "Normal" : imc < 30 ? "Sobrepeso" : imc < 35 ? "Obesidad I" : imc < 40 ? "Obesidad II" : "Obesidad III";
+        document.getElementById('form_imc').value = imc + " (" + clasificacionIMC + ")";
+        document.getElementById('form_bsa').value = Math.sqrt((p * t) / 3600).toFixed(2) + " m²";
+    }
+
+    function calcularEdadDesdeNacimiento() {
+        let nacStr = document.getElementById('input_nacimiento').value.trim();
+        if (!nacStr) {
+            document.getElementById('input_edad_txt').value = '';
+            return;
+        }
+        // Intentar parsear formatos comunes AAAA-MM-DD o DD/MM/AAAA
+        let partes = nacStr.split(/[-/]/);
+        let fNac = null;
+        if (partes.length === 3) {
+            if (partes[0].length === 4) {
+                fNac = new Date(partes[0], partes[1] - 1, partes[2]);
+            } else {
+                fNac = new Date(partes[2], partes[1] - 1, partes[0]);
+            }
+        }
+        if (fNac && !isNaN(fNac)) {
+            let hoy = new Date();
+            let edad = hoy.getFullYear() - fNac.getFullYear();
+            let m = hoy.getMonth() - fNac.getMonth();
+            if (m < 0 || (m === 0 && hoy.getDate() < fNac.getDate())) {
+                edad--;
+            }
+            document.getElementById('input_edad_txt').value = edad >= 0 ? edad + " años" : "";
+        } else {
+            document.getElementById('input_edad_txt').value = '';
+        }
+    }
+    </script>
 </head>
-<body style="font-family:Segoe UI; background:#f4f7f6; margin:0; display:flex; height:100vh;">
-    <!-- Sidebar -->
-    <div style="width:260px; background:#1e293b; color:white; padding:20px; box-sizing:border-box; display:flex; flex-direction:column; height:100vh;">
-        <h2 style="color:white; margin-top:0; margin-bottom:5px;">CardioSys 1.0</h2>
-        <p style="color:#38bdf8; font-size:15px; font-weight:bold; margin-top:0; margin-bottom:5px;">Dra. Cecilia Marecos Viana</p>
-        <p style="color:#94a3b8; font-size:11px; margin-top:0; margin-bottom:25px; line-height:1.2;">Reg. Prof. 13943<br>Cardiología Clínica y Diagnóstica</p>
-        <ul style="list-style:none; padding:0; margin-top:0; flex:1;">
-            <li style="margin:15px 0;"><a href="/" style="color:white; text-decoration:none;">📋 Lista de Pacientes</a></li>
-            <li style="margin:15px 0;"><a href="/nuevo" style="color:white; text-decoration:none; font-weight:bold;">➕ Nuevo Paciente</a></li>
-            <li style="margin:15px 0;"><a href="/estudios-lista" style="color:white; text-decoration:none;">📁 Lista de Estudios</a></li>
-            <li style="margin:15px 0;"><a href="/estudios-nuevo" style="color:white; text-decoration:none;">➕ Nuevo Estudio</a></li>
-            <li style="margin:15px 0;"><a href="/cambiar-password" style="color:white; text-decoration:none;">🔑 Cambiar Contraseña</a></li>
+<body style="font-family: 'Segoe UI', Arial, sans-serif; background: #f4f7f6; margin: 0; display: flex; height: 100vh;">
+
+    <!-- Sidebar Lateral -->
+    <div style="width: 260px; background: #1e293b; color: white; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; height: 100vh;">
+        <h2 style="color: white; margin-top: 0; margin-bottom: 5px;">CardioSys 1.0</h2>
+        <p style="color: #38bdf8; font-size: 15px; font-weight: bold; margin-top: 0; margin-bottom: 5px;">Dra. Cecilia Marecos Viana</p>
+        <p style="color: #94a3b8; font-size: 11px; margin-top: 0; margin-bottom: 25px; line-height: 1.2;">Reg. Prof. 13943<br>Cardiología Clínica y Diagnóstica</p>
+        <ul style="list-style: none; padding: 0; margin-top: 0; flex: 1;">
+            <li style="margin: 15px 0;"><a href="/" style="color: white; text-decoration: none;">📋 Lista de Pacientes</a></li>
+            <li style="margin: 15px 0;"><a href="/nuevo" style="color: #38bdf8; text-decoration: none; font-weight: bold;">➕ Nuevo Paciente</a></li>
+            <li style="margin: 15px 0;"><a href="/estudios-lista" style="color: white; text-decoration: none;">📁 Lista de Estudios</a></li>
+            <li style="margin: 15px 0;"><a href="/estudios-nuevo" style="color: white; text-decoration: none;">➕ Nuevo Estudio</a></li>
+            <li style="margin: 15px 0;"><a href="/cambiar-password" style="color: white; text-decoration: none;">🔑 Cambiar Contraseña</a></li>
         </ul>
-        <div style="margin-bottom:20px;">
-            <a href="/backup" style="display:block; background:#e67e22; color:white; padding:12px; text-align:center; text-decoration:none; border-radius:6px; font-weight:bold;">💾 Backup Manual</a>
-            <a href="/logout" style="display:block; background:#ef4444; color:white; padding:8px; text-align:center; text-decoration:none; border-radius:6px; font-size:12px; font-weight:bold; margin-top:8px;">🚪 Cerrar Sesión</a>
+        <div style="margin-bottom: 20px;">
+            <a href="/backup" style="display: block; background: #e67e22; color: white; padding: 12px; text-align: center; text-decoration: none; border-radius: 6px; font-weight: bold;">💾 Backup Manual</a>
+            <a href="/logout" style="display: block; background: #ef4444; color: white; padding: 8px; text-align: center; text-decoration: none; border-radius: 6px; font-size: 12px; font-weight: bold; margin-top: 8px;">🚪 Cerrar Sesión</a>
         </div>
     </div>
 
     <!-- Contenido Principal -->
-    <div style="flex:1; padding:30px; overflow-y:auto;">
-        <div style="background:white; padding:25px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.05); max-width:700px; margin:auto;">
-            <h2 style="margin-top:0; color:#2c3e50; border-bottom:1px solid #eee; padding-bottom:10px;">➕ Registrar Nuevo Paciente</h2>
+    <div style="flex: 1; padding: 30px; overflow-y: auto;">
+        <div style="margin-bottom: 20px;">
+            <a href="/" style="color: #3498db; text-decoration: none; font-weight: bold;">⬅ Volver al Panel Principal</a>
+        </div>
+
+        <div style="background: white; padding: 35px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); max-width: 900px; margin: auto;">
+            <h2 style="margin-top: 0; color: #1e293b; border-bottom: 2px solid #e2e8f0; padding-bottom: 12px; font-size: 22px;">👤 Registrar Nuevo Paciente e Inicio de Consulta</h2>
             
-            <form method="POST">
-                <div style="margin-bottom:15px;">
-                    <label style="font-weight:bold; font-size:13px; color:#2c3e50; display:block; margin-bottom:5px;">Nombre y Apellido:</label>
-                    <input type="text" name="nombre" required placeholder="Ej: Juan Pérez" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; font-size:14px; box-sizing:border-box;">
-                </div>
-
-                <div style="display:flex; gap:15px; margin-bottom:15px;">
-                    <div style="flex:1;">
-                        <label style="font-weight:bold; font-size:13px; color:#2c3e50; display:block; margin-bottom:5px;">Cédula (C.I.):</label>
-                        <input type="text" name="cedula" placeholder="Ej: 1234567" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; font-size:14px; box-sizing:border-box;">
+            <form method="POST" action="/nuevo">
+                <!-- SECCIÓN 1: DATOS PERSONALES -->
+                <h4 style="color: #334155; margin-bottom: 12px; font-size: 15px; background: #f8fafc; padding: 8px 12px; border-left: 4px solid #3b82f6; border-radius: 4px;">1. Datos Personales del Paciente</h4>
+                
+                <div style="display: flex; gap: 15px; margin-bottom: 15px;">
+                    <div style="flex: 2;">
+                        <label style="font-size: 12px; font-weight: bold; color: #475569; display: block; margin-bottom: 5px;">Nombre y Apellido *</label>
+                        <input type="text" name="nombre" required placeholder="Ej: Juan Pérez" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 13px;">
                     </div>
-                    <div style="flex:1;">
-                        <label style="font-weight:bold; font-size:13px; color:#2c3e50; display:block; margin-bottom:5px;">Fecha de Nacimiento / Edad:</label>
-                        <input type="text" name="nacimiento" placeholder="Ej: 15/05/1970 o 54 años" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; font-size:14px; box-sizing:border-box;">
+                    <div style="flex: 1;">
+                        <label style="font-size: 12px; font-weight: bold; color: #475569; display: block; margin-bottom: 5px;">Cédula de Identidad *</label>
+                        <input type="text" name="cedula" required placeholder="Ej: 1.234.567" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 13px;">
                     </div>
                 </div>
 
-                <div style="display:flex; gap:15px; margin-bottom:15px;">
-                    <div style="flex:1;">
-                        <label style="font-weight:bold; font-size:13px; color:#2c3e50; display:block; margin-bottom:5px;">Teléfono:</label>
-                        <input type="text" name="telefono" placeholder="Ej: 0981234567" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; font-size:14px; box-sizing:border-box;">
+                <div style="display: flex; gap: 15px; margin-bottom: 15px;">
+                    <div style="flex: 1;">
+                        <label style="font-size: 12px; font-weight: bold; color: #475569; display: block; margin-bottom: 5px;">Fecha de Nacimiento</label>
+                        <input type="text" id="input_nacimiento" name="nacimiento" placeholder="AAAA-MM-DD o DD/MM/AAAA" oninput="calcularEdadDesdeNacimiento()" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 13px;">
                     </div>
-                    <div style="flex:1;">
-                        <label style="font-weight:bold; font-size:13px; color:#2c3e50; display:block; margin-bottom:5px;">Profesión:</label>
-                        <input type="text" name="profesion" placeholder="Ej: Docente" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; font-size:14px; box-sizing:border-box;">
+                    <div style="flex: 1;">
+                        <label style="font-size: 12px; font-weight: bold; color: #475569; display: block; margin-bottom: 5px;">Edad calculada</label>
+                        <input type="text" id="input_edad_txt" placeholder="Auto" readonly style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 13px; background: #f8fafc;">
                     </div>
-                </div>
-
-                <div style="display:flex; gap:15px; margin-bottom:15px;">
-                    <div style="flex:1;">
-                        <label style="font-weight:bold; font-size:13px; color:#2c3e50; display:block; margin-bottom:5px;">Sanatorio:</label>
-                        <input type="text" name="sanatorio" placeholder="Ej: Sanatorio San Roque" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; font-size:14px; box-sizing:border-box;">
-                    </div>
-                    <div style="flex:1;">
-                        <label style="font-weight:bold; font-size:13px; color:#2c3e50; display:block; margin-bottom:5px;">Procedencia / Ciudad:</label>
-                        <input type="text" name="direccion" placeholder="Ej: Ciudad del Este" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; font-size:14px; box-sizing:border-box;">
+                    <div style="flex: 1;">
+                        <label style="font-size: 12px; font-weight: bold; color: #475569; display: block; margin-bottom: 5px;">Sexo</label>
+                        <select name="sexo" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 13px; background: white;">
+                            <option value="Masculino">Masculino</option>
+                            <option value="Femenino">Femenino</option>
+                            <option value="Otro">Otro</option>
+                        </select>
                     </div>
                 </div>
 
-                <!-- Antecedentes y Factores de Riesgo -->
-                <div style="margin-bottom:15px;">
-                    <label style="font-weight:bold; font-size:13px; color:#2c3e50; display:block; margin-bottom:5px;">Antecedentes y Factores de Riesgo Cardiovascular:</label>
-                    <div style="background:#f8fafc; padding:15px; border:1px solid #ccc; border-radius:6px; display:grid; grid-template-columns: 1fr 1fr; gap:10px; font-size:13px;">
-                        <label><input type="checkbox" name="factores" value="Hipertensión Arterial (HTA)"> Hipertensión Arterial (HTA)</label>
-                        <label><input type="checkbox" name="factores" value="Diabetes Mellitus (DBM)"> Diabetes Mellitus (DBM)</label>
-                        <label><input type="checkbox" name="factores" value="Dislipidemia"> Dislipidemia</label>
-                        <label><input type="checkbox" name="factores" value="Tabaquismo Activo"> Tabaquismo Activo</label>
-                        <label><input type="checkbox" name="factores" value="Enfermedad Coronaria Previa"> Enfermedad Coronaria Previa</label>
-                        <label><input type="checkbox" name="factores" value="IAM previo"> IAM previo</label>
-                        <label><input type="checkbox" name="factores" value="Angioplastia / Stent"> Angioplastia / Stent</label>
-                        <label><input type="checkbox" name="factores" value="Cirugía de Revascularización (CRM)"> Cirugía de Revascularización (CRM)</label>
+                <div style="display: flex; gap: 15px; margin-bottom: 15px;">
+                    <div style="flex: 1;">
+                        <label style="font-size: 12px; font-weight: bold; color: #475569; display: block; margin-bottom: 5px;">Teléfono</label>
+                        <input type="text" name="telefono" placeholder="0981 123456" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 13px;">
                     </div>
-                    <div style="margin-top:10px;">
-                        <label><input type="checkbox" name="factores" value="Sin APP"> Sin APP</label>
+                    <div style="flex: 1;">
+                        <label style="font-size: 12px; font-weight: bold; color: #475569; display: block; margin-bottom: 5px;">Profesión</label>
+                        <input type="text" name="profesion" placeholder="Ej: Docente" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 13px;">
+                    </div>
+                    <div style="flex: 1;">
+                        <label style="font-size: 12px; font-weight: bold; color: #475569; display: block; margin-bottom: 5px;">Sanatorio / Clínica</label>
+                        <input type="text" name="sanatorio" placeholder="Ej: Sanatorio Ovelar" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 13px;">
                     </div>
                 </div>
 
-                <!-- Opción de Estudios Previos -->
-                <div style="background:#f8fafc; border:1px solid #cbd5e1; padding:15px; border-radius:6px; margin-bottom:15px;">
-                    <label style="font-weight:bold; font-size:13px; color:#2c3e50; display:block; margin-bottom:8px;">📁 ¿El paciente trae estudios previos consigo?</label>
-                    <div style="display:flex; gap:20px;">
-                        <label style="font-size:13px; cursor:pointer;"><input type="radio" name="tiene_estudios" value="Sí" style="margin-right:5px;"> Sí, trae estudios</label>
-                        <label style="font-size:13px; cursor:pointer;"><input type="radio" name="tiene_estudios" value="No" checked style="margin-right:5px;"> No trae</label>
+                <div style="display: flex; gap: 15px; margin-bottom: 15px;">
+                    <div style="flex: 1;">
+                        <label style="font-size: 12px; font-weight: bold; color: #475569; display: block; margin-bottom: 5px;">Procedencia / Ciudad</label>
+                        <input type="text" name="direccion" placeholder="Ej: Asunción / Coronel Oviedo" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 13px;">
+                    </div>
+                    <div style="flex: 1;">
+                        <label style="font-size: 12px; font-weight: bold; color: #475569; display: block; margin-bottom: 5px;">Adicional / Observaciones</label>
+                        <input type="text" name="adicional" placeholder="Información extra..." style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 13px;">
+                    </div>
+                    <div style="flex: 1;">
+                        <label style="font-size: 12px; font-weight: bold; color: #dc2626; display: block; margin-bottom: 5px;">⚠️ Alergias</label>
+                        <input type="text" name="alergias" placeholder="Ninguna / Penicilina" style="width: 100%; padding: 10px; border: 1px solid #fca5a5; border-radius: 6px; box-sizing: border-box; font-size: 13px; background: #fef2f2;">
                     </div>
                 </div>
 
-                <div style="margin-bottom:20px;">
-                    <label style="font-weight:bold; font-size:13px; color:#e74c3c; display:block; margin-bottom:5px;">Alergias:</label>
-                    <input type="text" name="alergias" placeholder="Ej: Ninguna o Penicilina" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; font-size:14px; box-sizing:border-box;">
+                <!-- Factores de Riesgo / Antecedentes -->
+                <h5 style="color: #334155; margin: 15px 0 8px 0; font-size: 13px;">Factores de Riesgo / Antecedentes Principales</h5>
+                <div style="display: flex; flex-wrap: wrap; gap: 20px; background: #f8fafc; padding: 12px 15px; border-radius: 6px; border: 1px solid #e2e8f0; margin-bottom: 15px; font-size: 13px;">
+                    <label style="cursor: pointer;"><input type="checkbox" name="factores" value="HTA"> HTA</label>
+                    <label style="cursor: pointer;"><input type="checkbox" name="factores" value="Diabetes"> Diabetes</label>
+                    <label style="cursor: pointer;"><input type="checkbox" name="factores" value="Dislipemia"> Dislipemia</label>
+                    <label style="cursor: pointer;"><input type="checkbox" name="factores" value="Tabaquismo"> Tabaquismo</label>
+                    <label style="cursor: pointer;"><input type="checkbox" name="factores" value="Cardiopatía Isquémica"> Cardiopatía Isquémica</label>
+                    <label style="cursor: pointer;"><input type="checkbox" name="factores" value="Obesidad"> Obesidad</label>
                 </div>
 
-                <button type="submit" style="background:#2ecc71; color:white; border:none; padding:12px 20px; border-radius:6px; font-weight:bold; cursor:pointer; width:100%; font-size:15px;">💾 Guardar Paciente</button>
+                <div style="margin-bottom: 25px; background: #f8fafc; padding: 12px 15px; border-radius: 6px; border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between;">
+                    <span style="font-size: 13px; font-weight: bold; color: #334155;">¿El paciente trae estudios previos consigo?</span>
+                    <select name="tiene_estudios" style="padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 13px; background: white;">
+                        <option value="No">No</option>
+                        <option value="Sí">Sí</option>
+                    </select>
+                </div>
+
+                <!-- SECCIÓN 2: FICHA DE NUEVA CONSULTA Y EVOLUCIÓN (DE SEGUIDO) -->
+                <h4 style="color: #334155; margin-bottom: 12px; margin-top: 30px; font-size: 15px; background: #f8fafc; padding: 8px 12px; border-left: 4px solid #10b981; border-radius: 4px;">2. Primera Consulta y Evolución Inicial</h4>
+
+                <div style="margin-bottom: 15px;">
+                    <label style="font-weight: bold; font-size: 12px; color: #475569; display: block; margin-bottom: 5px;">Evolución del Paciente / Motivo de Consulta:</label>
+                    <textarea name="evolucion" rows="3" placeholder="Escriba aquí la evolución clínica inicial..." style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-family: inherit; font-size: 13px; background: #fdfefe;"></textarea>
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <label style="font-weight: bold; font-size: 12px; color: #0284c7; display: block; margin-bottom: 5px;">📊 Scores / Notas auxiliares:</label>
+                    <input type="text" name="scores_copiados" placeholder="Resultados de scores..." style="width: 100%; padding: 9px; border: 1px solid #cbd5e1; border-radius: 6px; background: #f8fafc; font-size: 13px; box-sizing: border-box;">
+                </div>
+
+                <h5 style="color: #334155; margin: 15px 0 8px 0; font-size: 13px;">Examen Físico y Signos Vitales</h5>
+                <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                    <div style="flex: 1;"><label style="font-size: 11px; font-weight: bold;">PA:</label><input type="text" name="pas" placeholder="120/80" style="width: 100%; padding: 8px; margin-top: 4px; border: 1px solid #cbd5e1; border-radius: 4px;"></div>
+                    <div style="flex: 1;"><label style="font-size: 11px; font-weight: bold;">FC:</label><input type="text" name="fc" placeholder="75" style="width: 100%; padding: 8px; margin-top: 4px; border: 1px solid #cbd5e1; border-radius: 4px;"></div>
+                    <div style="flex: 1;"><label style="font-size: 11px; font-weight: bold;">Peso (Kg):</label><input type="text" name="peso" id="form_peso" placeholder="75.5" oninput="calcularAntropometria()" style="width: 100%; padding: 8px; margin-top: 4px; border: 1px solid #cbd5e1; border-radius: 4px;"></div>
+                    <div style="flex: 1;"><label style="font-size: 11px; font-weight: bold;">Talla (cm):</label><input type="text" name="talla" id="form_talla" placeholder="170" oninput="calcularAntropometria()" style="width: 100%; padding: 8px; margin-top: 4px; border: 1px solid #cbd5e1; border-radius: 4px;"></div>
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                    <div style="flex: 1;"><label style="font-size: 11px; font-weight: bold;">Cintura (cm):</label><input type="text" name="cintura" placeholder="88" style="width: 100%; padding: 8px; margin-top: 4px; border: 1px solid #cbd5e1; border-radius: 4px;"></div>
+                    <div style="flex: 1;"><label style="font-size: 11px; font-weight: bold;">IMC:</label><input type="text" id="form_imc" placeholder="Auto" style="width: 100%; padding: 8px; margin-top: 4px; border: 1px solid #cbd5e1; border-radius: 4px; background: #f8fafc;" readonly></div>
+                    <div style="flex: 1;"><label style="font-size: 11px; font-weight: bold;">BSA m²:</label><input type="text" id="form_bsa" placeholder="Auto" style="width: 100%; padding: 8px; margin-top: 4px; border: 1px solid #cbd5e1; border-radius: 4px; background: #f8fafc;" readonly></div>
+                </div>
+
+                <h5 style="color: #334155; margin: 15px 0 8px 0; font-size: 13px;">Prescripción Médica y Plan Inicial</h5>
+                <div style="display: flex; gap: 15px; margin-bottom: 25px;">
+                    <div style="flex: 1;">
+                        <label style="font-weight: bold; font-size: 12px; color: #475569; display: block; margin-bottom: 5px;">💊 Receta (Medicamentos):</label>
+                        <textarea name="tratamiento_actual" rows="3" placeholder="Medicamentos y dosis iniciales..." style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-family: inherit; font-size: 13px; background: #fdfefe;"></textarea>
+                    </div>
+                    <div style="flex: 1;">
+                        <label style="font-weight: bold; font-size: 12px; color: #475569; display: block; margin-bottom: 5px;">📋 Indicaciones / Plan:</label>
+                        <textarea name="indicaciones_actual" rows="3" placeholder="Indicaciones generales..." style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-family: inherit; font-size: 13px; background: #fdfefe;"></textarea>
+                    </div>
+                </div>
+
+                <!-- Botones de Acción -->
+                <div style="display: flex; justify-content: flex-end; gap: 10px; border-top: 2px solid #e2e8f0; padding-top: 20px;">
+                    <a href="/" style="background: #64748b; color: white; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 13px; display: inline-flex; align-items: center;">Cancelar</a>
+                    <button type="submit" style="background: #10b981; color: white; border: none; padding: 12px 30px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 14px;">💾 Guardar Paciente y Consulta</button>
+                </div>
             </form>
         </div>
     </div>
