@@ -230,26 +230,21 @@ def nuevo():
             telefono = request.form.get('telefono', '').strip()
             profesion = request.form.get('profesion', '').strip()
             sanatorio = request.form.get('sanatorio', '').strip()
-            direccion = request.form.get('direccion', '').strip() # Procedencia
+            direccion = request.form.get('direccion', '').strip()
             adicional = request.form.get('adicional', '').strip()
             alergias = request.form.get('alergias', '').strip()
-            tiene_estudios = request.form.get('tiene_estudios', 'No').strip()
-            
-            factores_list = request.form.getlist('factores')
-            antecedentes_texto = ", ".join(factores_list) if factores_list else ""
             
             fecha_cita = datetime.now().strftime('%Y-%m-%d')
 
             conn = sqlite3.connect(db_path)
             cursor = conn.cursor()
             cursor.execute('''
-                INSERT INTO pacientes (cedula, nombre, nacimiento, sexo, telefono, profesion, sanatorio, direccion, adicional, alergias, antecedentes, antecedentes_principales, tiene_estudios, fecha_cita, es_estudio) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
-            ''', (cedula, nombre, nacimiento, sexo, telefono, profesion, sanatorio, direccion, adicional, alergias, antecedentes_texto, antecedentes_texto, tiene_estudios, fecha_cita))
+                INSERT INTO pacientes (cedula, nombre, nacimiento, sexo, telefono, profesion, sanatorio, direccion, adicional, alergias, tiene_estudios, fecha_cita, es_estudio) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'No', ?, 0)
+            ''', (cedula, nombre, nacimiento, sexo, telefono, profesion, sanatorio, direccion, adicional, alergias, fecha_cita))
             
             paciente_id = cursor.lastrowid
 
-            # Capturar consulta inicial / evolución de seguido
             evolucion = request.form.get('evolucion', '').strip()
             scores = request.form.get('scores_copiados', '').strip()
             pas = request.form.get('pas', '').strip()
@@ -271,19 +266,62 @@ def nuevo():
                     INSERT INTO historial (fecha, motivo, diagnostico, pas, fc, peso, talla, scores, cintura, imc, bsa, paciente_id)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ''', (fecha_cita, evolucion, evolucion, pas, fc, peso, talla, scores, cintura, imc, bsa, paciente_id))
-                
-                resumen_texto = f"Fecha: {fecha_cita}"
-                if evolucion:
-                    resumen_texto += f"\nEvolución: {evolucion}"
-                if scores:
-                    resumen_texto += f"\nScores: {scores}"
-                if pas or peso:
-                    resumen_texto += f"\nSignos Vitales: PA {pas} mmHg | FC {fc} lpm | Peso {peso} Kg | Talla {talla} cm | IMC {imc}"
-                
-                cursor.execute('UPDATE pacientes SET resumen_anterior = ? WHERE id = ?', (resumen_texto, paciente_id))
 
             conn.commit()
             conn.close()
+
+            accion_form = request.form.get('accion_form', 'guardar')
+            if accion_form == 'imprimir':
+                return f"""
+                <!DOCTYPE html>
+                <html lang="es">
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Receta e Indicaciones - {nombre}</title>
+                    <style>
+                        @page {{ size: A4 landscape; margin: 8mm; }}
+                        @media print {{ html, body {{ width: 297mm; height: 210mm; }} }}
+                        body {{ font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 0; color: #333; -webkit-print-color-adjust: exact; }}
+                        .container {{ display: flex; width: 100%; height: 96vh; gap: 15px; box-sizing: border-box; }}
+                        .columna {{ flex: 1; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; padding: 12px; border: 1.5px dashed #94a3b8; border-radius: 8px; background: #fff; }}
+                        .footer-aviso {{ border-top: 1px dashed #e2e8f0; padding-top: 8mm; margin-top: 10px; text-align: center; font-size: 11px; font-weight: bold; color: #e74c3c; letter-spacing: 0.5px; }}
+                        .content {{ background: #f8fafc; padding: 10px; border-radius: 4px; border: 1px solid #e2e8f0; white-space: pre-wrap; font-size: 13px; flex: 1; margin-top: 6px; }}
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="columna">
+                            <div>
+                                {obtener_membrete_html()}
+                                <div style="background: #e2e8f0; padding: 5px 8px; border-radius: 4px; margin-bottom: 6px; font-size: 11px; display: flex; justify-content: space-between;">
+                                    <span><strong>Paciente:</strong> {nombre} | <strong>C.I.:</strong> {cedula}</span>
+                                    <span><strong>Fecha:</strong> {datetime.now().strftime('%d/%m/%Y')}</span>
+                                </div>
+                                <h4 style="color:#2c3e50; margin:0 0 4px 0; font-size:12px;">RECETA MÉDICA:</h4>
+                                <div class="content">{tratamiento}</div>
+                            </div>
+                            <div class="footer-aviso">POR FAVOR NO CAMBIAR RECETA MEDICA</div>
+                        </div>
+                        <div class="columna">
+                            <div>
+                                {obtener_membrete_html()}
+                                <div style="background: #e2e8f0; padding: 5px 8px; border-radius: 4px; margin-bottom: 6px; font-size: 11px; display: flex; justify-content: space-between;">
+                                    <span><strong>Paciente:</strong> {nombre} | <strong>C.I.:</strong> {cedula}</span>
+                                    <span><strong>Fecha:</strong> {datetime.now().strftime('%d/%m/%Y')}</span>
+                                </div>
+                                <h4 style="color:#2c3e50; margin:0 0 4px 0; font-size:12px;">INDICACIONES MÉDICAS / PLAN:</h4>
+                                <div class="content">{indicaciones}</div>
+                            </div>
+                            <div class="footer-aviso">POR FAVOR NO CAMBIAR RECETA MEDICA</div>
+                        </div>
+                    </div>
+                    <script>
+                        window.onload = function() {{ window.print(); window.location.href = "/ficha/{paciente_id}"; }};
+                    </script>
+                </body>
+                </html>
+                """
+
             return redirect(url_for('ficha', id=paciente_id))
         except Exception as e:
             return f"<h3>Error al crear paciente:</h3><pre>{traceback.format_exc()}</pre>", 500
@@ -412,7 +450,6 @@ def ficha(id):
                     ext = original_filename.lower().split('.')[-1]
                     filename_a_guardar = filename_original
                     
-                    # CONVERSIÓN AUTOMÁTICA DE EXCEL A PDF LIMPIO
                     if ext == 'xlsx':
                         pdf_name = f'Estudio_{id}_{timestamp}_convertido.pdf'
                         pdf_path = os.path.join(upload_folder, pdf_name)
@@ -728,7 +765,6 @@ def generar_plan_pdf(id):
     </head>
     <body>
         <div class="container">
-            <!-- COLUMNA IZQUIERDA: RECETA CON AVISO -->
             <div class="columna">
                 <div>
                     {obtener_membrete_html()}
@@ -744,7 +780,6 @@ def generar_plan_pdf(id):
                 </div>
             </div>
 
-            <!-- COLUMNA DERECHA: INDICACIONES CON AVISO -->
             <div class="columna">
                 <div>
                     {obtener_membrete_html()}
@@ -760,11 +795,8 @@ def generar_plan_pdf(id):
                 </div>
             </div>
         </div>
-
         <script>
-            window.onload = function() {{
-                window.print();
-            }};
+            window.onload = function() {{ window.print(); }};
         </script>
     </body>
     </html>
@@ -800,28 +832,22 @@ def imprimir_historial_pdf(h_id):
         <meta charset="UTF-8">
         <title>Consulta - {h['nombre']}</title>
         <style>
-            @page {{
-                size: A4;
-                margin: 15mm;
-            }}
+            @page {{ size: A4; margin: 15mm; }}
             body {{ font-family: 'Segoe UI', Arial, sans-serif; padding: 10px; color: #333; max-width: 800px; margin: auto; }}
             .box {{ background: #f8fafc; padding: 15px; border-radius: 6px; border: 1px solid #e2e8f0; margin-bottom: 15px; font-size: 14px; white-space: pre-wrap; }}
         </style>
     </head>
     <body>
         {obtener_membrete_html()}
-        
         <div style="background: #e2e8f0; padding: 10px 15px; border-radius: 6px; margin-bottom: 20px; font-size: 14px; display: flex; justify-content: space-between;">
             <span><strong>Paciente:</strong> {h['nombre']} &nbsp;&nbsp;|&nbsp;&nbsp; <strong>C.I.:</strong> {h['cedula']}</span>
             <span><strong>Fecha:</strong> {h['fecha']}</span>
         </div>
-        
         <div class="box">
             <p style="margin:0 0 10px 0;"><b>Evolución:</b><br>{texto_evolucion}</p>
             {f"<p style='margin:0 0 10px 0;'><b>Scores:</b> {scores_txt}</p>" if scores_txt else ""}
             {f"<p style='margin:0;'><b>Examen Físico:</b> {sv_txt}</p>" if sv_txt else ""}
         </div>
-        
         <script>
             window.onload = function() {{ window.print(); }}
         </script>
@@ -883,23 +909,17 @@ def imprimir_multiples_historiales():
         <meta charset="UTF-8">
         <title>Historial Clínico - {p_nombre}</title>
         <style>
-            @page {{
-                size: A4;
-                margin: 15mm;
-            }}
+            @page {{ size: A4; margin: 15mm; }}
             body {{ font-family: 'Segoe UI', Arial, sans-serif; padding: 10px; color: #333; max-width: 800px; margin: auto; }}
         </style>
     </head>
     <body>
         {obtener_membrete_html()}
-        
         <div style="background: #e2e8f0; padding: 10px 15px; border-radius: 6px; margin-bottom: 20px; font-size: 14px; display: flex; justify-content: space-between;">
             <span><strong>Paciente:</strong> {p_nombre} &nbsp;&nbsp;|&nbsp;&nbsp; <strong>C.I.:</strong> {p_cedula}</span>
             <span><strong>Reporte de Consultas Seleccionadas</strong></span>
         </div>
-        
         {consultas_html}
-        
         <script>
             window.onload = function() {{ window.print(); }}
         </script>
