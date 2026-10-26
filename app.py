@@ -421,6 +421,31 @@ def eliminar_estudio_general(est_id):
     except Exception as e:
         return f"<h3>Error al eliminar estudio general:</h3><pre>{traceback.format_exc()}</pre>", 500
 
+@app.route('/eliminar_todos_estudios_generales', methods=['POST'])
+def eliminar_todos_estudios_generales():
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+    try:
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        cursor.execute('SELECT archivo FROM estudios_generales')
+        estudios = cursor.fetchall()
+        for est in estudios:
+            archivo = est[0]
+            if archivo:
+                filepath = os.path.join(upload_folder, archivo)
+                if os.path.exists(filepath):
+                    try:
+                        os.remove(filepath)
+                    except Exception:
+                        pass
+        cursor.execute('DELETE FROM estudios_generales')
+        conn.commit()
+        conn.close()
+        return redirect(url_for('estudios_lista'))
+    except Exception as e:
+        return f"<h3>Error al vaciar el catálogo:</h3><pre>{traceback.format_exc()}</pre>", 500
+
 @app.route('/cambiar-contrasena', methods=['GET', 'POST'])
 @app.route('/cambiar-password', methods=['GET', 'POST'])
 def cambiar_contrasena():
