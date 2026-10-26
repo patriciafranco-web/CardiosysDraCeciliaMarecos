@@ -24,7 +24,6 @@
             document.getElementById('input_edad_txt').value = '';
             return;
         }
-        // Intentar parsear formatos comunes AAAA-MM-DD o DD/MM/AAAA
         let partes = nacStr.split(/[-/]/);
         let fNac = null;
         if (partes.length === 3) {
@@ -126,7 +125,7 @@
                     </div>
                 </div>
 
-                <div style="display: flex; gap: 15px; margin-bottom: 15px;">
+                <div style="display: flex; gap: 15px; margin-bottom: 25px;">
                     <div style="flex: 1;">
                         <label style="font-size: 12px; font-weight: bold; color: #475569; display: block; margin-bottom: 5px;">Procedencia / Ciudad</label>
                         <input type="text" name="direccion" placeholder="Ej: Asunción / Coronel Oviedo" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 13px;">
@@ -139,25 +138,6 @@
                         <label style="font-size: 12px; font-weight: bold; color: #dc2626; display: block; margin-bottom: 5px;">⚠️ Alergias</label>
                         <input type="text" name="alergias" placeholder="Ninguna / Penicilina" style="width: 100%; padding: 10px; border: 1px solid #fca5a5; border-radius: 6px; box-sizing: border-box; font-size: 13px; background: #fef2f2;">
                     </div>
-                </div>
-
-                <!-- Factores de Riesgo / Antecedentes -->
-                <h5 style="color: #334155; margin: 15px 0 8px 0; font-size: 13px;">Factores de Riesgo / Antecedentes Principales</h5>
-                <div style="display: flex; flex-wrap: wrap; gap: 20px; background: #f8fafc; padding: 12px 15px; border-radius: 6px; border: 1px solid #e2e8f0; margin-bottom: 15px; font-size: 13px;">
-                    <label style="cursor: pointer;"><input type="checkbox" name="factores" value="HTA"> HTA</label>
-                    <label style="cursor: pointer;"><input type="checkbox" name="factores" value="Diabetes"> Diabetes</label>
-                    <label style="cursor: pointer;"><input type="checkbox" name="factores" value="Dislipemia"> Dislipemia</label>
-                    <label style="cursor: pointer;"><input type="checkbox" name="factores" value="Tabaquismo"> Tabaquismo</label>
-                    <label style="cursor: pointer;"><input type="checkbox" name="factores" value="Cardiopatía Isquémica"> Cardiopatía Isquémica</label>
-                    <label style="cursor: pointer;"><input type="checkbox" name="factores" value="Obesidad"> Obesidad</label>
-                </div>
-
-                <div style="margin-bottom: 25px; background: #f8fafc; padding: 12px 15px; border-radius: 6px; border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between;">
-                    <span style="font-size: 13px; font-weight: bold; color: #334155;">¿El paciente trae estudios previos consigo?</span>
-                    <select name="tiene_estudios" style="padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 13px; background: white;">
-                        <option value="No">No</option>
-                        <option value="Sí">Sí</option>
-                    </select>
                 </div>
 
                 <!-- SECCIÓN 2: FICHA DE NUEVA CONSULTA Y EVOLUCIÓN (DE SEGUIDO) -->
@@ -187,15 +167,18 @@
                     <div style="flex: 1;"><label style="font-size: 11px; font-weight: bold;">BSA m²:</label><input type="text" id="form_bsa" placeholder="Auto" style="width: 100%; padding: 8px; margin-top: 4px; border: 1px solid #cbd5e1; border-radius: 4px; background: #f8fafc;" readonly></div>
                 </div>
 
-                <h5 style="color: #334155; margin: 15px 0 8px 0; font-size: 13px;">Prescripción Médica y Plan Inicial</h5>
-                <div style="display: flex; gap: 15px; margin-bottom: 25px;">
-                    <div style="flex: 1;">
-                        <label style="font-weight: bold; font-size: 12px; color: #475569; display: block; margin-bottom: 5px;">💊 Receta (Medicamentos):</label>
-                        <textarea name="tratamiento_actual" rows="3" placeholder="Medicamentos y dosis iniciales..." style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-family: inherit; font-size: 13px; background: #fdfefe;"></textarea>
-                    </div>
-                    <div style="flex: 1;">
-                        <label style="font-weight: bold; font-size: 12px; color: #475569; display: block; margin-bottom: 5px;">📋 Indicaciones / Plan:</label>
-                        <textarea name="indicaciones_actual" rows="3" placeholder="Indicaciones generales..." style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-family: inherit; font-size: 13px; background: #fdfefe;"></textarea>
+                <!-- PRESCRIPCIÓN MÉDICA Y PLAN INICIAL (ESTILO IDÉNTICO A LA FICHA) -->
+                <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-top: 4px solid #e74c3c; margin-bottom: 25px;">
+                    <h4 style="margin-top: 0; font-size: 15px; color: #2c3e50; margin-bottom: 15px;">Prescripción Médica y Plan Inicial</h4>
+                    <div style="display: flex; gap: 20px; margin-bottom: 10px;">
+                        <div style="flex: 1;">
+                            <label style="font-weight: bold; font-size: 13px; color: #2c3e50; display: block; margin-bottom: 5px;">💊 Receta (Medicamentos):</label>
+                            <textarea name="tratamiento_actual" rows="5" placeholder="Medicamentos y dosis iniciales..." style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-family: inherit; font-size: 13px; background: #fdfefe;"></textarea>
+                        </div>
+                        <div style="flex: 1;">
+                            <label style="font-weight: bold; font-size: 13px; color: #2c3e50; display: block; margin-bottom: 5px;">📋 Indicaciones / Plan:</label>
+                            <textarea name="indicaciones_actual" rows="5" placeholder="Indicaciones generales..." style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-family: inherit; font-size: 13px; background: #fdfefe;"></textarea>
+                        </div>
                     </div>
                 </div>
 
