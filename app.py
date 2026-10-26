@@ -396,6 +396,31 @@ def estudios_nuevo():
             
     return render_template('estudios_nuevo.html', mensaje=mensaje)
 
+@app.route('/eliminar_estudio_general/<int:est_id>', methods=['POST'])
+def eliminar_estudio_general(est_id):
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+    try:
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        cursor.execute('SELECT archivo FROM estudios_generales WHERE id = ?', (est_id,))
+        est = cursor.fetchone()
+        if est:
+            archivo = est[0]
+            if archivo:
+                filepath = os.path.join(upload_folder, archivo)
+                if os.path.exists(filepath):
+                    try:
+                        os.remove(filepath)
+                    except Exception:
+                        pass
+            cursor.execute('DELETE FROM estudios_generales WHERE id = ?', (est_id,))
+            conn.commit()
+        conn.close()
+        return redirect(url_for('estudios_lista'))
+    except Exception as e:
+        return f"<h3>Error al eliminar estudio general:</h3><pre>{traceback.format_exc()}</pre>", 500
+
 @app.route('/cambiar-contrasena', methods=['GET', 'POST'])
 @app.route('/cambiar-password', methods=['GET', 'POST'])
 def cambiar_contrasena():
