@@ -303,25 +303,13 @@ def estudios_nuevo():
                 filepath = os.path.join(upload_folder, filename)
                 archivo.save(filepath)
                 
-                if archivo.filename.endswith(('.csv', '.xlsx', '.txt')):
-                    with open(filepath, mode='r', encoding='utf-8', errors='ignore') as f:
-                        lector = csv.reader(f)
-                        next(lector, None)
-                        for fila in lector:
-                            if len(fila) >= 1:
-                                est_name = fila[0].strip()
-                                est_desc = fila[1].strip() if len(fila) > 1 else ''
-                                cursor.execute('INSERT INTO estudios_generales (nombre_estudio, descripcion, archivo, fecha) VALUES (?, ?, ?, ?)',
-                                               (est_name, est_desc, filename, datetime.now().strftime('%Y-%m-%d')))
-                    conn.commit()
-                    mensaje = "¡Estudios importados masivamente con éxito!"
-                else:
-                    if not nombre_est:
-                        nombre_est = archivo.filename
-                    cursor.execute('INSERT INTO estudios_generales (nombre_estudio, descripcion, archivo, fecha) VALUES (?, ?, ?, ?)',
-                                   (nombre_est, descripcion, filename, datetime.now().strftime('%Y-%m-%d')))
-                    conn.commit()
-                    mensaje = "¡Estudio guardado correctamente!"
+                if not nombre_est:
+                    nombre_est = archivo.filename
+                
+                cursor.execute('INSERT INTO estudios_generales (nombre_estudio, descripcion, archivo, fecha) VALUES (?, ?, ?, ?)',
+                               (nombre_est, descripcion, filename, datetime.now().strftime('%Y-%m-%d')))
+                conn.commit()
+                mensaje = "¡Estudio guardado correctamente en el Catálogo General!"
             conn.close()
         except Exception as e:
             mensaje = f"Error al procesar el archivo: {e}"
@@ -770,7 +758,11 @@ def imprimir_historial_pdf(h_id):
         <meta charset="UTF-8">
         <title>Consulta - {h['nombre']}</title>
         <style>
-            body {{ font-family: 'Segoe UI', Arial, sans-serif; padding: 30px; color: #333; max-width: 800px; margin: auto; }}
+            @page {{
+                size: A4;
+                margin: 15mm;
+            }}
+            body {{ font-family: 'Segoe UI', Arial, sans-serif; padding: 10px; color: #333; max-width: 800px; margin: auto; }}
             .box {{ background: #f8fafc; padding: 15px; border-radius: 6px; border: 1px solid #e2e8f0; margin-bottom: 15px; font-size: 14px; white-space: pre-wrap; }}
         </style>
     </head>
@@ -787,6 +779,84 @@ def imprimir_historial_pdf(h_id):
             {f"<p style='margin:0 0 10px 0;'><b>Scores:</b> {scores_txt}</p>" if scores_txt else ""}
             {f"<p style='margin:0;'><b>Examen Físico:</b> {sv_txt}</p>" if sv_txt else ""}
         </div>
+        
+        <script>
+            window.onload = function() {{ window.print(); }}
+        </script>
+    </body>
+    </html>
+    """
+
+@app.route('/imprimir_multiples_historiales', methods=['POST'])
+def imprimir_multiples_historiales():
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+    
+    h_ids = request.form.getlist('h_ids')
+    if not h_ids:
+        return "No se seleccionó ninguna consulta para imprimir.", 400
+    
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    
+    placeholders = ','.join(['?'] * len(h_ids))
+    cursor.execute(f"""
+        SELECT h.*, p.nombre, p.cedula 
+        FROM historial h 
+        JOIN pacientes p ON h.paciente_id = p.id 
+        WHERE h.id IN ({placeholders})
+        ORDER BY h.fecha ASC
+    """, h_ids)
+    historiales = cursor.fetchall()
+    conn.close()
+
+    if not historiales:
+        return "No se encontraron las consultas seleccionadas.", 404
+
+    p_nombre = historiales[0]['nombre']
+    p_cedula = historiales[0]['cedula']
+
+    consultas_html = ""
+    for h in historiales:
+        texto_evolucion = h['motivo'] or h['diagnostico'] or 'N/D'
+        scores_txt = h['scores'] or ''
+        sv_txt = f"PA: {h['pas']} | FC: {h['fc']} | Peso: {h['peso']} Kg | Talla: {h['talla']} cm | IMC: {h['imc']}" if h['pas'] else ""
+
+        consultas_html += f"""
+        <div style="background: #f8fafc; padding: 15px; border-radius: 6px; border: 1px solid #e2e8f0; margin-bottom: 20px; font-size: 13px;">
+            <div style="font-weight: bold; color: #1d4ed8; margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; font-size: 14px;">
+                📅 Fecha de Consulta: {h['fecha']}
+            </div>
+            <p style="margin:0 0 8px 0; white-space: pre-wrap;"><b>Evolución:</b><br>{texto_evolucion}</p>
+            {f"<p style='margin:0 0 8px 0;'><b>Scores:</b> {scores_txt}</p>" if scores_txt else ""}
+            {f"<p style='margin:0;'><b>Examen Físico:</b> {sv_txt}</p>" if sv_txt else ""}
+        </div>
+        """
+
+    return f"""
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <title>Historial Clínico - {p_nombre}</title>
+        <style>
+            @page {{
+                size: A4;
+                margin: 15mm;
+            }}
+            body {{ font-family: 'Segoe UI', Arial, sans-serif; padding: 10px; color: #333; max-width: 800px; margin: auto; }}
+        </style>
+    </head>
+    <body>
+        {obtener_membrete_html()}
+        
+        <div style="background: #e2e8f0; padding: 10px 15px; border-radius: 6px; margin-bottom: 20px; font-size: 14px; display: flex; justify-content: space-between;">
+            <span><strong>Paciente:</strong> {p_nombre} &nbsp;&nbsp;|&nbsp;&nbsp; <strong>C.I.:</strong> {p_cedula}</span>
+            <span><strong>Reporte de Consultas Seleccionadas</strong></span>
+        </div>
+        
+        {consultas_html}
         
         <script>
             window.onload = function() {{ window.print(); }}
