@@ -493,33 +493,43 @@
             </div>
         </div>
 
-        <!-- HISTORIAL CLÍNICO COMPLETO (RESTAURADO) -->
+       <!-- HISTORIAL CLÍNICO COMPLETO -->
         <div style="margin-bottom:30px;">
             <button type="button" onclick="togglePanel('panelHistorialContent')" style="background:#334155; color:white; border:none; padding:12px; border-radius:6px; font-weight:bold; cursor:pointer; width:100%; font-size:14px; text-align:center;">📚 Historial Clínico Completo</button>
+            
             <div id="panelHistorialContent" style="display:none; background:white; border:1px solid #cbd5e1; padding:20px; border-radius:6px; margin-top:10px; max-height:500px; overflow-y:auto;">
-                {% for h in historiales|reverse %}
-                <div style="background:#f8fafc; border:1px solid #e2e8f0; border-left:4px solid #3498db; padding:15px; border-radius:6px; margin-bottom:15px;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e2e8f0; padding-bottom:8px; margin-bottom:8px;">
-                        <span style="font-size:12px; color:#64748b;"><b>Fecha:</b> {{ h['fecha'] }}</span>
-                        <a href="/imprimir_historial_pdf/{{ h['id'] }}" target="_blank" style="background:#3b82f6; color:white; padding:4px 10px; border-radius:4px; font-size:11px; text-decoration:none; font-weight:bold;">🖨️ Imprimir PDF</a>
+                
+                <form action="/imprimir_multiples_historiales" method="POST" target="_blank">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid #e2e8f0; padding-bottom:10px;">
+                        <span style="font-size:13px; color:#64748b;">Seleccione las consultas que desea imprimir juntas:</span>
+                        <button type="submit" style="background:#2563eb; color:white; border:none; padding:8px 16px; border-radius:6px; font-weight:bold; cursor:pointer; font-size:13px;">🖨️ Imprimir Consultas Seleccionadas</button>
                     </div>
-                    <div style="font-size:13px; color:#1e293b; white-space: pre-wrap; display: flex; flex-direction: column; gap: 6px;">
-                        {% if h['motivo'] or h['diagnostico'] %}
-                            <div><b>Evolución:</b> {{ h['motivo'] or h['diagnostico'] }}</div>
-                        {% endif %}
-                        {% if h['scores'] %}
-                            <div><b>Scores:</b> {{ h['scores'] }}</div>
-                        {% endif %}
-                        {% if h['pas'] or h['peso'] %}
-                            <div><b>Examen Físico / Signos Vitales:</b> PA: {{ h['pas'] }} mmHg | FC: {{ h['fc'] }} lpm | Peso: {{ h['peso'] }} Kg | Talla: {{ h['talla'] }} cm | IMC: {{ h['imc'] }}</div>
-                        {% endif %}
+
+                    {% for h in historiales|reverse %}
+                    <div style="background:#f8fafc; border:1px solid #e2e8f0; border-left:4px solid #3498db; padding:15px; border-radius:6px; margin-bottom:15px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e2e8f0; padding-bottom:8px; margin-bottom:8px;">
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <input type="checkbox" name="h_ids" value="{{ h['id'] }}" style="transform: scale(1.3); cursor: pointer;">
+                                <span style="font-size:13px; color:#1e293b;"><b>Fecha:</b> {{ h['fecha'] }}</span>
+                            </div>
+                            <a href="/imprimir_historial_pdf/{{ h['id'] }}" target="_blank" style="background:#3b82f6; color:white; padding:4px 10px; border-radius:4px; font-size:11px; text-decoration:none; font-weight:bold;">🖨️ Imprimir PDF Individual</a>
+                        </div>
+                        <div style="font-size:13px; color:#1e293b; white-space: pre-wrap; display: flex; flex-direction: column; gap: 6px;">
+                            {% if h['motivo'] or h['diagnostico'] %}
+                                <div><b>Evolución:</b> {{ h['motivo'] or h['diagnostico'] }}</div>
+                            {% endif %}
+                            {% if h['scores'] %}
+                                <div><b>Scores:</b> {{ h['scores'] }}</div>
+                            {% endif %}
+                            {% if h['pas'] or h['peso'] %}
+                                <div><b>Examen Físico / Signos Vitales:</b> PA: {{ h['pas'] }} mmHg | FC: {{ h['fc'] }} lpm | Peso: {{ h['peso'] }} Kg | Talla: {{ h['talla'] }} cm | IMC: {{ h['imc'] }}</div>
+                            {% endif %}
+                        </div>
                     </div>
-                </div>
-                {% else %}
-                <p style="color:#7f8c8d; font-size:14px;">No hay consultas previas registradas.</p>
-                {% endfor %}
+                    {% else %}
+                    <p style="color:#7f8c8d; font-size:14px;">No hay consultas previas registradas.</p>
+                    {% endfor %}
+                </form>
+
             </div>
         </div>
-    </div>
-</body>
-</html>
