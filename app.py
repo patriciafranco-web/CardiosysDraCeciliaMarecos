@@ -77,10 +77,12 @@ def init_db():
                 cedula TEXT NOT NULL,
                 nombre TEXT NOT NULL,
                 nacimiento TEXT,
+                sexo TEXT,
                 telefono TEXT,
                 profesion TEXT,
                 sanatorio TEXT,
                 direccion TEXT,
+                adicional TEXT,
                 alergias TEXT,
                 antecedentes TEXT,
                 antecedentes_principales TEXT,
@@ -135,6 +137,8 @@ def init_db():
         ''')
 
         for col, tipo in [
+            ('sexo', 'TEXT'),
+            ('adicional', 'TEXT'),
             ('nacimiento', 'TEXT'),
             ('antecedentes_principales', 'TEXT'),
             ('resumen_anterior', 'TEXT'),
@@ -222,10 +226,12 @@ def nuevo():
             cedula = request.form.get('cedula', '').strip()
             nombre = request.form.get('nombre', '').strip()
             nacimiento = request.form.get('nacimiento', '').strip()
+            sexo = request.form.get('sexo', '').strip()
             telefono = request.form.get('telefono', '').strip()
             profesion = request.form.get('profesion', '').strip()
             sanatorio = request.form.get('sanatorio', '').strip()
-            direccion = request.form.get('direccion', '').strip()
+            direccion = request.form.get('direccion', '').strip() # Procedencia
+            adicional = request.form.get('adicional', '').strip()
             alergias = request.form.get('alergias', '').strip()
             tiene_estudios = request.form.get('tiene_estudios', 'No').strip()
             
@@ -237,12 +243,48 @@ def nuevo():
             conn = sqlite3.connect(db_path)
             cursor = conn.cursor()
             cursor.execute('''
-                INSERT INTO pacientes (cedula, nombre, nacimiento, telefono, profesion, sanatorio, direccion, alergias, antecedentes, antecedentes_principales, tiene_estudios, fecha_cita, es_estudio) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
-            ''', (cedula, nombre, nacimiento, telefono, profesion, sanatorio, direccion, alergias, antecedentes_texto, antecedentes_texto, tiene_estudios, fecha_cita))
+                INSERT INTO pacientes (cedula, nombre, nacimiento, sexo, telefono, profesion, sanatorio, direccion, adicional, alergias, antecedentes, antecedentes_principales, tiene_estudios, fecha_cita, es_estudio) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
+            ''', (cedula, nombre, nacimiento, sexo, telefono, profesion, sanatorio, direccion, adicional, alergias, antecedentes_texto, antecedentes_texto, tiene_estudios, fecha_cita))
+            
+            paciente_id = cursor.lastrowid
+
+            # Capturar consulta inicial / evolución de seguido
+            evolucion = request.form.get('evolucion', '').strip()
+            scores = request.form.get('scores_copiados', '').strip()
+            pas = request.form.get('pas', '').strip()
+            fc = request.form.get('fc', '').strip()
+            peso = request.form.get('peso', '').strip()
+            talla = request.form.get('talla', '').strip()
+            cintura = request.form.get('cintura', '').strip()
+            imc = request.form.get('imc', '').strip()
+            bsa = request.form.get('bsa', '').strip()
+            
+            tratamiento = request.form.get('tratamiento_actual', '').strip()
+            indicaciones = request.form.get('indicaciones_actual', '').strip()
+
+            if tratamiento or indicaciones:
+                cursor.execute('UPDATE pacientes SET tratamiento_actual = ?, indicaciones_actual = ? WHERE id = ?', (tratamiento, indicaciones, paciente_id))
+
+            if evolucion or scores or pas or peso or tratamiento:
+                cursor.execute('''
+                    INSERT INTO historial (fecha, motivo, diagnostico, pas, fc, peso, talla, scores, cintura, imc, bsa, paciente_id)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ''', (fecha_cita, evolucion, evolucion, pas, fc, peso, talla, scores, cintura, imc, bsa, paciente_id))
+                
+                resumen_texto = f"Fecha: {fecha_cita}"
+                if evolucion:
+                    resumen_texto += f"\nEvolución: {evolucion}"
+                if scores:
+                    resumen_texto += f"\nScores: {scores}"
+                if pas or peso:
+                    resumen_texto += f"\nSignos Vitales: PA {pas} mmHg | FC {fc} lpm | Peso {peso} Kg | Talla {talla} cm | IMC {imc}"
+                
+                cursor.execute('UPDATE pacientes SET resumen_anterior = ? WHERE id = ?', (resumen_texto, paciente_id))
+
             conn.commit()
             conn.close()
-            return redirect(url_for('index'))
+            return redirect(url_for('ficha', id=paciente_id))
         except Exception as e:
             return f"<h3>Error al crear paciente:</h3><pre>{traceback.format_exc()}</pre>", 500
     return render_template('nuevo_paciente.html')
