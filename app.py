@@ -37,7 +37,7 @@ def calcular_edad(nacimiento_str):
     if not nacimiento_str:
         return "N/D"
     try:
-        for fmt in ('%Y-%m-%d', '%d/%m/%Y', '%Y-%m-%d'):
+        for fmt in ('%Y-%m-%d', '%d/%m/%Y', '%Y/%m/%d'):
             try:
                 f_nac = datetime.strptime(nacimiento_str.strip(), fmt)
                 hoy = datetime.today()
@@ -316,7 +316,7 @@ def nuevo():
                             flex-direction: column;
                             justify-content: space-between;
                             box-sizing: border-box;
-                            padding: 4px 8px;
+                            padding: 2px 8px 4px 8px;
                             border: 1.5px dashed #94a3b8;
                             border-radius: 6px;
                             background: #fff;
@@ -802,7 +802,7 @@ def actualizar_tratamiento_actual(id):
 
 def obtener_membrete_html():
     return f"""
-    <div style="border-bottom: 2px solid #2c3e50; padding-bottom: 2px; margin-bottom: 3px; display: flex; align-items: center; gap: 15px;">
+    <div style="border-bottom: 2px solid #2c3e50; padding-bottom: 1px; margin-bottom: 1px; display: flex; align-items: center; gap: 15px;">
         <div style="flex-shrink: 0;">
             <img src="/static/logo_cardiologia.png" alt="Logo" style="width: 130px; height: auto; object-fit: contain;">
         </div>
@@ -870,7 +870,7 @@ def generar_plan_pdf(id):
                 flex-direction: column;
                 justify-content: space-between;
                 box-sizing: border-box;
-                padding: 4px 8px;
+                padding: 2px 8px 4px 8px;
                 border: 1.5px dashed #94a3b8;
                 border-radius: 6px;
                 background: #fff;
