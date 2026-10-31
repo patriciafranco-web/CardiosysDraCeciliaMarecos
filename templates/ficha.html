@@ -338,6 +338,8 @@
                     <!-- Receta Médica -->
                     <div style="flex:1;">
                         <label style="font-weight:bold; font-size:13px; color:#2c3e50; display:block; margin-bottom:5px;">💊 Receta (Medicamentos):</label>
+                        <!-- Usamos un textarea oculto para cargar los datos desde la BD de forma 100% segura -->
+                        <textarea id="datos-tratamiento-oculto" style="display:none;">{{ paciente['tratamiento_actual'] or '' }}</textarea>
                         <div id="editor-tratamiento" style="height: 150px; background: #fff; border-radius: 0 0 6px 6px;"></div>
                         <input type="hidden" name="tratamiento_actual" id="tratamiento_actual">
                     </div>
@@ -345,6 +347,8 @@
                     <!-- Indicaciones -->
                     <div style="flex:1;">
                         <label style="font-weight:bold; font-size:13px; color:#2c3e50; display:block; margin-bottom:5px;">📋 Indicaciones / Plan:</label>
+                        <!-- Usamos un textarea oculto para cargar los datos desde la BD de forma 100% segura -->
+                        <textarea id="datos-indicaciones-ocultas" style="display:none;">{{ paciente['indicaciones_actual'] or '' }}</textarea>
                         <div id="editor-indicaciones" style="height: 150px; background: #fff; border-radius: 0 0 6px 6px;"></div>
                         <input type="hidden" name="indicaciones_actual" id="indicaciones_actual">
                     </div>
@@ -548,7 +552,7 @@
         </div>
     </div>
 
-   <!-- Script para inicializar Quill y cargar textos previos -->
+    <!-- Script para inicializar Quill y cargar textos previos de forma segura -->
     <script>
         var toolbarOptions = [
             ['bold', 'underline'],
@@ -568,19 +572,32 @@
             modules: { toolbar: toolbarOptions }
         });
 
-        // Inyección directa desde Flask/Jinja asegurando el contenido
-        var textoTratamiento = {{ (paciente['tratamiento_actual'] or '') | tojson | safe }};
-        var textoIndicaciones = {{ (paciente['indicaciones_actual'] or '') | tojson | safe }};
+        // 1. Extraer los datos guardados mediante los textareas ocultos
+        var textoTratamiento = document.getElementById('datos-tratamiento-oculto').value;
+        var textoIndicaciones = document.getElementById('datos-indicaciones-ocultas').value;
 
-        if (textoTratamiento) {
-            quillTratamiento.root.innerHTML = textoTratamiento;
-        }
-        if (textoIndicaciones) {
-            quillIndicaciones.root.innerHTML = textoIndicaciones;
+        // 2. Función infalible para rellenar Quill
+        function cargarQuillSeguro(editor, contenido) {
+            if (!contenido) return;
+            // Si el texto ya tiene formato HTML
+            if (contenido.includes('<p>') || contenido.includes('<br>')) {
+                editor.clipboard.dangerouslyPasteHTML(contenido);
+            } else {
+                // Si es texto plano antiguo, convertimos los saltos de línea a <br>
+                var htmlConvertido = contenido.replace(/\n/g, '<br>');
+                editor.clipboard.dangerouslyPasteHTML(htmlConvertido);
+            }
         }
 
+        // Cargar inmediatamente
+        cargarQuillSeguro(quillTratamiento, textoTratamiento);
+        cargarQuillSeguro(quillIndicaciones, textoIndicaciones);
+
+        // Guardar antes de enviar
         document.getElementById('formRecetaPlan').onsubmit = function() {
             document.getElementById('tratamiento_actual').value = quillTratamiento.root.innerHTML;
             document.getElementById('indicaciones_actual').value = quillIndicaciones.root.innerHTML;
         };
     </script>
+</body>
+</html>
