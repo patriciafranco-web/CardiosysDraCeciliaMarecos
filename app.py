@@ -803,7 +803,7 @@ def actualizar_tratamiento_actual(id):
 def obtener_membrete_html():
     return f"""
     <div>
-        <div style="display: flex; align-items: center; gap: 12px; padding-bottom: 0px; margin-top: -18px;">
+        <div style="display: flex; align-items: center; gap: 12px; padding-bottom: 0px; margin-top: -24px;">
             <div style="flex-shrink: 0;">
                 <img src="/static/logo_cardiologia.png" alt="Logo" style="width: 105px; height: auto; object-fit: contain;">
             </div>
