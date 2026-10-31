@@ -1095,7 +1095,7 @@ def imprimir_multiples_historiales():
     </html>
     """
 
-@app.route('/backup'):
+@app.route('/backup')
 def backup():
     if not session.get('logged_in'):
         return redirect(url_for('login'))
