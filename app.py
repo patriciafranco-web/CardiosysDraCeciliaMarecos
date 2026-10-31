@@ -283,86 +283,16 @@ def nuevo():
                     <meta charset="UTF-8">
                     <title>Receta e Indicaciones - {nombre}</title>
                     <style>
-                        @page {{
-                            size: A4 landscape;
-                            margin: 1mm;
-                        }}
-                        @media print {{
-                            html, body {{
-                                width: 297mm;
-                                height: 206mm;
-                                overflow: hidden !important;
-                                page-break-after: avoid;
-                                page-break-before: avoid;
-                            }}
-                        }}
-                        body {{
-                            font-family: 'Segoe UI', Arial, sans-serif;
-                            margin: 0;
-                            padding: 0;
-                            color: #333;
-                            -webkit-print-color-adjust: exact;
-                        }}
-                        .container {{
-                            display: flex;
-                            width: 100%;
-                            height: 198mm;
-                            gap: 6px;
-                            box-sizing: border-box;
-                        }}
-                        .columna {{
-                            flex: 1;
-                            display: flex;
-                            flex-direction: column;
-                            justify-content: space-between;
-                            box-sizing: border-box;
-                            padding: 0px 8px 4px 8px;
-                            border: 1.5px dashed #94a3b8;
-                            border-radius: 6px;
-                            background: #fff;
-                            height: 100%;
-                            overflow: hidden;
-                        }}
-                        .footer-aviso {{
-                            border-top: 1px dashed #cbd5e1;
-                            padding-top: 1.5mm;
-                            margin-top: auto;
-                            text-align: center;
-                            font-size: 10px;
-                            font-weight: bold;
-                            color: #e74c3c;
-                            letter-spacing: 0.5px;
-                            background: #fff;
-                        }}
-                        .content {{
-                            background: #f8fafc;
-                            padding: 4px 6px;
-                            border-radius: 4px;
-                            border: 1px solid #e2e8f0;
-                            font-size: 15px;
-                            flex: 1;
-                            margin-top: 2px;
-                            overflow: hidden;
-                        }}
-                        /* Permitir que Quill dicte el tamaño y estilos de la doctora (negritas, cursivas, etc.) */
-                        .content p, .content div, .content span, .content li, .content strong, .content em {{
-                            line-height: 1.3 !important;
-                        }}
-                        .content strong, .content b {{
-                            font-weight: bold !important;
-                        }}
-                        .content em, .content i {{
-                            font-style: italic !important;
-                        }}
-                        .content .ql-size-large, .content span.ql-size-large, .content p.ql-size-large {{
-                            font-size: 21px !important;
-                        }}
-                        .content .ql-size-huge, .content span.ql-size-huge, .content p.ql-size-huge {{
-                            font-size: 27px !important;
-                        }}
-                        .content .ql-size-small, .content span.ql-size-small, .content p.ql-size-small {{
-                            font-size: 12px !important;
-                        }}
+                        @page {{ size: A4 landscape; margin: 8mm; }}
+                        @media print {{ html, body {{ width: 297mm; height: 210mm; }} }}
+                        body {{ font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 0; color: #333; -webkit-print-color-adjust: exact; }}
+                        .container {{ display: flex; width: 100%; height: 96vh; gap: 15px; box-sizing: border-box; }}
+                        .columna {{ flex: 1; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; padding: 12px; border: 1.5px dashed #94a3b8; border-radius: 8px; background: #fff; }}
+                        .footer-aviso {{ border-top: 1px dashed #e2e8f0; padding-top: 8mm; margin-top: 10px; text-align: center; font-size: 11px; font-weight: bold; color: #e74c3c; letter-spacing: 0.5px; }}
+                        .content {{ background: #f8fafc; padding: 10px; border-radius: 4px; border: 1px solid #e2e8f0; font-size: 13px; flex: 1; margin-top: 6px; }}
+                        /* Soportar formato de Quill (negrita, cursiva, etc.) */
+                        .content strong, .content b {{ font-weight: bold !important; }}
+                        .content em, .content i {{ font-style: italic !important; }}
                     </style>
                 </head>
                 <body>
@@ -370,16 +300,16 @@ def nuevo():
                         <div class="columna">
                             <div>
                                 {obtener_membrete_html()}
-                                <div style="background: #cbd5e1; padding: 3px 6px; border-radius: 4px; margin-bottom: 2px; font-weight: bold; color: #0f172a; display: flex; justify-content: space-between; align-items: center; border: 1px solid #94a3b8;">
+                                <div style="background: #cbd5e1; padding: 10px 14px; border-radius: 6px; margin-bottom: 10px; font-weight: bold; color: #0f172a; display: flex; justify-content: space-between; align-items: center; border: 1px solid #94a3b8;">
                                     <div>
-                                        <div style="font-size: 13.5px; margin-bottom: 1px;"><strong>Paciente:</strong> {nombre}</div>
-                                        <div style="font-size: 12px;"><strong>C.I.:</strong> {cedula}</div>
+                                        <div style="font-size: 15px; margin-bottom: 3px;"><strong>Paciente:</strong> {nombre}</div>
+                                        <div style="font-size: 14px;"><strong>C.I.:</strong> {cedula}</div>
                                     </div>
-                                    <div style="font-size: 10px; text-align: right;">
+                                    <div style="font-size: 13.5px; text-align: right;">
                                         <strong>Fecha:</strong> {datetime.now().strftime('%d/%m/%Y')}
                                     </div>
                                 </div>
-                                <h4 style="color:#2c3e50; margin:0 0 2px 0; font-size:10px;">RECETA MÉDICA:</h4>
+                                <h4 style="color:#2c3e50; margin:0 0 4px 0; font-size:12px;">RECETA MÉDICA:</h4>
                                 <div class="content">{tratamiento}</div>
                             </div>
                             <div class="footer-aviso">POR FAVOR NO CAMBIAR RECETA MEDICA</div>
@@ -387,16 +317,16 @@ def nuevo():
                         <div class="columna">
                             <div>
                                 {obtener_membrete_html()}
-                                <div style="background: #cbd5e1; padding: 3px 6px; border-radius: 4px; margin-bottom: 2px; font-weight: bold; color: #0f172a; display: flex; justify-content: space-between; align-items: center; border: 1px solid #94a3b8;">
+                                <div style="background: #cbd5e1; padding: 10px 14px; border-radius: 6px; margin-bottom: 10px; font-weight: bold; color: #0f172a; display: flex; justify-content: space-between; align-items: center; border: 1px solid #94a3b8;">
                                     <div>
-                                        <div style="font-size: 13.5px; margin-bottom: 1px;"><strong>Paciente:</strong> {nombre}</div>
-                                        <div style="font-size: 12px;"><strong>C.I.:</strong> {cedula}</div>
+                                        <div style="font-size: 15px; margin-bottom: 3px;"><strong>Paciente:</strong> {nombre}</div>
+                                        <div style="font-size: 14px;"><strong>C.I.:</strong> {cedula}</div>
                                     </div>
-                                    <div style="font-size: 10px; text-align: right;">
+                                    <div style="font-size: 13.5px; text-align: right;">
                                         <strong>Fecha:</strong> {datetime.now().strftime('%d/%m/%Y')}
                                     </div>
                                 </div>
-                                <h4 style="color:#2c3e50; margin:0 0 2px 0; font-size:10px;">INDICACIONES MÉDICAS / PLAN:</h4>
+                                <h4 style="color:#2c3e50; margin:0 0 4px 0; font-size:12px;">INDICACIONES MÉDICAS / PLAN:</h4>
                                 <div class="content">{indicaciones}</div>
                             </div>
                             <div class="footer-aviso">POR FAVOR NO CAMBIAR RECETA MEDICA</div>
@@ -808,20 +738,17 @@ def actualizar_tratamiento_actual(id):
 
 def obtener_membrete_html():
     return f"""
-    <div>
-        <div style="display: flex; align-items: center; gap: 10px; padding-bottom: 0px; margin-top: -30px;">
-            <div style="flex-shrink: 0; margin-top: -2px;">
-                <img src="/static/logo_cardiologia.png" alt="Logo" style="width: 115px; height: auto; object-fit: contain;">
-            </div>
-            <div style="flex: 1; font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.0;">
-                <h3 style="margin: 0 0 1px 0; color: #111; font-size: 12px; font-weight: bold; letter-spacing: 0.5px;">DRA. CECILIA MONSERRAT MARECOS VIANA</h3>
-                <p style="margin: 0 0 1px 0; color: #333; font-size: 8.5px;">Especialista en Cardiología Clínica – Medicina Interna</p>
-                <p style="margin: 0 0 1px 0; color: #333; font-size: 7.5px;">Ecocardiograma Doppler Color, Mapeo de Presión Arterial, Ergometría, Holter 24 horas</p>
-                <p style="margin: 0 0 1px 0; color: #333; font-size: 7.5px;">Miembro Titular de la Sociedad Paraguaya de Cardiología y Cirugía Cardiovascular</p>
-                <p style="margin: 0; color: #333; font-size: 7.5px;">Asunción – Coronel Oviedo, Py.</p>
-            </div>
+    <div style="border-bottom: 2.5px solid #2c3e50; padding-bottom: 10px; margin-bottom: 12px; display: flex; align-items: center; gap: 20px;">
+        <div style="flex-shrink: 0;">
+            <img src="/static/logo_cardiologia.png" alt="Logo" style="width: 150px; height: auto; object-fit: contain;">
         </div>
-        <div style="border-bottom: 2px solid #2c3e50; margin-top: -2px; margin-bottom: 2px;"></div>
+        <div style="flex: 1; font-family: 'Segoe UI', Arial, sans-serif;">
+            <h3 style="margin: 0 0 2px 0; color: #111; font-size: 13.5px; font-weight: bold; letter-spacing: 0.5px;">DRA. CECILIA MONSERRAT MARECOS VIANA</h3>
+            <p style="margin: 0 0 1px 0; color: #333; font-size: 10px;">Especialista en Cardiología Clínica – Medicina Interna</p>
+            <p style="margin: 0 0 1px 0; color: #333; font-size: 9px;">Ecocardiograma Doppler Color, Mapeo de Presión Arterial, Ergometría, Holter 24 horas</p>
+            <p style="margin: 0 0 1px 0; color: #333; font-size: 9px;">Miembro Titular de la Sociedad Paraguaya de Cardiología y Cirugía Cardiovascular</p>
+            <p style="margin: 0; color: #333; font-size: 9px;">Asunción – Coronel Oviedo, Py.</p>
+        </div>
     </div>
     """
 
@@ -848,15 +775,12 @@ def generar_plan_pdf(id):
         <style>
             @page {{
                 size: A4 landscape;
-                margin: 1mm;
+                margin: 8mm;
             }}
             @media print {{
                 html, body {{
                     width: 297mm;
-                    height: 206mm;
-                    overflow: hidden !important;
-                    page-break-after: avoid;
-                    page-break-before: avoid;
+                    height: 210mm;
                 }}
             }}
             body {{
@@ -869,8 +793,8 @@ def generar_plan_pdf(id):
             .container {{
                 display: flex;
                 width: 100%;
-                height: 198mm;
-                gap: 6px;
+                height: 96vh;
+                gap: 15px;
                 box-sizing: border-box;
             }}
             .columna {{
@@ -879,53 +803,33 @@ def generar_plan_pdf(id):
                 flex-direction: column;
                 justify-content: space-between;
                 box-sizing: border-box;
-                padding: 0px 8px 4px 8px;
+                padding: 12px;
                 border: 1.5px dashed #94a3b8;
-                border-radius: 6px;
+                border-radius: 8px;
                 background: #fff;
-                height: 100%;
-                overflow: hidden;
             }}
             .footer-aviso {{
-                border-top: 1px dashed #cbd5e1;
-                padding-top: 1.5mm;
-                margin-top: auto;
+                border-top: 1px dashed #e2e8f0;
+                padding-top: 8mm;
+                margin-top: 10px;
                 text-align: center;
-                font-size: 10px;
+                font-size: 11px;
                 font-weight: bold;
                 color: #e74c3c;
                 letter-spacing: 0.5px;
-                background: #fff;
             }}
             .content {{
                 background: #f8fafc;
-                padding: 4px 6px;
+                padding: 10px;
                 border-radius: 4px;
                 border: 1px solid #e2e8f0;
-                font-size: 15px;
+                font-size: 13px;
                 flex: 1;
-                margin-top: 2px;
-                overflow: hidden;
+                margin-top: 6px;
             }}
-            /* Permitir que Quill dicte el tamaño según lo elegido por la doctora */
-            .content p, .content div, .content span, .content li, .content strong, .content em {{
-                line-height: 1.3 !important;
-            }}
-            .content strong, .content b {{
-                font-weight: bold !important;
-            }}
-            .content em, .content i {{
-                font-style: italic !important;
-            }}
-            .content .ql-size-large, .content span.ql-size-large, .content p.ql-size-large {{
-                font-size: 21px !important;
-            }}
-            .content .ql-size-huge, .content span.ql-size-huge, .content p.ql-size-huge {{
-                font-size: 27px !important;
-            }}
-            .content .ql-size-small, .content span.ql-size-small, .content p.ql-size-small {{
-                font-size: 12px !important;
-            }}
+            /* Soportar formato de Quill (negrita, cursiva, etc.) */
+            .content strong, .content b {{ font-weight: bold !important; }}
+            .content em, .content i {{ font-style: italic !important; }}
         </style>
     </head>
     <body>
@@ -933,16 +837,16 @@ def generar_plan_pdf(id):
             <div class="columna">
                 <div>
                     {obtener_membrete_html()}
-                    <div style="background: #cbd5e1; padding: 3px 6px; border-radius: 4px; margin-bottom: 2px; font-weight: bold; color: #0f172a; display: flex; justify-content: space-between; align-items: center; border: 1px solid #94a3b8;">
+                    <div style="background: #cbd5e1; padding: 10px 14px; border-radius: 6px; margin-bottom: 10px; font-weight: bold; color: #0f172a; display: flex; justify-content: space-between; align-items: center; border: 1px solid #94a3b8;">
                         <div>
-                            <div style="font-size: 13.5px; margin-bottom: 1px;"><strong>Paciente:</strong> {p['nombre']}</div>
-                            <div style="font-size: 12px;"><strong>C.I.:</strong> {p['cedula']}</div>
+                            <div style="font-size: 15px; margin-bottom: 3px;"><strong>Paciente:</strong> {p['nombre']}</div>
+                            <div style="font-size: 14px;"><strong>C.I.:</strong> {p['cedula']}</div>
                         </div>
-                        <div style="font-size: 10px; text-align: right;">
+                        <div style="font-size: 13.5px; text-align: right;">
                             <strong>Fecha:</strong> {datetime.now().strftime('%d/%m/%Y')}
                         </div>
                     </div>
-                    <h4 style="color:#2c3e50; margin:0 0 2px 0; font-size:10px;">RECETA MÉDICA:</h4>
+                    <h4 style="color:#2c3e50; margin:0 0 4px 0; font-size:12px;">RECETA MÉDICA:</h4>
                     <div class="content">{tratamiento}</div>
                 </div>
                 <div class="footer-aviso">
@@ -953,16 +857,16 @@ def generar_plan_pdf(id):
             <div class="columna">
                 <div>
                     {obtener_membrete_html()}
-                    <div style="background: #cbd5e1; padding: 3px 6px; border-radius: 4px; margin-bottom: 2px; font-weight: bold; color: #0f172a; display: flex; justify-content: space-between; align-items: center; border: 1px solid #94a3b8;">
+                    <div style="background: #cbd5e1; padding: 10px 14px; border-radius: 6px; margin-bottom: 10px; font-weight: bold; color: #0f172a; display: flex; justify-content: space-between; align-items: center; border: 1px solid #94a3b8;">
                         <div>
-                            <div style="font-size: 13.5px; margin-bottom: 1px;"><strong>Paciente:</strong> {p['nombre']}</div>
-                            <div style="font-size: 12px;"><strong>C.I.:</strong> {p['cedula']}</div>
+                            <div style="font-size: 15px; margin-bottom: 3px;"><strong>Paciente:</strong> {p['nombre']}</div>
+                            <div style="font-size: 14px;"><strong>C.I.:</strong> {p['cedula']}</div>
                         </div>
-                        <div style="font-size: 10px; text-align: right;">
+                        <div style="font-size: 13.5px; text-align: right;">
                             <strong>Fecha:</strong> {datetime.now().strftime('%d/%m/%Y')}
                         </div>
                     </div>
-                    <h4 style="color:#2c3e50; margin:0 0 2px 0; font-size:10px;">INDICACIONES MÉDICAS / PLAN:</h4>
+                    <h4 style="color:#2c3e50; margin:0 0 4px 0; font-size:12px;">INDICACIONES MÉDICAS / PLAN:</h4>
                     <div class="content">{indicaciones}</div>
                 </div>
                 <div class="footer-aviso">
@@ -1016,8 +920,8 @@ def imprimir_historial_pdf(h_id):
         {obtener_membrete_html()}
         <div style="background: #cbd5e1; padding: 10px 15px; border-radius: 6px; margin-bottom: 20px; font-weight: bold; color: #0f172a; display: flex; justify-content: space-between; align-items: center; border: 1px solid #94a3b8;">
             <div>
-                <div style="font-size: 17px; margin-bottom: 3px;"><strong>Paciente:</strong> {h['nombre']}</div>
-                <div style="font-size: 15px;"><strong>C.I.:</strong> {h['cedula']}</div>
+                <div style="font-size: 15px; margin-bottom: 3px;"><strong>Paciente:</strong> {h['nombre']}</div>
+                <div style="font-size: 14px;"><strong>C.I.:</strong> {h['cedula']}</div>
             </div>
             <div style="font-size: 13.5px; text-align: right;">
                 <strong>Fecha:</strong> {h['fecha']}
@@ -1097,8 +1001,8 @@ def imprimir_multiples_historiales():
         {obtener_membrete_html()}
         <div style="background: #cbd5e1; padding: 10px 15px; border-radius: 6px; margin-bottom: 20px; font-weight: bold; color: #0f172a; display: flex; justify-content: space-between; align-items: center; border: 1px solid #94a3b8;">
             <div>
-                <div style="font-size: 17px; margin-bottom: 3px;"><strong>Paciente:</strong> {p_nombre}</div>
-                <div style="font-size: 15px;"><strong>C.I.:</strong> {p_cedula}</div>
+                <div style="font-size: 15px; margin-bottom: 3px;"><strong>Paciente:</strong> {p_nombre}</div>
+                <div style="font-size: 14px;"><strong>C.I.:</strong> {p_cedula}</div>
             </div>
             <div style="font-size: 13.5px; text-align: right;">
                 <strong>Reporte de Consultas Seleccionadas</strong>
