@@ -37,7 +37,7 @@ def calcular_edad(nacimiento_str):
     if not nacimiento_str:
         return "N/D"
     try:
-        for fmt in ('%Y-%m-%d', '%d/%m/%Y', '%Y-%m-%d'):
+        for fmt in ('%Y-%m-%d', '%d/%m/%Y', '%Y/%m/%d'):
             try:
                 f_nac = datetime.strptime(nacimiento_str.strip(), fmt)
                 hoy = datetime.today()
@@ -803,8 +803,8 @@ def actualizar_tratamiento_actual(id):
 def obtener_membrete_html():
     return f"""
     <div>
-        <div style="display: flex; align-items: center; gap: 14px; padding-bottom: 2px; margin-top: -30px;">
-            <div style="flex-shrink: 0;">
+        <div style="display: flex; align-items: center; gap: 14px; padding-bottom: 2px; margin-top: -12px;">
+            <div style="flex-shrink: 0; margin-top: 20px;">
                 <img src="/static/logo_cardiologia.png" alt="Logo" style="width: 130px; height: auto; object-fit: contain;">
             </div>
             <div style="flex: 1; font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.2;">
