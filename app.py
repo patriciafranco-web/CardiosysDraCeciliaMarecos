@@ -37,7 +37,7 @@ def calcular_edad(nacimiento_str):
     if not nacimiento_str:
         return "N/D"
     try:
-        for fmt in ('%Y-%m-%d', '%d/%m/%Y', '%Y/%m/%d'):
+        for fmt in ('%Y-%m-%d', '%d/%m/%Y', '%Y-%m-%d'):
             try:
                 f_nac = datetime.strptime(nacimiento_str.strip(), fmt)
                 hoy = datetime.today()
@@ -316,7 +316,7 @@ def nuevo():
                             flex-direction: column;
                             justify-content: space-between;
                             box-sizing: border-box;
-                            padding: 6px 8px;
+                            padding: 4px 8px;
                             border: 1.5px dashed #94a3b8;
                             border-radius: 6px;
                             background: #fff;
@@ -325,13 +325,14 @@ def nuevo():
                         }}
                         .footer-aviso {{
                             border-top: 1px dashed #cbd5e1;
-                            padding-top: 2mm;
-                            margin-top: 2px;
+                            padding-top: 1.5mm;
+                            margin-top: auto;
                             text-align: center;
                             font-size: 10px;
                             font-weight: bold;
                             color: #e74c3c;
                             letter-spacing: 0.5px;
+                            background: #fff;
                         }}
                         .content {{
                             background: #f8fafc;
@@ -345,7 +346,7 @@ def nuevo():
                         }}
                         /* Permitir que Quill dicte el tamaño según lo elegido por la doctora */
                         .content p, .content div, .content span, .content li, .content strong, .content em {{
-                            line-height: 1.35 !important;
+                            line-height: 1.3 !important;
                         }}
                         .content .ql-size-large, .content span.ql-size-large, .content p.ql-size-large {{
                             font-size: 21px !important;
@@ -363,7 +364,7 @@ def nuevo():
                         <div class="columna">
                             <div>
                                 {obtener_membrete_html()}
-                                <div style="background: #cbd5e1; padding: 5px 8px; border-radius: 5px; margin-bottom: 4px; font-weight: bold; color: #0f172a; display: flex; justify-content: space-between; align-items: center; border: 1px solid #94a3b8;">
+                                <div style="background: #cbd5e1; padding: 4px 8px; border-radius: 5px; margin-bottom: 2px; font-weight: bold; color: #0f172a; display: flex; justify-content: space-between; align-items: center; border: 1px solid #94a3b8;">
                                     <div>
                                         <div style="font-size: 16px; margin-bottom: 1px;"><strong>Paciente:</strong> {nombre}</div>
                                         <div style="font-size: 14px;"><strong>C.I.:</strong> {cedula}</div>
@@ -380,7 +381,7 @@ def nuevo():
                         <div class="columna">
                             <div>
                                 {obtener_membrete_html()}
-                                <div style="background: #cbd5e1; padding: 5px 8px; border-radius: 5px; margin-bottom: 4px; font-weight: bold; color: #0f172a; display: flex; justify-content: space-between; align-items: center; border: 1px solid #94a3b8;">
+                                <div style="background: #cbd5e1; padding: 4px 8px; border-radius: 5px; margin-bottom: 2px; font-weight: bold; color: #0f172a; display: flex; justify-content: space-between; align-items: center; border: 1px solid #94a3b8;">
                                     <div>
                                         <div style="font-size: 16px; margin-bottom: 1px;"><strong>Paciente:</strong> {nombre}</div>
                                         <div style="font-size: 14px;"><strong>C.I.:</strong> {cedula}</div>
@@ -869,7 +870,7 @@ def generar_plan_pdf(id):
                 flex-direction: column;
                 justify-content: space-between;
                 box-sizing: border-box;
-                padding: 6px 8px;
+                padding: 4px 8px;
                 border: 1.5px dashed #94a3b8;
                 border-radius: 6px;
                 background: #fff;
@@ -878,13 +879,14 @@ def generar_plan_pdf(id):
             }}
             .footer-aviso {{
                 border-top: 1px dashed #cbd5e1;
-                padding-top: 2mm;
-                margin-top: 2px;
+                padding-top: 1.5mm;
+                margin-top: auto;
                 text-align: center;
                 font-size: 10px;
                 font-weight: bold;
                 color: #e74c3c;
                 letter-spacing: 0.5px;
+                background: #fff;
             }}
             .content {{
                 background: #f8fafc;
@@ -898,7 +900,7 @@ def generar_plan_pdf(id):
             }}
             /* Permitir que Quill dicte el tamaño según lo elegido por la doctora */
             .content p, .content div, .content span, .content li, .content strong, .content em {{
-                line-height: 1.35 !important;
+                line-height: 1.3 !important;
             }}
             .content .ql-size-large, .content span.ql-size-large, .content p.ql-size-large {{
                 font-size: 21px !important;
@@ -916,7 +918,7 @@ def generar_plan_pdf(id):
             <div class="columna">
                 <div>
                     {obtener_membrete_html()}
-                    <div style="background: #cbd5e1; padding: 5px 8px; border-radius: 5px; margin-bottom: 4px; font-weight: bold; color: #0f172a; display: flex; justify-content: space-between; align-items: center; border: 1px solid #94a3b8;">
+                    <div style="background: #cbd5e1; padding: 4px 8px; border-radius: 5px; margin-bottom: 2px; font-weight: bold; color: #0f172a; display: flex; justify-content: space-between; align-items: center; border: 1px solid #94a3b8;">
                         <div>
                             <div style="font-size: 16px; margin-bottom: 1px;"><strong>Paciente:</strong> {p['nombre']}</div>
                             <div style="font-size: 14px;"><strong>C.I.:</strong> {p['cedula']}</div>
@@ -936,7 +938,7 @@ def generar_plan_pdf(id):
             <div class="columna">
                 <div>
                     {obtener_membrete_html()}
-                    <div style="background: #cbd5e1; padding: 5px 8px; border-radius: 5px; margin-bottom: 4px; font-weight: bold; color: #0f172a; display: flex; justify-content: space-between; align-items: center; border: 1px solid #94a3b8;">
+                    <div style="background: #cbd5e1; padding: 4px 8px; border-radius: 5px; margin-bottom: 2px; font-weight: bold; color: #0f172a; display: flex; justify-content: space-between; align-items: center; border: 1px solid #94a3b8;">
                         <div>
                             <div style="font-size: 16px; margin-bottom: 1px;"><strong>Paciente:</strong> {p['nombre']}</div>
                             <div style="font-size: 14px;"><strong>C.I.:</strong> {p['cedula']}</div>
