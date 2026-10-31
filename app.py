@@ -338,21 +338,23 @@ def nuevo():
                             padding: 4px 6px;
                             border-radius: 4px;
                             border: 1px solid #e2e8f0;
-                            font-size: 20px !important;
+                            font-size: 15px;
                             flex: 1;
                             margin-top: 2px;
                             overflow: hidden;
                         }}
-                        /* Forzar tamaño de letra grande y legible, anulando estilos inline de Quill */
+                        /* Permitir que Quill dicte el tamaño según lo elegido por la doctora */
                         .content p, .content div, .content span, .content li, .content strong, .content em {{
-                            font-size: 20px !important;
                             line-height: 1.35 !important;
                         }}
-                        .content .ql-size-huge {{
-                            font-size: 26px !important;
+                        .content .ql-size-large, .content span.ql-size-large, .content p.ql-size-large {{
+                            font-size: 21px !important;
                         }}
-                        .content .ql-size-large {{
-                            font-size: 22px !important;
+                        .content .ql-size-huge, .content span.ql-size-huge, .content p.ql-size-huge {{
+                            font-size: 27px !important;
+                        }}
+                        .content .ql-size-small, .content span.ql-size-small, .content p.ql-size-small {{
+                            font-size: 12px !important;
                         }}
                     </style>
                 </head>
@@ -889,20 +891,23 @@ def generar_plan_pdf(id):
                 padding: 4px 6px;
                 border-radius: 4px;
                 border: 1px solid #e2e8f0;
-                font-size: 20px !important;
+                font-size: 15px;
                 flex: 1;
                 margin-top: 2px;
                 overflow: hidden;
             }}
+            /* Permitir que Quill dicte el tamaño según lo elegido por la doctora */
             .content p, .content div, .content span, .content li, .content strong, .content em {{
-                font-size: 20px !important;
                 line-height: 1.35 !important;
             }}
-            .content .ql-size-huge {{
-                font-size: 26px !important;
+            .content .ql-size-large, .content span.ql-size-large, .content p.ql-size-large {{
+                font-size: 21px !important;
             }}
-            .content .ql-size-large {{
-                font-size: 22px !important;
+            .content .ql-size-huge, .content span.ql-size-huge, .content p.ql-size-huge {{
+                font-size: 27px !important;
+            }}
+            .content .ql-size-small, .content span.ql-size-small, .content p.ql-size-small {{
+                font-size: 12px !important;
             }}
         </style>
     </head>
@@ -1090,7 +1095,7 @@ def imprimir_multiples_historiales():
     </html>
     """
 
-@app.route('/backup')
+@app.route('/backup'):
 def backup():
     if not session.get('logged_in'):
         return redirect(url_for('login'))
