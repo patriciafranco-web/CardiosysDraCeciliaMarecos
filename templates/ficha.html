@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>Ficha del Paciente - CardioSys</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Quill.js CSS -->
+    <!-- Incluimos Quill.js para el editor de texto enriquecido -->
     <link href="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.min.js"></script>
     <style>
@@ -328,10 +328,11 @@
 
         <!-- 2. PRESCRIPCIÓN MÉDICA Y PLAN CON EDITORES ENRIQUECIDOS -->
         <div style="background:white; padding:25px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.05); border-top:4px solid #e74c3c; margin-bottom:25px;">
-            <form method="POST" action="/actualizar_tratamiento_actual/{{ paciente['id'] }}" id="formRecetaPlan">
+            <form method="POST" action="/actualizar_tratamiento_actual/{{ paciente['id'] }}" id="formRecetaPlan" onsubmit="sincronizarQuill()">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
                     <h3 style="margin:0; font-size:15px; color:#2c3e50;">Prescripción Médica y Plan</h3>
-                    <button type="submit" style="background:#10b981; color:white; border:none; padding:8px 20px; border-radius:6px; font-weight:bold; cursor:pointer; font-size:13px;">💾 Guardar Todo</button>
+                    <!-- Botón Guardar Todo vinculado al evento de sincronización -->
+                    <button type="submit" style="background:#10b981; color:white; border:none; padding:8px 20px; border-radius:6px; font-weight:bold; cursor:pointer; font-size:13px;" onclick="sincronizarQuill()">💾 Guardar Todo</button>
                 </div>
 
                 <div style="display:flex; gap:20px; margin-bottom:15px;">
@@ -351,11 +352,11 @@
                 </div>
             </form>
             
-            <!-- Botón Imprimir (Guarda automáticamente y abre la hoja horizontal 2 en 1) -->
-            <form method="POST" action="/generar_plan_pdf/{{ paciente['id'] }}" target="_blank" style="margin-top:15px; border-top:1px solid #eee; padding-top:15px;" onsubmit="document.getElementById('formRecetaPlan').submit();">
+            <!-- Botón Imprimir -->
+            <form method="POST" action="/generar_plan_pdf/{{ paciente['id'] }}" target="_blank" style="margin-top:15px; border-top:1px solid #eee; padding-top:15px;" onsubmit="sincronizarQuill()">
                 <input type="hidden" name="tratamiento" id="print_tratamiento">
                 <input type="hidden" name="indicaciones" id="print_indicaciones">
-                <button type="submit" style="background:#e74c3c; color:white; border:none; padding:12px; border-radius:6px; font-weight:bold; cursor:pointer; width:100%; font-size:14px;" onclick="document.getElementById('print_tratamiento').value = quillTratamiento.root.innerHTML; document.getElementById('print_indicaciones').value = quillIndicaciones.root.innerHTML;">🖨️ Guardar e Imprimir Receta e Indicaciones en una Hoja (Horizontal 2 en 1)</button>
+                <button type="submit" style="background:#e74c3c; color:white; border:none; padding:12px; border-radius:6px; font-weight:bold; cursor:pointer; width:100%; font-size:14px;" onclick="sincronizarQuill(); document.getElementById('print_tratamiento').value = quillTratamiento.root.innerHTML; document.getElementById('print_indicaciones').value = quillIndicaciones.root.innerHTML;">🖨️ Guardar e Imprimir Receta e Indicaciones en una Hoja (Horizontal 2 en 1)</button>
             </form>
         </div>
 
@@ -548,7 +549,7 @@
         </div>
     </div>
 
-    <!-- Script definitivo para poblar Quill y manejar el guardado -->
+    <!-- Script definitivo con carga y guardado garantizado -->
     <script>
         var toolbarOptions = [
             ['bold', 'underline'],
@@ -556,7 +557,6 @@
             ['clean']
         ];
 
-        // 1. Cargamos los datos limpios y seguros directamente desde Flask
         var datosTratamientoOriginal = {{ (paciente['tratamiento_actual'] or '') | tojson | safe }};
         var datosIndicacionesOriginal = {{ (paciente['indicaciones_actual'] or '') | tojson | safe }};
 
@@ -572,7 +572,6 @@
             modules: { toolbar: toolbarOptions }
         });
 
-        // 2. Inyectamos de forma estricta los textos al iniciar la vista
         if (datosTratamientoOriginal) {
             quillTratamiento.clipboard.dangerouslyPasteHTML(datosTratamientoOriginal);
         }
@@ -580,10 +579,14 @@
             quillIndicaciones.clipboard.dangerouslyPasteHTML(datosIndicacionesOriginal);
         }
 
-        // 3. Al enviar el formulario, sincronizamos el HTML de Quill con los inputs ocultos
-        document.getElementById('formRecetaPlan').onsubmit = function() {
+        // Función infalible de sincronización antes de enviar el formulario
+        function sincronizarQuill() {
             document.getElementById('tratamiento_actual').value = quillTratamiento.root.innerHTML;
             document.getElementById('indicaciones_actual').value = quillIndicaciones.root.innerHTML;
+        }
+
+        document.getElementById('formRecetaPlan').onsubmit = function() {
+            sincronizarQuill();
         };
     </script>
 </body>
