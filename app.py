@@ -225,7 +225,12 @@ def nuevo():
         try:
             cedula = request.form.get('cedula', '').strip()
             nombre = request.form.get('nombre', '').strip()
+            
+            # Soporta fecha de nacimiento o edad manual ingresada
             nacimiento = request.form.get('nacimiento', '').strip()
+            if not nacimiento:
+                nacimiento = request.form.get('edad_manual', '').strip()
+
             sexo = request.form.get('sexo', '').strip()
             telefono = request.form.get('telefono', '').strip()
             profesion = request.form.get('profesion', '').strip()
@@ -285,7 +290,7 @@ def nuevo():
                         .container {{ display: flex; width: 100%; height: 96vh; gap: 15px; box-sizing: border-box; }}
                         .columna {{ flex: 1; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; padding: 12px; border: 1.5px dashed #94a3b8; border-radius: 8px; background: #fff; }}
                         .footer-aviso {{ border-top: 1px dashed #e2e8f0; padding-top: 8mm; margin-top: 10px; text-align: center; font-size: 11px; font-weight: bold; color: #e74c3c; letter-spacing: 0.5px; }}
-                        .content {{ background: #f8fafc; padding: 10px; border-radius: 4px; border: 1px solid #e2e8f0; white-space: pre-wrap; font-size: 13px; flex: 1; margin-top: 6px; }}
+                        .content {{ background: #f8fafc; padding: 10px; border-radius: 4px; border: 1px solid #e2e8f0; font-size: 13px; flex: 1; margin-top: 6px; }}
                     </style>
                 </head>
                 <body>
@@ -806,7 +811,6 @@ def generar_plan_pdf(id):
                 padding: 10px;
                 border-radius: 4px;
                 border: 1px solid #e2e8f0;
-                white-space: pre-wrap;
                 font-size: 13px;
                 flex: 1;
                 margin-top: 6px;
