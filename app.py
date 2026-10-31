@@ -803,19 +803,19 @@ def actualizar_tratamiento_actual(id):
 def obtener_membrete_html():
     return f"""
     <div>
-        <div style="display: flex; align-items: center; gap: 14px; padding-bottom: 2px; margin-top: -12px;">
-            <div style="flex-shrink: 0; margin-top: 20px;">
+        <div style="display: flex; align-items: center; gap: 14px; padding-bottom: 2px; margin-top: -10px;">
+            <div style="flex-shrink: 0; margin-top: 10px;">
                 <img src="/static/logo_cardiologia.png" alt="Logo" style="width: 130px; height: auto; object-fit: contain;">
             </div>
-            <div style="flex: 1; font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.2;">
-                <h3 style="margin: 0 0 2px 0; color: #111; font-size: 14px; font-weight: bold; letter-spacing: 0.5px;">DRA. CECILIA MONSERRAT MARECOS VIANA</h3>
-                <p style="margin: 0 0 1px 0; color: #333; font-size: 10px;">Especialista en Cardiología Clínica – Medicina Interna</p>
-                <p style="margin: 0 0 1px 0; color: #333; font-size: 8.5px;">Ecocardiograma Doppler Color, Mapeo de Presión Arterial, Ergometría, Holter 24 horas</p>
-                <p style="margin: 0 0 1px 0; color: #333; font-size: 8.5px;">Miembro Titular de la Sociedad Paraguaya de Cardiología y Cirugía Cardiovascular</p>
-                <p style="margin: 0; color: #333; font-size: 8.5px;">Asunción – Coronel Oviedo, Py.</p>
+            <div style="flex: 1; font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.25;">
+                <h3 style="margin: 0 0 2px 0; color: #111; font-size: 15px; font-weight: bold; letter-spacing: 0.5px;">DRA. CECILIA MONSERRAT MARECOS VIANA</h3>
+                <p style="margin: 0 0 1px 0; color: #333; font-size: 11px;">Especialista en Cardiología Clínica – Medicina Interna</p>
+                <p style="margin: 0 0 1px 0; color: #333; font-size: 9.5px;">Ecocardiograma Doppler Color, Mapeo de Presión Arterial, Ergometría, Holter 24 horas</p>
+                <p style="margin: 0 0 1px 0; color: #333; font-size: 9.5px;">Miembro Titular de la Sociedad Paraguaya de Cardiología y Cirugía Cardiovascular</p>
+                <p style="margin: 0; color: #333; font-size: 9.5px;">Asunción – Coronel Oviedo, Py.</p>
             </div>
         </div>
-        <div style="border-bottom: 2px solid #2c3e50; margin-top: 1px; margin-bottom: 3px;"></div>
+        <div style="border-bottom: 2px solid #2c3e50; margin-top: 2px; margin-bottom: 3px;"></div>
     </div>
     """
 
