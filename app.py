@@ -285,13 +285,15 @@ def nuevo():
                     <style>
                         @page {{
                             size: A4 landscape;
-                            margin: 4mm;
+                            margin: 2mm;
                         }}
                         @media print {{
                             html, body {{
                                 width: 297mm;
-                                height: 210mm;
-                                overflow: hidden;
+                                height: 206mm;
+                                overflow: hidden !important;
+                                page-break-after: avoid;
+                                page-break-before: avoid;
                             }}
                         }}
                         body {{
@@ -304,8 +306,8 @@ def nuevo():
                         .container {{
                             display: flex;
                             width: 100%;
-                            height: 100vh;
-                            gap: 10px;
+                            height: 196mm;
+                            gap: 8px;
                             box-sizing: border-box;
                         }}
                         .columna {{
@@ -314,7 +316,7 @@ def nuevo():
                             flex-direction: column;
                             justify-content: space-between;
                             box-sizing: border-box;
-                            padding: 8px 10px;
+                            padding: 6px 8px;
                             border: 1.5px dashed #94a3b8;
                             border-radius: 6px;
                             background: #fff;
@@ -323,8 +325,8 @@ def nuevo():
                         }}
                         .footer-aviso {{
                             border-top: 1px dashed #cbd5e1;
-                            padding-top: 3mm;
-                            margin-top: 3px;
+                            padding-top: 2mm;
+                            margin-top: 2px;
                             text-align: center;
                             font-size: 10px;
                             font-weight: bold;
@@ -333,13 +335,17 @@ def nuevo():
                         }}
                         .content {{
                             background: #f8fafc;
-                            padding: 6px;
+                            padding: 4px 6px;
                             border-radius: 4px;
                             border: 1px solid #e2e8f0;
-                            font-size: 12px;
+                            font-size: 14px !important;
                             flex: 1;
-                            margin-top: 3px;
+                            margin-top: 2px;
                             overflow: hidden;
+                        }}
+                        .content p, .content div, .content span, .content li, .content strong {{
+                            font-size: 14px !important;
+                            line-height: 1.3 !important;
                         }}
                     </style>
                 </head>
@@ -348,16 +354,16 @@ def nuevo():
                         <div class="columna">
                             <div>
                                 {obtener_membrete_html()}
-                                <div style="background: #cbd5e1; padding: 6px 10px; border-radius: 5px; margin-bottom: 6px; font-weight: bold; color: #0f172a; display: flex; justify-content: space-between; align-items: center; border: 1px solid #94a3b8;">
+                                <div style="background: #cbd5e1; padding: 5px 8px; border-radius: 5px; margin-bottom: 4px; font-weight: bold; color: #0f172a; display: flex; justify-content: space-between; align-items: center; border: 1px solid #94a3b8;">
                                     <div>
-                                        <div style="font-size: 17px; margin-bottom: 2px;"><strong>Paciente:</strong> {nombre}</div>
-                                        <div style="font-size: 15px;"><strong>C.I.:</strong> {cedula}</div>
+                                        <div style="font-size: 16px; margin-bottom: 1px;"><strong>Paciente:</strong> {nombre}</div>
+                                        <div style="font-size: 14px;"><strong>C.I.:</strong> {cedula}</div>
                                     </div>
-                                    <div style="font-size: 12px; text-align: right;">
+                                    <div style="font-size: 11px; text-align: right;">
                                         <strong>Fecha:</strong> {datetime.now().strftime('%d/%m/%Y')}
                                     </div>
                                 </div>
-                                <h4 style="color:#2c3e50; margin:0 0 2px 0; font-size:11px;">RECETA MÉDICA:</h4>
+                                <h4 style="color:#2c3e50; margin:0 0 2px 0; font-size:10px;">RECETA MÉDICA:</h4>
                                 <div class="content">{tratamiento}</div>
                             </div>
                             <div class="footer-aviso">POR FAVOR NO CAMBIAR RECETA MEDICA</div>
@@ -365,16 +371,16 @@ def nuevo():
                         <div class="columna">
                             <div>
                                 {obtener_membrete_html()}
-                                <div style="background: #cbd5e1; padding: 6px 10px; border-radius: 5px; margin-bottom: 6px; font-weight: bold; color: #0f172a; display: flex; justify-content: space-between; align-items: center; border: 1px solid #94a3b8;">
+                                <div style="background: #cbd5e1; padding: 5px 8px; border-radius: 5px; margin-bottom: 4px; font-weight: bold; color: #0f172a; display: flex; justify-content: space-between; align-items: center; border: 1px solid #94a3b8;">
                                     <div>
-                                        <div style="font-size: 17px; margin-bottom: 2px;"><strong>Paciente:</strong> {nombre}</div>
-                                        <div style="font-size: 15px;"><strong>C.I.:</strong> {cedula}</div>
+                                        <div style="font-size: 16px; margin-bottom: 1px;"><strong>Paciente:</strong> {nombre}</div>
+                                        <div style="font-size: 14px;"><strong>C.I.:</strong> {cedula}</div>
                                     </div>
-                                    <div style="font-size: 12px; text-align: right;">
+                                    <div style="font-size: 11px; text-align: right;">
                                         <strong>Fecha:</strong> {datetime.now().strftime('%d/%m/%Y')}
                                     </div>
                                 </div>
-                                <h4 style="color:#2c3e50; margin:0 0 2px 0; font-size:11px;">INDICACIONES MÉDICAS / PLAN:</h4>
+                                <h4 style="color:#2c3e50; margin:0 0 2px 0; font-size:10px;">INDICACIONES MÉDICAS / PLAN:</h4>
                                 <div class="content">{indicaciones}</div>
                             </div>
                             <div class="footer-aviso">POR FAVOR NO CAMBIAR RECETA MEDICA</div>
@@ -823,13 +829,15 @@ def generar_plan_pdf(id):
         <style>
             @page {{
                 size: A4 landscape;
-                margin: 4mm;
+                margin: 2mm;
             }}
             @media print {{
                 html, body {{
                     width: 297mm;
-                    height: 210mm;
-                    overflow: hidden;
+                    height: 206mm;
+                    overflow: hidden !important;
+                    page-break-after: avoid;
+                    page-break-before: avoid;
                 }}
             }}
             body {{
@@ -842,8 +850,8 @@ def generar_plan_pdf(id):
             .container {{
                 display: flex;
                 width: 100%;
-                height: 100vh;
-                gap: 10px;
+                height: 196mm;
+                gap: 8px;
                 box-sizing: border-box;
             }}
             .columna {{
@@ -852,7 +860,7 @@ def generar_plan_pdf(id):
                 flex-direction: column;
                 justify-content: space-between;
                 box-sizing: border-box;
-                padding: 8px 10px;
+                padding: 6px 8px;
                 border: 1.5px dashed #94a3b8;
                 border-radius: 6px;
                 background: #fff;
@@ -861,8 +869,8 @@ def generar_plan_pdf(id):
             }}
             .footer-aviso {{
                 border-top: 1px dashed #cbd5e1;
-                padding-top: 3mm;
-                margin-top: 3px;
+                padding-top: 2mm;
+                margin-top: 2px;
                 text-align: center;
                 font-size: 10px;
                 font-weight: bold;
@@ -871,13 +879,17 @@ def generar_plan_pdf(id):
             }}
             .content {{
                 background: #f8fafc;
-                padding: 6px;
+                padding: 4px 6px;
                 border-radius: 4px;
                 border: 1px solid #e2e8f0;
-                font-size: 12px;
+                font-size: 14px !important;
                 flex: 1;
-                margin-top: 3px;
+                margin-top: 2px;
                 overflow: hidden;
+            }}
+            .content p, .content div, .content span, .content li, .content strong {{
+                font-size: 14px !important;
+                line-height: 1.3 !important;
             }}
         </style>
     </head>
@@ -886,16 +898,16 @@ def generar_plan_pdf(id):
             <div class="columna">
                 <div>
                     {obtener_membrete_html()}
-                    <div style="background: #cbd5e1; padding: 6px 10px; border-radius: 5px; margin-bottom: 6px; font-weight: bold; color: #0f172a; display: flex; justify-content: space-between; align-items: center; border: 1px solid #94a3b8;">
+                    <div style="background: #cbd5e1; padding: 5px 8px; border-radius: 5px; margin-bottom: 4px; font-weight: bold; color: #0f172a; display: flex; justify-content: space-between; align-items: center; border: 1px solid #94a3b8;">
                         <div>
-                            <div style="font-size: 17px; margin-bottom: 2px;"><strong>Paciente:</strong> {p['nombre']}</div>
-                            <div style="font-size: 15px;"><strong>C.I.:</strong> {p['cedula']}</div>
+                            <div style="font-size: 16px; margin-bottom: 1px;"><strong>Paciente:</strong> {p['nombre']}</div>
+                            <div style="font-size: 14px;"><strong>C.I.:</strong> {p['cedula']}</div>
                         </div>
-                        <div style="font-size: 12px; text-align: right;">
+                        <div style="font-size: 11px; text-align: right;">
                             <strong>Fecha:</strong> {datetime.now().strftime('%d/%m/%Y')}
                         </div>
                     </div>
-                    <h4 style="color:#2c3e50; margin:0 0 2px 0; font-size:11px;">RECETA MÉDICA:</h4>
+                    <h4 style="color:#2c3e50; margin:0 0 2px 0; font-size:10px;">RECETA MÉDICA:</h4>
                     <div class="content">{tratamiento}</div>
                 </div>
                 <div class="footer-aviso">
@@ -906,16 +918,16 @@ def generar_plan_pdf(id):
             <div class="columna">
                 <div>
                     {obtener_membrete_html()}
-                    <div style="background: #cbd5e1; padding: 6px 10px; border-radius: 5px; margin-bottom: 6px; font-weight: bold; color: #0f172a; display: flex; justify-content: space-between; align-items: center; border: 1px solid #94a3b8;">
+                    <div style="background: #cbd5e1; padding: 5px 8px; border-radius: 5px; margin-bottom: 4px; font-weight: bold; color: #0f172a; display: flex; justify-content: space-between; align-items: center; border: 1px solid #94a3b8;">
                         <div>
-                            <div style="font-size: 17px; margin-bottom: 2px;"><strong>Paciente:</strong> {p['nombre']}</div>
-                            <div style="font-size: 15px;"><strong>C.I.:</strong> {p['cedula']}</div>
+                            <div style="font-size: 16px; margin-bottom: 1px;"><strong>Paciente:</strong> {p['nombre']}</div>
+                            <div style="font-size: 14px;"><strong>C.I.:</strong> {p['cedula']}</div>
                         </div>
-                        <div style="font-size: 12px; text-align: right;">
+                        <div style="font-size: 11px; text-align: right;">
                             <strong>Fecha:</strong> {datetime.now().strftime('%d/%m/%Y')}
                         </div>
                     </div>
-                    <h4 style="color:#2c3e50; margin:0 0 2px 0; font-size:11px;">INDICACIONES MÉDICAS / PLAN:</h4>
+                    <h4 style="color:#2c3e50; margin:0 0 2px 0; font-size:10px;">INDICACIONES MÉDICAS / PLAN:</h4>
                     <div class="content">{indicaciones}</div>
                 </div>
                 <div class="footer-aviso">
