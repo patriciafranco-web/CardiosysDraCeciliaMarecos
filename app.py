@@ -226,7 +226,6 @@ def nuevo():
             cedula = request.form.get('cedula', '').strip()
             nombre = request.form.get('nombre', '').strip()
             
-            # Soporta fecha de nacimiento o edad manual ingresada
             nacimiento = request.form.get('nacimiento', '').strip()
             if not nacimiento:
                 nacimiento = request.form.get('edad_manual', '').strip()
@@ -298,8 +297,8 @@ def nuevo():
                         <div class="columna">
                             <div>
                                 {obtener_membrete_html()}
-                                <div style="background: #e2e8f0; padding: 5px 8px; border-radius: 4px; margin-bottom: 6px; font-size: 11px; display: flex; justify-content: space-between;">
-                                    <span><strong>Paciente:</strong> {nombre} | <strong>C.I.:</strong> {cedula}</span>
+                                <div style="background: #cbd5e1; padding: 8px 12px; border-radius: 6px; margin-bottom: 10px; font-size: 14px; font-weight: bold; color: #0f172a; display: flex; justify-content: space-between; border: 1px solid #94a3b8;">
+                                    <span><strong>Paciente:</strong> {nombre} &nbsp;&nbsp;|&nbsp;&nbsp; <strong>C.I.:</strong> {cedula}</span>
                                     <span><strong>Fecha:</strong> {datetime.now().strftime('%d/%m/%Y')}</span>
                                 </div>
                                 <h4 style="color:#2c3e50; margin:0 0 4px 0; font-size:12px;">RECETA MÉDICA:</h4>
@@ -310,8 +309,8 @@ def nuevo():
                         <div class="columna">
                             <div>
                                 {obtener_membrete_html()}
-                                <div style="background: #e2e8f0; padding: 5px 8px; border-radius: 4px; margin-bottom: 6px; font-size: 11px; display: flex; justify-content: space-between;">
-                                    <span><strong>Paciente:</strong> {nombre} | <strong>C.I.:</strong> {cedula}</span>
+                                <div style="background: #cbd5e1; padding: 8px 12px; border-radius: 6px; margin-bottom: 10px; font-size: 14px; font-weight: bold; color: #0f172a; display: flex; justify-content: space-between; border: 1px solid #94a3b8;">
+                                    <span><strong>Paciente:</strong> {nombre} &nbsp;&nbsp;|&nbsp;&nbsp; <strong>C.I.:</strong> {cedula}</span>
                                     <span><strong>Fecha:</strong> {datetime.now().strftime('%d/%m/%Y')}</span>
                                 </div>
                                 <h4 style="color:#2c3e50; margin:0 0 4px 0; font-size:12px;">INDICACIONES MÉDICAS / PLAN:</h4>
@@ -726,12 +725,12 @@ def actualizar_tratamiento_actual(id):
 
 def obtener_membrete_html():
     return f"""
-    <div style="border-bottom: 2px solid #2c3e50; padding-bottom: 8px; margin-bottom: 10px; display: flex; align-items: center; gap: 15px;">
-        <div>
-            <img src="/static/logo_cardiologia.png" alt="Logo" style="width: 65px; height: auto; object-fit: contain;">
+    <div style="border-bottom: 2.5px solid #2c3e50; padding-bottom: 10px; margin-bottom: 12px; display: flex; align-items: center; gap: 20px;">
+        <div style="flex-shrink: 0;">
+            <img src="/static/logo_cardiologia.png" alt="Logo" style="width: 110px; height: auto; object-fit: contain;">
         </div>
         <div style="flex: 1; font-family: 'Segoe UI', Arial, sans-serif;">
-            <h3 style="margin: 0 0 2px 0; color: #111; font-size: 13px; font-weight: bold; letter-spacing: 0.5px;">DRA. CECILIA MONSERRAT MARECOS VIANA</h3>
+            <h3 style="margin: 0 0 2px 0; color: #111; font-size: 13.5px; font-weight: bold; letter-spacing: 0.5px;">DRA. CECILIA MONSERRAT MARECOS VIANA</h3>
             <p style="margin: 0 0 1px 0; color: #333; font-size: 10px;">Especialista en Cardiología Clínica – Medicina Interna</p>
             <p style="margin: 0 0 1px 0; color: #333; font-size: 9px;">Ecocardiograma Doppler Color, Mapeo de Presión Arterial, Ergometría, Holter 24 horas</p>
             <p style="margin: 0 0 1px 0; color: #333; font-size: 9px;">Miembro Titular de la Sociedad Paraguaya de Cardiología y Cirugía Cardiovascular</p>
@@ -822,8 +821,8 @@ def generar_plan_pdf(id):
             <div class="columna">
                 <div>
                     {obtener_membrete_html()}
-                    <div style="background: #e2e8f0; padding: 5px 8px; border-radius: 4px; margin-bottom: 6px; font-size: 11px; display: flex; justify-content: space-between;">
-                        <span><strong>Paciente:</strong> {p['nombre']} | <strong>C.I.:</strong> {p['cedula']}</span>
+                    <div style="background: #cbd5e1; padding: 8px 12px; border-radius: 6px; margin-bottom: 10px; font-size: 14px; font-weight: bold; color: #0f172a; display: flex; justify-content: space-between; border: 1px solid #94a3b8;">
+                        <span><strong>Paciente:</strong> {p['nombre']} &nbsp;&nbsp;|&nbsp;&nbsp; <strong>C.I.:</strong> {p['cedula']}</span>
                         <span><strong>Fecha:</strong> {datetime.now().strftime('%d/%m/%Y')}</span>
                     </div>
                     <h4 style="color:#2c3e50; margin:0 0 4px 0; font-size:12px;">RECETA MÉDICA:</h4>
@@ -837,8 +836,8 @@ def generar_plan_pdf(id):
             <div class="columna">
                 <div>
                     {obtener_membrete_html()}
-                    <div style="background: #e2e8f0; padding: 5px 8px; border-radius: 4px; margin-bottom: 6px; font-size: 11px; display: flex; justify-content: space-between;">
-                        <span><strong>Paciente:</strong> {p['nombre']} | <strong>C.I.:</strong> {p['cedula']}</span>
+                    <div style="background: #cbd5e1; padding: 8px 12px; border-radius: 6px; margin-bottom: 10px; font-size: 14px; font-weight: bold; color: #0f172a; display: flex; justify-content: space-between; border: 1px solid #94a3b8;">
+                        <span><strong>Paciente:</strong> {p['nombre']} &nbsp;&nbsp;|&nbsp;&nbsp; <strong>C.I.:</strong> {p['cedula']}</span>
                         <span><strong>Fecha:</strong> {datetime.now().strftime('%d/%m/%Y')}</span>
                     </div>
                     <h4 style="color:#2c3e50; margin:0 0 4px 0; font-size:12px;">INDICACIONES MÉDICAS / PLAN:</h4>
@@ -893,7 +892,7 @@ def imprimir_historial_pdf(h_id):
     </head>
     <body>
         {obtener_membrete_html()}
-        <div style="background: #e2e8f0; padding: 10px 15px; border-radius: 6px; margin-bottom: 20px; font-size: 14px; display: flex; justify-content: space-between;">
+        <div style="background: #cbd5e1; padding: 10px 15px; border-radius: 6px; margin-bottom: 20px; font-size: 14.5px; font-weight: bold; color: #0f172a; display: flex; justify-content: space-between; border: 1px solid #94a3b8;">
             <span><strong>Paciente:</strong> {h['nombre']} &nbsp;&nbsp;|&nbsp;&nbsp; <strong>C.I.:</strong> {h['cedula']}</span>
             <span><strong>Fecha:</strong> {h['fecha']}</span>
         </div>
@@ -969,7 +968,7 @@ def imprimir_multiples_historiales():
     </head>
     <body>
         {obtener_membrete_html()}
-        <div style="background: #e2e8f0; padding: 10px 15px; border-radius: 6px; margin-bottom: 20px; font-size: 14px; display: flex; justify-content: space-between;">
+        <div style="background: #cbd5e1; padding: 10px 15px; border-radius: 6px; margin-bottom: 20px; font-size: 14.5px; font-weight: bold; color: #0f172a; display: flex; justify-content: space-between; border: 1px solid #94a3b8;">
             <span><strong>Paciente:</strong> {p_nombre} &nbsp;&nbsp;|&nbsp;&nbsp; <strong>C.I.:</strong> {p_cedula}</span>
             <span><strong>Reporte de Consultas Seleccionadas</strong></span>
         </div>
