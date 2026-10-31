@@ -737,7 +737,7 @@ def obtener_membrete_html():
     return f"""
     <div style="border-bottom: 2.5px solid #2c3e50; padding-bottom: 10px; margin-bottom: 12px; display: flex; align-items: center; gap: 20px;">
         <div style="flex-shrink: 0;">
-            <img src="/static/logo_cardiologia.png" alt="Logo" style="width: 110px; height: auto; object-fit: contain;">
+            <img src="/static/logo_cardiologia.png" alt="Logo" style="width: 150px; height: auto; object-fit: contain;">
         </div>
         <div style="flex: 1; font-family: 'Segoe UI', Arial, sans-serif;">
             <h3 style="margin: 0 0 2px 0; color: #111; font-size: 13.5px; font-weight: bold; letter-spacing: 0.5px;">DRA. CECILIA MONSERRAT MARECOS VIANA</h3>
