@@ -548,7 +548,7 @@
         </div>
     </div>
 
-    <!-- Script para inicializar Quill y cargar textos previos de forma segura -->
+   <!-- Script para inicializar Quill y cargar textos previos -->
     <script>
         var toolbarOptions = [
             ['bold', 'underline'],
@@ -568,15 +568,15 @@
             modules: { toolbar: toolbarOptions }
         });
 
-        // Cargar datos previos de manera segura mediante tojson
-        var tratamientoPrevio = {{ (paciente['tratamiento_actual'] or '') | tojson | safe }};
-        var indicacionesPrevias = {{ (paciente['indicaciones_actual'] or '') | tojson | safe }};
+        // Inyección directa desde Flask/Jinja asegurando el contenido
+        var textoTratamiento = {{ (paciente['tratamiento_actual'] or '') | tojson | safe }};
+        var textoIndicaciones = {{ (paciente['indicaciones_actual'] or '') | tojson | safe }};
 
-        if (tratamientoPrevio) {
-            quillTratamiento.root.innerHTML = tratamientoPrevio;
+        if (textoTratamiento) {
+            quillTratamiento.root.innerHTML = textoTratamiento;
         }
-        if (indicacionesPrevias) {
-            quillIndicaciones.root.innerHTML = indicacionesPrevias;
+        if (textoIndicaciones) {
+            quillIndicaciones.root.innerHTML = textoIndicaciones;
         }
 
         document.getElementById('formRecetaPlan').onsubmit = function() {
@@ -584,5 +584,3 @@
             document.getElementById('indicaciones_actual').value = quillIndicaciones.root.innerHTML;
         };
     </script>
-</body>
-</html>
