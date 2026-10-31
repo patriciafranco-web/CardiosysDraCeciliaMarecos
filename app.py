@@ -803,7 +803,7 @@ def actualizar_tratamiento_actual(id):
 def obtener_membrete_html():
     return f"""
     <div>
-        <div style="display: flex; align-items: center; gap: 14px; padding-bottom: 2px; margin-top: -10px;">
+        <div style="display: flex; align-items: center; gap: 14px; padding-bottom: 2px; margin-top: -30px;">
             <div style="flex-shrink: 0; margin-top: 10px;">
                 <img src="/static/logo_cardiologia.png" alt="Logo" style="width: 130px; height: auto; object-fit: contain;">
             </div>
@@ -815,7 +815,7 @@ def obtener_membrete_html():
                 <p style="margin: 0; color: #333; font-size: 9.5px;">Asunción – Coronel Oviedo, Py.</p>
             </div>
         </div>
-        <div style="border-bottom: 2px solid #2c3e50; margin-top: 2px; margin-bottom: 3px;"></div>
+        <div style="border-bottom: 2px solid #2c3e50; margin-top: 1px; margin-bottom: 3px;"></div>
     </div>
     """
 
