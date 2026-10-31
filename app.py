@@ -297,9 +297,14 @@ def nuevo():
                         <div class="columna">
                             <div>
                                 {obtener_membrete_html()}
-                                <div style="background: #cbd5e1; padding: 8px 12px; border-radius: 6px; margin-bottom: 10px; font-size: 14px; font-weight: bold; color: #0f172a; display: flex; justify-content: space-between; border: 1px solid #94a3b8;">
-                                    <span><strong>Paciente:</strong> {nombre} &nbsp;&nbsp;|&nbsp;&nbsp; <strong>C.I.:</strong> {cedula}</span>
-                                    <span><strong>Fecha:</strong> {datetime.now().strftime('%d/%m/%Y')}</span>
+                                <div style="background: #cbd5e1; padding: 10px 14px; border-radius: 6px; margin-bottom: 10px; font-weight: bold; color: #0f172a; display: flex; justify-content: space-between; align-items: center; border: 1px solid #94a3b8;">
+                                    <div>
+                                        <div style="font-size: 15px; margin-bottom: 3px;"><strong>Paciente:</strong> {nombre}</div>
+                                        <div style="font-size: 14px;"><strong>C.I.:</strong> {cedula}</div>
+                                    </div>
+                                    <div style="font-size: 13.5px; text-align: right;">
+                                        <strong>Fecha:</strong> {datetime.now().strftime('%d/%m/%Y')}
+                                    </div>
                                 </div>
                                 <h4 style="color:#2c3e50; margin:0 0 4px 0; font-size:12px;">RECETA MÉDICA:</h4>
                                 <div class="content">{tratamiento}</div>
@@ -309,9 +314,14 @@ def nuevo():
                         <div class="columna">
                             <div>
                                 {obtener_membrete_html()}
-                                <div style="background: #cbd5e1; padding: 8px 12px; border-radius: 6px; margin-bottom: 10px; font-size: 14px; font-weight: bold; color: #0f172a; display: flex; justify-content: space-between; border: 1px solid #94a3b8;">
-                                    <span><strong>Paciente:</strong> {nombre} &nbsp;&nbsp;|&nbsp;&nbsp; <strong>C.I.:</strong> {cedula}</span>
-                                    <span><strong>Fecha:</strong> {datetime.now().strftime('%d/%m/%Y')}</span>
+                                <div style="background: #cbd5e1; padding: 10px 14px; border-radius: 6px; margin-bottom: 10px; font-weight: bold; color: #0f172a; display: flex; justify-content: space-between; align-items: center; border: 1px solid #94a3b8;">
+                                    <div>
+                                        <div style="font-size: 15px; margin-bottom: 3px;"><strong>Paciente:</strong> {nombre}</div>
+                                        <div style="font-size: 14px;"><strong>C.I.:</strong> {cedula}</div>
+                                    </div>
+                                    <div style="font-size: 13.5px; text-align: right;">
+                                        <strong>Fecha:</strong> {datetime.now().strftime('%d/%m/%Y')}
+                                    </div>
                                 </div>
                                 <h4 style="color:#2c3e50; margin:0 0 4px 0; font-size:12px;">INDICACIONES MÉDICAS / PLAN:</h4>
                                 <div class="content">{indicaciones}</div>
@@ -821,9 +831,14 @@ def generar_plan_pdf(id):
             <div class="columna">
                 <div>
                     {obtener_membrete_html()}
-                    <div style="background: #cbd5e1; padding: 8px 12px; border-radius: 6px; margin-bottom: 10px; font-size: 14px; font-weight: bold; color: #0f172a; display: flex; justify-content: space-between; border: 1px solid #94a3b8;">
-                        <span><strong>Paciente:</strong> {p['nombre']} &nbsp;&nbsp;|&nbsp;&nbsp; <strong>C.I.:</strong> {p['cedula']}</span>
-                        <span><strong>Fecha:</strong> {datetime.now().strftime('%d/%m/%Y')}</span>
+                    <div style="background: #cbd5e1; padding: 10px 14px; border-radius: 6px; margin-bottom: 10px; font-weight: bold; color: #0f172a; display: flex; justify-content: space-between; align-items: center; border: 1px solid #94a3b8;">
+                        <div>
+                            <div style="font-size: 15px; margin-bottom: 3px;"><strong>Paciente:</strong> {p['nombre']}</div>
+                            <div style="font-size: 14px;"><strong>C.I.:</strong> {p['cedula']}</div>
+                        </div>
+                        <div style="font-size: 13.5px; text-align: right;">
+                            <strong>Fecha:</strong> {datetime.now().strftime('%d/%m/%Y')}
+                        </div>
                     </div>
                     <h4 style="color:#2c3e50; margin:0 0 4px 0; font-size:12px;">RECETA MÉDICA:</h4>
                     <div class="content">{tratamiento}</div>
@@ -836,9 +851,14 @@ def generar_plan_pdf(id):
             <div class="columna">
                 <div>
                     {obtener_membrete_html()}
-                    <div style="background: #cbd5e1; padding: 8px 12px; border-radius: 6px; margin-bottom: 10px; font-size: 14px; font-weight: bold; color: #0f172a; display: flex; justify-content: space-between; border: 1px solid #94a3b8;">
-                        <span><strong>Paciente:</strong> {p['nombre']} &nbsp;&nbsp;|&nbsp;&nbsp; <strong>C.I.:</strong> {p['cedula']}</span>
-                        <span><strong>Fecha:</strong> {datetime.now().strftime('%d/%m/%Y')}</span>
+                    <div style="background: #cbd5e1; padding: 10px 14px; border-radius: 6px; margin-bottom: 10px; font-weight: bold; color: #0f172a; display: flex; justify-content: space-between; align-items: center; border: 1px solid #94a3b8;">
+                        <div>
+                            <div style="font-size: 15px; margin-bottom: 3px;"><strong>Paciente:</strong> {p['nombre']}</div>
+                            <div style="font-size: 14px;"><strong>C.I.:</strong> {p['cedula']}</div>
+                        </div>
+                        <div style="font-size: 13.5px; text-align: right;">
+                            <strong>Fecha:</strong> {datetime.now().strftime('%d/%m/%Y')}
+                        </div>
                     </div>
                     <h4 style="color:#2c3e50; margin:0 0 4px 0; font-size:12px;">INDICACIONES MÉDICAS / PLAN:</h4>
                     <div class="content">{indicaciones}</div>
@@ -892,9 +912,14 @@ def imprimir_historial_pdf(h_id):
     </head>
     <body>
         {obtener_membrete_html()}
-        <div style="background: #cbd5e1; padding: 10px 15px; border-radius: 6px; margin-bottom: 20px; font-size: 14.5px; font-weight: bold; color: #0f172a; display: flex; justify-content: space-between; border: 1px solid #94a3b8;">
-            <span><strong>Paciente:</strong> {h['nombre']} &nbsp;&nbsp;|&nbsp;&nbsp; <strong>C.I.:</strong> {h['cedula']}</span>
-            <span><strong>Fecha:</strong> {h['fecha']}</span>
+        <div style="background: #cbd5e1; padding: 10px 15px; border-radius: 6px; margin-bottom: 20px; font-weight: bold; color: #0f172a; display: flex; justify-content: space-between; align-items: center; border: 1px solid #94a3b8;">
+            <div>
+                <div style="font-size: 15px; margin-bottom: 3px;"><strong>Paciente:</strong> {h['nombre']}</div>
+                <div style="font-size: 14px;"><strong>C.I.:</strong> {h['cedula']}</div>
+            </div>
+            <div style="font-size: 13.5px; text-align: right;">
+                <strong>Fecha:</strong> {h['fecha']}
+            </div>
         </div>
         <div class="box">
             <p style="margin:0 0 10px 0;"><b>Evolución:</b><br>{texto_evolucion}</p>
@@ -968,13 +993,18 @@ def imprimir_multiples_historiales():
     </head>
     <body>
         {obtener_membrete_html()}
-        <div style="background: #cbd5e1; padding: 10px 15px; border-radius: 6px; margin-bottom: 20px; font-size: 14.5px; font-weight: bold; color: #0f172a; display: flex; justify-content: space-between; border: 1px solid #94a3b8;">
-            <span><strong>Paciente:</strong> {p_nombre} &nbsp;&nbsp;|&nbsp;&nbsp; <strong>C.I.:</strong> {p_cedula}</span>
-            <span><strong>Reporte de Consultas Seleccionadas</strong></span>
+        <div style="background: #cbd5e1; padding: 10px 15px; border-radius: 6px; margin-bottom: 20px; font-weight: bold; color: #0f172a; display: flex; justify-content: space-between; align-items: center; border: 1px solid #94a3b8;">
+            <div>
+                <div style="font-size: 15px; margin-bottom: 3px;"><strong>Paciente:</strong> {p_nombre}</div>
+                <div style="font-size: 14px;"><strong>C.I.:</strong> {p_cedula}</div>
+            </div>
+            <div style="font-size: 13.5px; text-align: right;">
+                <strong>Reporte de Consultas Seleccionadas</strong>
+            </div>
         </div>
         {consultas_html}
         <script>
-            window.onload = function() {{ window.print(); }}
+            window.onload = function() {{ window.print(); }};
         </script>
     </body>
     </html>
