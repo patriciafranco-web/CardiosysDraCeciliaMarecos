@@ -285,7 +285,7 @@ def nuevo():
                     <style>
                         @page {{
                             size: A4 landscape;
-                            margin: 1mm;
+                            margin: 2mm;
                         }}
                         @media print {{
                             html, body {{
@@ -306,8 +306,8 @@ def nuevo():
                         .container {{
                             display: flex;
                             width: 100%;
-                            height: 198mm;
-                            gap: 6px;
+                            height: 196mm;
+                            gap: 8px;
                             box-sizing: border-box;
                         }}
                         .columna {{
@@ -316,7 +316,7 @@ def nuevo():
                             flex-direction: column;
                             justify-content: space-between;
                             box-sizing: border-box;
-                            padding: 0px 8px 4px 8px;
+                            padding: 2px 8px 4px 8px;
                             border: 1.5px dashed #94a3b8;
                             border-radius: 6px;
                             background: #fff;
@@ -802,17 +802,20 @@ def actualizar_tratamiento_actual(id):
 
 def obtener_membrete_html():
     return f"""
-    <div style="position: relative; border-bottom: 2px solid #2c3e50; padding-bottom: 0px; margin-bottom: 2px; margin-top: -35px; display: flex; align-items: center; gap: 12px; height: 48px; overflow: hidden;">
-        <div style="flex-shrink: 0; margin-top: -6px;">
-            <img src="/static/logo_cardiologia.png" alt="Logo" style="width: 100px; height: auto; object-fit: contain;">
+    <div>
+        <div style="display: flex; align-items: center; gap: 12px; padding-bottom: 2px;">
+            <div style="flex-shrink: 0;">
+                <img src="/static/logo_cardiologia.png" alt="Logo" style="width: 110px; height: auto; object-fit: contain;">
+            </div>
+            <div style="flex: 1; font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.1;">
+                <h3 style="margin: 0 0 1px 0; color: #111; font-size: 12px; font-weight: bold; letter-spacing: 0.5px;">DRA. CECILIA MONSERRAT MARECOS VIANA</h3>
+                <p style="margin: 0 0 1px 0; color: #333; font-size: 8.5px;">Especialista en Cardiología Clínica – Medicina Interna</p>
+                <p style="margin: 0 0 1px 0; color: #333; font-size: 7.5px;">Ecocardiograma Doppler Color, Mapeo de Presión Arterial, Ergometría, Holter 24 horas</p>
+                <p style="margin: 0 0 1px 0; color: #333; font-size: 7.5px;">Miembro Titular de la Sociedad Paraguaya de Cardiología y Cirugía Cardiovascular</p>
+                <p style="margin: 0; color: #333; font-size: 7.5px;">Asunción – Coronel Oviedo, Py.</p>
+            </div>
         </div>
-        <div style="flex: 1; font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.0;">
-            <h3 style="margin: 0 0 1px 0; color: #111; font-size: 11px; font-weight: bold; letter-spacing: 0.5px;">DRA. CECILIA MONSERRAT MARECOS VIANA</h3>
-            <p style="margin: 0 0 1px 0; color: #333; font-size: 8px;">Especialista en Cardiología Clínica – Medicina Interna</p>
-            <p style="margin: 0 0 1px 0; color: #333; font-size: 7px;">Ecocardiograma Doppler Color, Mapeo de Presión Arterial, Ergometría, Holter 24 horas</p>
-            <p style="margin: 0 0 1px 0; color: #333; font-size: 7px;">Miembro Titular de la Sociedad Paraguaya de Cardiología y Cirugía Cardiovascular</p>
-            <p style="margin: 0; color: #333; font-size: 7px;">Asunción – Coronel Oviedo, Py.</p>
-        </div>
+        <div style="border-bottom: 2px solid #2c3e50; margin-top: -6px; margin-bottom: 4px;"></div>
     </div>
     """
 
@@ -839,7 +842,7 @@ def generar_plan_pdf(id):
         <style>
             @page {{
                 size: A4 landscape;
-                margin: 1mm;
+                margin: 2mm;
             }}
             @media print {{
                 html, body {{
@@ -860,8 +863,8 @@ def generar_plan_pdf(id):
             .container {{
                 display: flex;
                 width: 100%;
-                height: 198mm;
-                gap: 6px;
+                height: 196mm;
+                gap: 8px;
                 box-sizing: border-box;
             }}
             .columna {{
@@ -870,7 +873,7 @@ def generar_plan_pdf(id):
                 flex-direction: column;
                 justify-content: space-between;
                 box-sizing: border-box;
-                padding: 0px 8px 4px 8px;
+                padding: 2px 8px 4px 8px;
                 border: 1.5px dashed #94a3b8;
                 border-radius: 6px;
                 background: #fff;
