@@ -3,6 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <title>Nuevo Paciente y Consulta - CardioSys</title>
+    <!-- Incluimos Quill.js para el editor de texto enriquecido -->
+    <link href="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.min.js"></script>
+    <style>
+        .ql-editor {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            font-size: 13px;
+            background: #fdfefe;
+            min-height: 120px;
+        }
+    </style>
     <script>
     function calcularAntropometria() {
         let p = parseFloat(document.getElementById('form_peso').value);
@@ -20,8 +31,8 @@
 
     function calcularEdadDesdeNacimiento() {
         let nacStr = document.getElementById('input_nacimiento').value.trim();
+        let inputEdad = document.getElementById('input_edad_txt');
         if (!nacStr) {
-            document.getElementById('input_edad_txt').value = '';
             return;
         }
         let partes = nacStr.split(/[-/]/);
@@ -40,9 +51,7 @@
             if (m < 0 || (m === 0 && hoy.getDate() < fNac.getDate())) {
                 edad--;
             }
-            document.getElementById('input_edad_txt').value = edad >= 0 ? edad + " años" : "";
-        } else {
-            document.getElementById('input_edad_txt').value = '';
+            inputEdad.value = edad >= 0 ? edad + " años" : "";
         }
     }
     </script>
@@ -76,7 +85,7 @@
         <div style="background: white; padding: 35px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); max-width: 900px; margin: auto;">
             <h2 style="margin-top: 0; color: #1e293b; border-bottom: 2px solid #e2e8f0; padding-bottom: 12px; font-size: 22px;">👤 Registrar Nuevo Paciente e Inicio de Consulta</h2>
             
-            <form method="POST" action="/nuevo">
+            <form method="POST" action="/nuevo" id="pacienteForm">
                 <!-- SECCIÓN 1: DATOS PERSONALES -->
                 <h4 style="color: #334155; margin-bottom: 12px; font-size: 15px; background: #f8fafc; padding: 8px 12px; border-left: 4px solid #3b82f6; border-radius: 4px;">1. Datos Personales del Paciente</h4>
                 
@@ -97,8 +106,8 @@
                         <input type="text" id="input_nacimiento" name="nacimiento" placeholder="AAAA-MM-DD o DD/MM/AAAA" oninput="calcularEdadDesdeNacimiento()" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 13px;">
                     </div>
                     <div style="flex: 1;">
-                        <label style="font-size: 12px; font-weight: bold; color: #475569; display: block; margin-bottom: 5px;">Edad calculada</label>
-                        <input type="text" id="input_edad_txt" placeholder="Auto" readonly style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 13px; background: #f8fafc;">
+                        <label style="font-size: 12px; font-weight: bold; color: #475569; display: block; margin-bottom: 5px;">Edad (Editable o Auto)</label>
+                        <input type="text" id="input_edad_txt" name="edad_manual" placeholder="Ej: 54 años" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 13px; background: white;">
                     </div>
                     <div style="flex: 1;">
                         <label style="font-size: 12px; font-weight: bold; color: #475569; display: block; margin-bottom: 5px;">Sexo</label>
@@ -167,17 +176,21 @@
                     <div style="flex: 1;"><label style="font-size: 11px; font-weight: bold;">BSA m²:</label><input type="text" id="form_bsa" placeholder="Auto" style="width: 100%; padding: 8px; margin-top: 4px; border: 1px solid #cbd5e1; border-radius: 4px; background: #f8fafc;" readonly></div>
                 </div>
 
-                <!-- SECCIÓN 3: PRESCRIPCIÓN MÉDICA Y PLAN -->
+                <!-- SECCIÓN 3: PRESCRIPCIÓN MÉDICA Y PLAN CON EDITORES ENRIQUECIDOS -->
                 <div style="background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-top: 4px solid #e74c3c; margin-bottom: 25px;">
                     <h3 style="margin: 0; font-size: 15px; color: #2c3e50; margin-bottom: 15px;">Prescripción Médica y Plan</h3>
                     <div style="display: flex; gap: 20px; margin-bottom: 15px;">
                         <div style="flex: 1;">
                             <label style="font-weight: bold; font-size: 13px; color: #2c3e50; display: block; margin-bottom: 5px;">💊 Receta (Medicamentos):</label>
-                            <textarea name="tratamiento_actual" rows="6" placeholder="Escriba aquí los medicamentos y dosis..." style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-family: inherit; font-size: 13px; background: #fdfefe;"></textarea>
+                            <!-- Contenedor del Editor Quill -->
+                            <div id="editor-tratamiento" style="height: 150px; background: #fff; border-radius: 0 0 6px 6px;"></div>
+                            <input type="hidden" name="tratamiento_actual" id="tratamiento_actual">
                         </div>
                         <div style="flex: 1;">
                             <label style="font-weight: bold; font-size: 13px; color: #2c3e50; display: block; margin-bottom: 5px;">📋 Indicaciones / Plan:</label>
-                            <textarea name="indicaciones_actual" rows="6" placeholder="Escriba aquí las indicaciones generales y estilo de vida..." style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-family: inherit; font-size: 13px; background: #fdfefe;"></textarea>
+                            <!-- Contenedor del Editor Quill -->
+                            <div id="editor-indicaciones" style="height: 150px; background: #fff; border-radius: 0 0 6px 6px;"></div>
+                            <input type="hidden" name="indicaciones_actual" id="indicaciones_actual">
                         </div>
                     </div>
                 </div>
@@ -191,5 +204,37 @@
             </form>
         </div>
     </div>
+
+    <!-- Script para inicializar Quill y capturar los textos enriquecidos al enviar -->
+    <script>
+        var quillTratamiento = new Quill('#editor-tratamiento', {
+            theme: 'snow',
+            placeholder: 'Escriba aquí los medicamentos y dosis...',
+            modules: {
+                toolbar: [
+                    ['bold', 'underline'],
+                    [{ 'size': ['small', false, 'large', 'huge'] }],
+                    ['clean']
+                ]
+            }
+        });
+
+        var quillIndicaciones = new Quill('#editor-indicaciones', {
+            theme: 'snow',
+            placeholder: 'Escriba aquí las indicaciones generales y estilo de vida...',
+            modules: {
+                toolbar: [
+                    ['bold', 'underline'],
+                    [{ 'size': ['small', false, 'large', 'huge'] }],
+                    ['clean']
+                ]
+            }
+        });
+
+        document.getElementById('pacienteForm').onsubmit = function() {
+            document.getElementById('tratamiento_actual').value = quillTratamiento.root.innerHTML;
+            document.getElementById('indicaciones_actual').value = quillIndicaciones.root.innerHTML;
+        };
+    </script>
 </body>
 </html>
