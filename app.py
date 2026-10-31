@@ -802,16 +802,16 @@ def actualizar_tratamiento_actual(id):
 
 def obtener_membrete_html():
     return f"""
-    <div style="border-bottom: 2px solid #2c3e50; padding-bottom: 1px; margin-bottom: 1px; display: flex; align-items: center; gap: 15px;">
+    <div style="border-bottom: 2px solid #2c3e50; padding-bottom: 0px; margin-bottom: 2px; margin-top: -12px; display: flex; align-items: center; gap: 12px;">
         <div style="flex-shrink: 0;">
-            <img src="/static/logo_cardiologia.png" alt="Logo" style="width: 130px; height: auto; object-fit: contain;">
+            <img src="/static/logo_cardiologia.png" alt="Logo" style="width: 115px; height: auto; object-fit: contain;">
         </div>
         <div style="flex: 1; font-family: 'Segoe UI', Arial, sans-serif;">
-            <h3 style="margin: 0 0 1px 0; color: #111; font-size: 13px; font-weight: bold; letter-spacing: 0.5px;">DRA. CECILIA MONSERRAT MARECOS VIANA</h3>
-            <p style="margin: 0 0 1px 0; color: #333; font-size: 9.5px;">Especialista en Cardiología Clínica – Medicina Interna</p>
-            <p style="margin: 0 0 1px 0; color: #333; font-size: 8.5px;">Ecocardiograma Doppler Color, Mapeo de Presión Arterial, Ergometría, Holter 24 horas</p>
-            <p style="margin: 0 0 1px 0; color: #333; font-size: 8.5px;">Miembro Titular de la Sociedad Paraguaya de Cardiología y Cirugía Cardiovascular</p>
-            <p style="margin: 0; color: #333; font-size: 8.5px;">Asunción – Coronel Oviedo, Py.</p>
+            <h3 style="margin: 0 0 1px 0; color: #111; font-size: 12.5px; font-weight: bold; letter-spacing: 0.5px;">DRA. CECILIA MONSERRAT MARECOS VIANA</h3>
+            <p style="margin: 0 0 1px 0; color: #333; font-size: 9px;">Especialista en Cardiología Clínica – Medicina Interna</p>
+            <p style="margin: 0 0 1px 0; color: #333; font-size: 8px;">Ecocardiograma Doppler Color, Mapeo de Presión Arterial, Ergometría, Holter 24 horas</p>
+            <p style="margin: 0 0 1px 0; color: #333; font-size: 8px;">Miembro Titular de la Sociedad Paraguaya de Cardiología y Cirugía Cardiovascular</p>
+            <p style="margin: 0; color: #333; font-size: 8px;">Asunción – Coronel Oviedo, Py.</p>
         </div>
     </div>
     """
