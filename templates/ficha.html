@@ -548,7 +548,7 @@
         </div>
     </div>
 
-    <!-- Script para inicializar Quill y cargar textos previos -->
+    <!-- Script para inicializar Quill y cargar textos previos de forma segura -->
     <script>
         var toolbarOptions = [
             ['bold', 'underline'],
@@ -568,9 +568,16 @@
             modules: { toolbar: toolbarOptions }
         });
 
-        // Cargar datos previos si existen
-        quillTratamiento.root.innerHTML = `{{ paciente['tratamiento_actual'] | safe }}`;
-        quillIndicaciones.root.innerHTML = `{{ paciente['indicaciones_actual'] | safe }}`;
+        // Cargar datos previos de manera segura mediante tojson
+        var tratamientoPrevio = {{ (paciente['tratamiento_actual'] or '') | tojson | safe }};
+        var indicacionesPrevias = {{ (paciente['indicaciones_actual'] or '') | tojson | safe }};
+
+        if (tratamientoPrevio) {
+            quillTratamiento.root.innerHTML = tratamientoPrevio;
+        }
+        if (indicacionesPrevias) {
+            quillIndicaciones.root.innerHTML = indicacionesPrevias;
+        }
 
         document.getElementById('formRecetaPlan').onsubmit = function() {
             document.getElementById('tratamiento_actual').value = quillTratamiento.root.innerHTML;
