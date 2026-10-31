@@ -338,14 +338,21 @@ def nuevo():
                             padding: 4px 6px;
                             border-radius: 4px;
                             border: 1px solid #e2e8f0;
-                            font-size: 14px !important;
+                            font-size: 20px !important;
                             flex: 1;
                             margin-top: 2px;
                             overflow: hidden;
                         }}
-                        .content p, .content div, .content span, .content li, .content strong {{
-                            font-size: 14px !important;
-                            line-height: 1.3 !important;
+                        /* Forzar tamaño de letra grande y legible, anulando estilos inline de Quill */
+                        .content p, .content div, .content span, .content li, .content strong, .content em {{
+                            font-size: 20px !important;
+                            line-height: 1.35 !important;
+                        }}
+                        .content .ql-size-huge {{
+                            font-size: 26px !important;
+                        }}
+                        .content .ql-size-large {{
+                            font-size: 22px !important;
                         }}
                     </style>
                 </head>
@@ -882,14 +889,20 @@ def generar_plan_pdf(id):
                 padding: 4px 6px;
                 border-radius: 4px;
                 border: 1px solid #e2e8f0;
-                font-size: 14px !important;
+                font-size: 20px !important;
                 flex: 1;
                 margin-top: 2px;
                 overflow: hidden;
             }}
-            .content p, .content div, .content span, .content li, .content strong {{
-                font-size: 14px !important;
-                line-height: 1.3 !important;
+            .content p, .content div, .content span, .content li, .content strong, .content em {{
+                font-size: 20px !important;
+                line-height: 1.35 !important;
+            }}
+            .content .ql-size-huge {{
+                font-size: 26px !important;
+            }}
+            .content .ql-size-large {{
+                font-size: 22px !important;
             }}
         </style>
     </head>
