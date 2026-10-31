@@ -4,6 +4,17 @@
     <meta charset="UTF-8">
     <title>Ficha del Paciente - CardioSys</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Incluimos Quill.js para el editor de texto enriquecido -->
+    <link href="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.snow.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/quill@1.3.7/dist/quill.min.js"></script>
+    <style>
+        .ql-editor {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            font-size: 13px;
+            background: #fdfefe;
+            min-height: 120px;
+        }
+    </style>
     <script>
     function calcularAntropometria() {
         let p = parseFloat(document.getElementById('form_peso').value);
@@ -315,9 +326,9 @@
             </form>
         </div>
 
-        <!-- 2. PRESCRIPCIÓN MÉDICA Y PLAN -->
+        <!-- 2. PRESCRIPCIÓN MÉDICA Y PLAN CON EDITORES ENRIQUECIDOS -->
         <div style="background:white; padding:25px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.05); border-top:4px solid #e74c3c; margin-bottom:25px;">
-            <form method="POST" action="/actualizar_tratamiento_actual/{{ paciente['id'] }}">
+            <form method="POST" action="/actualizar_tratamiento_actual/{{ paciente['id'] }}" id="formRecetaPlan">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
                     <h3 style="margin:0; font-size:15px; color:#2c3e50;">Prescripción Médica y Plan</h3>
                     <button type="submit" style="background:#10b981; color:white; border:none; padding:8px 20px; border-radius:6px; font-weight:bold; cursor:pointer; font-size:13px;">💾 Guardar Todo</button>
@@ -327,22 +338,24 @@
                     <!-- Receta Médica -->
                     <div style="flex:1;">
                         <label style="font-weight:bold; font-size:13px; color:#2c3e50; display:block; margin-bottom:5px;">💊 Receta (Medicamentos):</label>
-                        <textarea name="tratamiento_actual" rows="6" placeholder="Escriba aquí los medicamentos y dosis..." style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; box-sizing:border-box; font-family:inherit; font-size:13px; background:#fdfefe;">{{ paciente['tratamiento_actual'] or '' }}</textarea>
+                        <div id="editor-tratamiento" style="height: 150px; background: #fff; border-radius: 0 0 6px 6px;"></div>
+                        <input type="hidden" name="tratamiento_actual" id="tratamiento_actual">
                     </div>
 
                     <!-- Indicaciones -->
                     <div style="flex:1;">
                         <label style="font-weight:bold; font-size:13px; color:#2c3e50; display:block; margin-bottom:5px;">📋 Indicaciones / Plan:</label>
-                        <textarea name="indicaciones_actual" rows="6" placeholder="Escriba aquí las indicaciones generales y estilo de vida..." style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px; box-sizing:border-box; font-family:inherit; font-size:13px; background:#fdfefe;">{{ paciente['indicaciones_actual'] or '' }}</textarea>
+                        <div id="editor-indicaciones" style="height: 150px; background: #fff; border-radius: 0 0 6px 6px;"></div>
+                        <input type="hidden" name="indicaciones_actual" id="indicaciones_actual">
                     </div>
                 </div>
             </form>
             
-            <!-- ÚNICO BOTÓN DE IMPRESIÓN 2 EN 1 (Horizontal) -->
-            <form method="POST" action="/generar_plan_pdf/{{ paciente['id'] }}" target="_blank" style="margin-top:15px; border-top:1px solid #eee; padding-top:15px;">
-                <input type="hidden" name="tratamiento" value="{{ paciente['tratamiento_actual'] or '' }}">
-                <input type="hidden" name="indicaciones" value="{{ paciente['indicaciones_actual'] or '' }}">
-                <button type="submit" style="background:#e74c3c; color:white; border:none; padding:12px; border-radius:6px; font-weight:bold; cursor:pointer; width:100%; font-size:14px;">🖨️ Imprimir Receta e Indicaciones en una Hoja (Horizontal 2 en 1)</button>
+            <!-- Botón Imprimir (Guarda automáticamente y abre la hoja horizontal 2 en 1) -->
+            <form method="POST" action="/generar_plan_pdf/{{ paciente['id'] }}" target="_blank" style="margin-top:15px; border-top:1px solid #eee; padding-top:15px;" onsubmit="document.getElementById('formRecetaPlan').submit();">
+                <input type="hidden" name="tratamiento" id="print_tratamiento">
+                <input type="hidden" name="indicaciones" id="print_indicaciones">
+                <button type="submit" style="background:#e74c3c; color:white; border:none; padding:12px; border-radius:6px; font-weight:bold; cursor:pointer; width:100%; font-size:14px;" onclick="document.getElementById('print_tratamiento').value = quillTratamiento.root.innerHTML; document.getElementById('print_indicaciones').value = quillIndicaciones.root.innerHTML;">🖨️ Guardar e Imprimir Receta e Indicaciones en una Hoja (Horizontal 2 en 1)</button>
             </form>
         </div>
 
@@ -533,3 +546,36 @@
 
             </div>
         </div>
+    </div>
+
+    <!-- Script para inicializar Quill y cargar textos previos -->
+    <script>
+        var toolbarOptions = [
+            ['bold', 'underline'],
+            [{ 'size': ['small', false, 'large', 'huge'] }],
+            ['clean']
+        ];
+
+        var quillTratamiento = new Quill('#editor-tratamiento', {
+            theme: 'snow',
+            placeholder: 'Escriba aquí los medicamentos y dosis...',
+            modules: { toolbar: toolbarOptions }
+        });
+
+        var quillIndicaciones = new Quill('#editor-indicaciones', {
+            theme: 'snow',
+            placeholder: 'Escriba aquí las indicaciones generales y estilo de vida...',
+            modules: { toolbar: toolbarOptions }
+        });
+
+        // Cargar datos previos si existen
+        quillTratamiento.root.innerHTML = `{{ paciente['tratamiento_actual'] | safe }}`;
+        quillIndicaciones.root.innerHTML = `{{ paciente['indicaciones_actual'] | safe }}`;
+
+        document.getElementById('formRecetaPlan').onsubmit = function() {
+            document.getElementById('tratamiento_actual').value = quillTratamiento.root.innerHTML;
+            document.getElementById('indicaciones_actual').value = quillIndicaciones.root.innerHTML;
+        };
+    </script>
+</body>
+</html>
