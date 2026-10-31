@@ -285,7 +285,7 @@ def nuevo():
                     <style>
                         @page {{
                             size: A4 landscape;
-                            margin: 2mm;
+                            margin: 1mm;
                         }}
                         @media print {{
                             html, body {{
@@ -306,8 +306,8 @@ def nuevo():
                         .container {{
                             display: flex;
                             width: 100%;
-                            height: 196mm;
-                            gap: 8px;
+                            height: 198mm;
+                            gap: 6px;
                             box-sizing: border-box;
                         }}
                         .columna {{
@@ -316,7 +316,7 @@ def nuevo():
                             flex-direction: column;
                             justify-content: space-between;
                             box-sizing: border-box;
-                            padding: 2px 8px 4px 8px;
+                            padding: 0px 8px 4px 8px;
                             border: 1.5px dashed #94a3b8;
                             border-radius: 6px;
                             background: #fff;
@@ -344,9 +344,15 @@ def nuevo():
                             margin-top: 2px;
                             overflow: hidden;
                         }}
-                        /* Permitir que Quill dicte el tamaño según lo elegido por la doctora */
+                        /* Permitir que Quill dicte el tamaño y estilos de la doctora (negritas, cursivas, etc.) */
                         .content p, .content div, .content span, .content li, .content strong, .content em {{
                             line-height: 1.3 !important;
+                        }}
+                        .content strong, .content b {{
+                            font-weight: bold !important;
+                        }}
+                        .content em, .content i {{
+                            font-style: italic !important;
                         }}
                         .content .ql-size-large, .content span.ql-size-large, .content p.ql-size-large {{
                             font-size: 21px !important;
@@ -364,12 +370,12 @@ def nuevo():
                         <div class="columna">
                             <div>
                                 {obtener_membrete_html()}
-                                <div style="background: #cbd5e1; padding: 4px 8px; border-radius: 5px; margin-bottom: 2px; font-weight: bold; color: #0f172a; display: flex; justify-content: space-between; align-items: center; border: 1px solid #94a3b8;">
+                                <div style="background: #cbd5e1; padding: 3px 6px; border-radius: 4px; margin-bottom: 2px; font-weight: bold; color: #0f172a; display: flex; justify-content: space-between; align-items: center; border: 1px solid #94a3b8;">
                                     <div>
-                                        <div style="font-size: 16px; margin-bottom: 1px;"><strong>Paciente:</strong> {nombre}</div>
-                                        <div style="font-size: 14px;"><strong>C.I.:</strong> {cedula}</div>
+                                        <div style="font-size: 13.5px; margin-bottom: 1px;"><strong>Paciente:</strong> {nombre}</div>
+                                        <div style="font-size: 12px;"><strong>C.I.:</strong> {cedula}</div>
                                     </div>
-                                    <div style="font-size: 11px; text-align: right;">
+                                    <div style="font-size: 10px; text-align: right;">
                                         <strong>Fecha:</strong> {datetime.now().strftime('%d/%m/%Y')}
                                     </div>
                                 </div>
@@ -381,12 +387,12 @@ def nuevo():
                         <div class="columna">
                             <div>
                                 {obtener_membrete_html()}
-                                <div style="background: #cbd5e1; padding: 4px 8px; border-radius: 5px; margin-bottom: 2px; font-weight: bold; color: #0f172a; display: flex; justify-content: space-between; align-items: center; border: 1px solid #94a3b8;">
+                                <div style="background: #cbd5e1; padding: 3px 6px; border-radius: 4px; margin-bottom: 2px; font-weight: bold; color: #0f172a; display: flex; justify-content: space-between; align-items: center; border: 1px solid #94a3b8;">
                                     <div>
-                                        <div style="font-size: 16px; margin-bottom: 1px;"><strong>Paciente:</strong> {nombre}</div>
-                                        <div style="font-size: 14px;"><strong>C.I.:</strong> {cedula}</div>
+                                        <div style="font-size: 13.5px; margin-bottom: 1px;"><strong>Paciente:</strong> {nombre}</div>
+                                        <div style="font-size: 12px;"><strong>C.I.:</strong> {cedula}</div>
                                     </div>
-                                    <div style="font-size: 11px; text-align: right;">
+                                    <div style="font-size: 10px; text-align: right;">
                                         <strong>Fecha:</strong> {datetime.now().strftime('%d/%m/%Y')}
                                     </div>
                                 </div>
@@ -803,19 +809,19 @@ def actualizar_tratamiento_actual(id):
 def obtener_membrete_html():
     return f"""
     <div>
-        <div style="display: flex; align-items: center; gap: 14px; padding-bottom: 2px; margin-top: -30px;">
-            <div style="flex-shrink: 0; margin-top: 10px;">
-                <img src="/static/logo_cardiologia.png" alt="Logo" style="width: 130px; height: auto; object-fit: contain;">
+        <div style="display: flex; align-items: center; gap: 10px; padding-bottom: 0px; margin-top: -30px;">
+            <div style="flex-shrink: 0; margin-top: -2px;">
+                <img src="/static/logo_cardiologia.png" alt="Logo" style="width: 115px; height: auto; object-fit: contain;">
             </div>
-            <div style="flex: 1; font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.25;">
-                <h3 style="margin: 0 0 2px 0; color: #111; font-size: 15px; font-weight: bold; letter-spacing: 0.5px;">DRA. CECILIA MONSERRAT MARECOS VIANA</h3>
-                <p style="margin: 0 0 1px 0; color: #333; font-size: 11px;">Especialista en Cardiología Clínica – Medicina Interna</p>
-                <p style="margin: 0 0 1px 0; color: #333; font-size: 9.5px;">Ecocardiograma Doppler Color, Mapeo de Presión Arterial, Ergometría, Holter 24 horas</p>
-                <p style="margin: 0 0 1px 0; color: #333; font-size: 9.5px;">Miembro Titular de la Sociedad Paraguaya de Cardiología y Cirugía Cardiovascular</p>
-                <p style="margin: 0; color: #333; font-size: 9.5px;">Asunción – Coronel Oviedo, Py.</p>
+            <div style="flex: 1; font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.0;">
+                <h3 style="margin: 0 0 1px 0; color: #111; font-size: 12px; font-weight: bold; letter-spacing: 0.5px;">DRA. CECILIA MONSERRAT MARECOS VIANA</h3>
+                <p style="margin: 0 0 1px 0; color: #333; font-size: 8.5px;">Especialista en Cardiología Clínica – Medicina Interna</p>
+                <p style="margin: 0 0 1px 0; color: #333; font-size: 7.5px;">Ecocardiograma Doppler Color, Mapeo de Presión Arterial, Ergometría, Holter 24 horas</p>
+                <p style="margin: 0 0 1px 0; color: #333; font-size: 7.5px;">Miembro Titular de la Sociedad Paraguaya de Cardiología y Cirugía Cardiovascular</p>
+                <p style="margin: 0; color: #333; font-size: 7.5px;">Asunción – Coronel Oviedo, Py.</p>
             </div>
         </div>
-        <div style="border-bottom: 2px solid #2c3e50; margin-top: 1px; margin-bottom: 3px;"></div>
+        <div style="border-bottom: 2px solid #2c3e50; margin-top: -2px; margin-bottom: 2px;"></div>
     </div>
     """
 
@@ -842,7 +848,7 @@ def generar_plan_pdf(id):
         <style>
             @page {{
                 size: A4 landscape;
-                margin: 2mm;
+                margin: 1mm;
             }}
             @media print {{
                 html, body {{
@@ -863,8 +869,8 @@ def generar_plan_pdf(id):
             .container {{
                 display: flex;
                 width: 100%;
-                height: 196mm;
-                gap: 8px;
+                height: 198mm;
+                gap: 6px;
                 box-sizing: border-box;
             }}
             .columna {{
@@ -873,7 +879,7 @@ def generar_plan_pdf(id):
                 flex-direction: column;
                 justify-content: space-between;
                 box-sizing: border-box;
-                padding: 2px 8px 4px 8px;
+                padding: 0px 8px 4px 8px;
                 border: 1.5px dashed #94a3b8;
                 border-radius: 6px;
                 background: #fff;
@@ -905,6 +911,12 @@ def generar_plan_pdf(id):
             .content p, .content div, .content span, .content li, .content strong, .content em {{
                 line-height: 1.3 !important;
             }}
+            .content strong, .content b {{
+                font-weight: bold !important;
+            }}
+            .content em, .content i {{
+                font-style: italic !important;
+            }}
             .content .ql-size-large, .content span.ql-size-large, .content p.ql-size-large {{
                 font-size: 21px !important;
             }}
@@ -921,12 +933,12 @@ def generar_plan_pdf(id):
             <div class="columna">
                 <div>
                     {obtener_membrete_html()}
-                    <div style="background: #cbd5e1; padding: 4px 8px; border-radius: 5px; margin-bottom: 2px; font-weight: bold; color: #0f172a; display: flex; justify-content: space-between; align-items: center; border: 1px solid #94a3b8;">
+                    <div style="background: #cbd5e1; padding: 3px 6px; border-radius: 4px; margin-bottom: 2px; font-weight: bold; color: #0f172a; display: flex; justify-content: space-between; align-items: center; border: 1px solid #94a3b8;">
                         <div>
-                            <div style="font-size: 16px; margin-bottom: 1px;"><strong>Paciente:</strong> {p['nombre']}</div>
-                            <div style="font-size: 14px;"><strong>C.I.:</strong> {p['cedula']}</div>
+                            <div style="font-size: 13.5px; margin-bottom: 1px;"><strong>Paciente:</strong> {p['nombre']}</div>
+                            <div style="font-size: 12px;"><strong>C.I.:</strong> {p['cedula']}</div>
                         </div>
-                        <div style="font-size: 11px; text-align: right;">
+                        <div style="font-size: 10px; text-align: right;">
                             <strong>Fecha:</strong> {datetime.now().strftime('%d/%m/%Y')}
                         </div>
                     </div>
@@ -941,12 +953,12 @@ def generar_plan_pdf(id):
             <div class="columna">
                 <div>
                     {obtener_membrete_html()}
-                    <div style="background: #cbd5e1; padding: 4px 8px; border-radius: 5px; margin-bottom: 2px; font-weight: bold; color: #0f172a; display: flex; justify-content: space-between; align-items: center; border: 1px solid #94a3b8;">
+                    <div style="background: #cbd5e1; padding: 3px 6px; border-radius: 4px; margin-bottom: 2px; font-weight: bold; color: #0f172a; display: flex; justify-content: space-between; align-items: center; border: 1px solid #94a3b8;">
                         <div>
-                            <div style="font-size: 16px; margin-bottom: 1px;"><strong>Paciente:</strong> {p['nombre']}</div>
-                            <div style="font-size: 14px;"><strong>C.I.:</strong> {p['cedula']}</div>
+                            <div style="font-size: 13.5px; margin-bottom: 1px;"><strong>Paciente:</strong> {p['nombre']}</div>
+                            <div style="font-size: 12px;"><strong>C.I.:</strong> {p['cedula']}</div>
                         </div>
-                        <div style="font-size: 11px; text-align: right;">
+                        <div style="font-size: 10px; text-align: right;">
                             <strong>Fecha:</strong> {datetime.now().strftime('%d/%m/%Y')}
                         </div>
                     </div>
