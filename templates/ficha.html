@@ -338,16 +338,18 @@
                     <!-- Receta Médica -->
                     <div style="flex:1;">
                         <label style="font-weight:bold; font-size:13px; color:#2c3e50; display:block; margin-bottom:5px;">💊 Receta (Medicamentos):</label>
-                        <!-- MÉTODO INFALIBLE: Datos inyectados directamente dentro del contenedor -->
-                        <div id="editor-tratamiento" style="height: 150px; background: #fff; border-radius: 0 0 6px 6px;">{{ (paciente['tratamiento_actual'] or '') | safe }}</div>
+                        <!-- MÉTODO 100% SEGURO: Textarea oculto para guardar los datos originales -->
+                        <textarea id="datos_tratamiento_bd" style="display:none;">{{ paciente['tratamiento_actual'] or '' }}</textarea>
+                        <div id="editor-tratamiento" style="height: 150px; background: #fff; border-radius: 0 0 6px 6px;"></div>
                         <input type="hidden" name="tratamiento_actual" id="tratamiento_actual">
                     </div>
 
                     <!-- Indicaciones -->
                     <div style="flex:1;">
                         <label style="font-weight:bold; font-size:13px; color:#2c3e50; display:block; margin-bottom:5px;">📋 Indicaciones / Plan:</label>
-                        <!-- MÉTODO INFALIBLE: Datos inyectados directamente dentro del contenedor -->
-                        <div id="editor-indicaciones" style="height: 150px; background: #fff; border-radius: 0 0 6px 6px;">{{ (paciente['indicaciones_actual'] or '') | safe }}</div>
+                        <!-- MÉTODO 100% SEGURO: Textarea oculto para guardar los datos originales -->
+                        <textarea id="datos_indicaciones_bd" style="display:none;">{{ paciente['indicaciones_actual'] or '' }}</textarea>
+                        <div id="editor-indicaciones" style="height: 150px; background: #fff; border-radius: 0 0 6px 6px;"></div>
                         <input type="hidden" name="indicaciones_actual" id="indicaciones_actual">
                     </div>
                 </div>
@@ -550,7 +552,7 @@
         </div>
     </div>
 
-    <!-- Script simplificado y definitivo para inicializar Quill -->
+    <!-- Script definitivo y seguro para inicializar Quill -->
     <script>
         var toolbarOptions = [
             ['bold', 'underline'],
@@ -558,7 +560,6 @@
             ['clean']
         ];
 
-        // Se inicializa Quill sobre los div que ya contienen el texto de la base de datos
         var quillTratamiento = new Quill('#editor-tratamiento', {
             theme: 'snow',
             placeholder: 'Escriba aquí los medicamentos y dosis...',
@@ -571,7 +572,27 @@
             modules: { toolbar: toolbarOptions }
         });
 
-        // Aseguramos que al guardar, el texto se envíe de vuelta
+        // 1. Extraer los datos de la base de datos de manera invisible y segura
+        var textoTratamiento = document.getElementById('datos_tratamiento_bd').value;
+        var textoIndicaciones = document.getElementById('datos_indicaciones_bd').value;
+
+        // 2. Función infalible para inyectar texto al editor sin romper el formato
+        function inyectarTextoAQuill(quill, texto) {
+            if (!texto || texto.trim() === '') return;
+            // Si el texto ya viene con etiquetas HTML lo pegamos directo
+            if (texto.includes('<p>') || texto.includes('<li>') || texto.includes('<br>')) {
+                quill.clipboard.dangerouslyPasteHTML(texto);
+            } else {
+                // Si es el texto plano de la versión vieja, reemplazamos saltos de línea por <br>
+                quill.clipboard.dangerouslyPasteHTML(texto.replace(/\n/g, '<br>'));
+            }
+        }
+
+        // 3. Ejecutar la inyección
+        inyectarTextoAQuill(quillTratamiento, textoTratamiento);
+        inyectarTextoAQuill(quillIndicaciones, textoIndicaciones);
+
+        // 4. Asegurarnos que al presionar el botón "Guardar Todo" o "Imprimir", el texto se envíe de vuelta a la base de datos
         document.getElementById('formRecetaPlan').onsubmit = function() {
             document.getElementById('tratamiento_actual').value = quillTratamiento.root.innerHTML;
             document.getElementById('indicaciones_actual').value = quillIndicaciones.root.innerHTML;
