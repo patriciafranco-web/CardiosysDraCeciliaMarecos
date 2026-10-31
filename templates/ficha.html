@@ -318,7 +318,7 @@
 
                 <div style="display:flex; gap:10px; margin-bottom:20px;">
                     <div style="flex:1;"><label style="font-size:11px; font-weight:bold;">Cintura (cm):</label><input type="text" name="cintura" id="form_cintura" placeholder="88" style="width:100%; padding:8px; margin-top:4px; border:1px solid #ccc; border-radius:4px;"></div>
-                    <div style="font-size:11px; font-weight:bold;">IMC:</label><input type="text" name="imc" id="form_imc" placeholder="Auto" style="width:100%; padding:8px; margin-top:4px; border:1px solid #ccc; border-radius:4px; background:#f8fafc;" readonly></div>
+                    <div style="flex:1;"><label style="font-size:11px; font-weight:bold;">IMC:</label><input type="text" name="imc" id="form_imc" placeholder="Auto" style="width:100%; padding:8px; margin-top:4px; border:1px solid #ccc; border-radius:4px; background:#f8fafc;" readonly></div>
                     <div style="flex:1;"><label style="font-size:11px; font-weight:bold;">BSA m²:</label><input type="text" name="bsa" id="form_bsa" placeholder="Auto" style="width:100%; padding:8px; margin-top:4px; border:1px solid #cbd5e1; border-radius:4px; background:#f8fafc;" readonly></div>
                 </div>
                 
@@ -338,16 +338,18 @@
                     <!-- Receta Médica -->
                     <div style="flex:1;">
                         <label style="font-weight:bold; font-size:13px; color:#2c3e50; display:block; margin-bottom:5px;">💊 Receta (Medicamentos):</label>
-                        <!-- Inyección nativa directa para que Quill la reconozca al arrancar -->
-                        <div id="editor-tratamiento" style="height: 150px; background: #fff; border-radius: 0 0 6px 6px;">{{ paciente['tratamiento_actual'] | safe }}</div>
+                        <!-- Textarea oculto para respaldar el texto original de la base de datos -->
+                        <textarea id="raw_tratamiento" style="display:none;">{{ paciente['tratamiento_actual'] or '' }}</textarea>
+                        <div id="editor-tratamiento" style="height: 150px; background: #fff; border-radius: 0 0 6px 6px;"></div>
                         <input type="hidden" name="tratamiento_actual" id="tratamiento_actual">
                     </div>
 
                     <!-- Indicaciones -->
                     <div style="flex:1;">
                         <label style="font-weight:bold; font-size:13px; color:#2c3e50; display:block; margin-bottom:5px;">📋 Indicaciones / Plan:</label>
-                        <!-- Inyección nativa directa para que Quill la reconozca al arrancar -->
-                        <div id="editor-indicaciones" style="height: 150px; background: #fff; border-radius: 0 0 6px 6px;">{{ paciente['indicaciones_actual'] | safe }}</div>
+                        <!-- Textarea oculto para respaldar el texto original de la base de datos -->
+                        <textarea id="raw_indicaciones" style="display:none;">{{ paciente['indicaciones_actual'] or '' }}</textarea>
+                        <div id="editor-indicaciones" style="height: 150px; background: #fff; border-radius: 0 0 6px 6px;"></div>
                         <input type="hidden" name="indicaciones_actual" id="indicaciones_actual">
                     </div>
                 </div>
@@ -550,7 +552,7 @@
         </div>
     </div>
 
-    <!-- Script para inicializar Quill con el contenido precargado directamente -->
+    <!-- Script definitivo para poblar Quill al cargar -->
     <script>
         var toolbarOptions = [
             ['bold', 'underline'],
@@ -570,7 +572,18 @@
             modules: { toolbar: toolbarOptions }
         });
 
-        // Aseguramos que al enviar el formulario, el contenido enriquecido se inyecte en los inputs ocultos
+        // Cargar el texto respaldado desde el textarea oculto de forma segura
+        var rawTratamiento = document.getElementById('raw_tratamiento').value;
+        var rawIndicaciones = document.getElementById('raw_indicaciones').value;
+
+        if (rawTratamiento.trim() !== '') {
+            quillTratamiento.clipboard.dangerouslyPasteHTML(rawTratamiento);
+        }
+        if (rawIndicaciones.trim() !== '') {
+            quillIndicaciones.clipboard.dangerouslyPasteHTML(rawIndicaciones);
+        }
+
+        // Enviar contenido al servidor al guardar
         document.getElementById('formRecetaPlan').onsubmit = function() {
             document.getElementById('tratamiento_actual').value = quillTratamiento.root.innerHTML;
             document.getElementById('indicaciones_actual').value = quillIndicaciones.root.innerHTML;
